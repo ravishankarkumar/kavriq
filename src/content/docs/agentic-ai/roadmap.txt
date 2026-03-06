@@ -1,0 +1,85 @@
+## Module 1: Foundations of Agentic AI (The 2026 Edition)
+
+### 1.1 The Cognitive Architecture of Agents
+
+* **The "World Model" Concept:** How agents maintain a simulation of their environment to predict outcomes.
+* **Agentic vs. Deterministic AI:** When to use a hard-coded loop vs. a LLM-driven agent.
+* **The Inference-Time Compute Revolution:** Understanding how models "think" before they speak (o1/o3/DeepSeek-R1 logic).
+
+### 1.2 Modern LLM Primitives
+
+* **System Prompting 2.0:** Moving beyond "You are an assistant" to structured Persona-Action-Guardrail (PAG) prompts.
+* **Structured Outputs:** Forcing agents to speak in JSON/Schema for tool reliability.
+* **Context Windows vs. Context Management:** Why "Infinite Context" is a lie and how to manage "Working Memory."
+
+### 1.3 Core Agentic Principles
+
+* **Iterative Loops:** ReAct, Reflection, and Self-Correction.
+* **State Awareness:** Persistent threads and "Time-Travel" debugging (rewinding agent state).
+* **Tool Discovery:** How agents "learn" to use new APIs dynamically.
+
+---
+
+## Module 2: The "Action" Layer & Computer Use
+
+### 2.1 Tool Calling & MCP (Model Context Protocol)
+
+* **Protocol Standardization:** Using Anthropic's **MCP** to give agents a universal "plug-and-play" interface to your local files and databases.
+* **Input Validation:** Preventing "Prompt Injection" through tool parameters.
+
+### 2.2 Beyond APIs: Computer Use (LAMs)
+
+* **GUI Navigation:** Training agents to use a mouse and keyboard to interact with "un-API-able" legacy software.
+* **Visual Perception:** Using Multimodal models to "see" screenshots and identify UI elements.
+
+---
+
+## Module 3: Advanced Memory & RAG 2.0
+
+### 3.1 The Three-Tier Memory System
+
+* **Episodic Memory:** Storing "experiences" of past successes/failures.
+* **Semantic Memory:** Your vector-database-backed knowledge base (RAG).
+* **Procedural Memory:** Hard-coding "how-to" guides into the agent's system prompt.
+
+### 3.2 Agentic RAG
+
+* **Self-RAG:** Teaching agents to critique their own retrieved documents for relevance.
+* **Multi-Hop Retrieval:** Agents that perform multiple searches to connect the dots (e.g., "Find the CEO of X, then find their latest tweet").
+
+---
+
+## Module 4: Multi-Agent Orchestration
+
+### 4.1 Orchestration Patterns
+
+* **The Handoff Pattern:** A Triage agent routing tasks to specialists.
+* **The Debate Pattern:** Two agents arguing different sides of a problem to find the "truth."
+* **Hierarchical vs. Peer-to-Peer:** When to use a "Manager Agent" vs. a "Swarm."
+
+### 4.2 Frameworks: LangGraph & CrewAI
+
+* **Graph-Based Design:** Building cycles, conditions, and "checkpoints" in LangGraph.
+* **Role-Based Workflows:** Modeling agent teams as human departments in CrewAI.
+
+---
+
+## Module 5: Performance, Evals, & Production
+
+### 5.1 "LLM-as-a-Judge" (Evals)
+
+* **Automated Grading:** Using a 128k-context "Judge" model to score the performance of a smaller "Worker" agent.
+* **Unit Testing for Agents:** Creating "Golden Datasets" to ensure your agent doesn't regress when you update its prompt.
+
+### 5.2 The "Small Model" Strategy (SLMs)
+
+* **Local Agency:** Running **Llama 3.2 3B** or **Phi-4** locally (using Rust/Ollama) for high-speed, low-cost sub-tasks within a larger swarm.
+* **FinOps:** Calculating "Cost-per-Task" vs. "Cost-per-Token" to justify agent ROI.
+
+---
+
+## Module 6: Capstone Projects (Choose One)
+
+1. **The "Computer Use" Researcher:** An agent that opens a browser, finds 3 articles, takes screenshots of the charts, and writes a report in a local Google Doc.
+2. **The Multi-Agent Coding Pipeline:** A "Product Manager" agent that writes specs, a "Coder" agent that writes the Rust code, and a "Reviewer" agent that tries to find bugs.
+3. **The Local "Privacy-First" Butler:** A local-only agent (using SLMs) that manages your calendar and local file system without sending sensitive data to the cloud.
