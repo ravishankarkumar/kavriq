@@ -1,0 +1,429 @@
+---
+
+title: The Observation Processor
+description: How agents convert tool outputs into structured observations for reasoning
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 2 — Internal Agent Architecture**.
+
+In the previous article we examined the **Execution Engine**, which executes APIs, database queries, filesystem operations, and code safely.
+
+However, once a tool finishes executing, the raw result must be transformed into something the agent can reason about.
+
+This transformation is handled by the **Observation Processor**.
+
+</Aside>
+
+# The Observation Processor
+
+When an agent executes a tool, it receives **raw output**.
+
+Examples:
+
+* API responses
+* database query results
+* HTML pages
+* JSON payloads
+* log messages
+* generated files
+
+These outputs are often **large, noisy, and poorly structured**.
+
+If we feed this raw data directly back into the language model, several problems occur:
+
+* context windows fill quickly
+* reasoning becomes unstable
+* irrelevant information pollutes the prompt
+
+Therefore agent systems introduce a dedicated component:
+
+> **The Observation Processor**
+
+Its job is to transform raw tool outputs into **clean, structured observations**.
+
+---
+
+# The Role of Observations in the Agent Loop
+
+Recall the full agent loop:
+
+```text
+observe → reason → plan → act → observe
+```
+
+The **Observation Processor** produces the "observe" stage.
+
+```text
+Tool Output
+     ↓
+Observation Processor
+     ↓
+Structured Observation
+     ↓
+Working Memory
+     ↓
+Next Reasoning Step
+```
+
+This step is critical for **multi-step reasoning**.
+
+---
+
+# Raw Tool Output vs Observations
+
+Consider a simple example.
+
+### Raw Tool Output
+
+```json
+{
+  "weather": {
+    "location": "Tokyo",
+    "temperature": 26.4,
+    "humidity": 78,
+    "pressure": 1008,
+    "wind_speed": 12.3,
+    "wind_direction": "NE",
+    "sunrise": "04:52",
+    "sunset": "18:37"
+  }
+}
+```
+
+This contains more information than necessary.
+
+### Structured Observation
+
+```text
+Observation: The current temperature in Tokyo is 26°C with moderate humidity.
+```
+
+This representation is **shorter and easier for the agent to reason about**.
+
+---
+
+# Responsibilities of the Observation Processor
+
+The observation processor performs several key tasks.
+
+```text
+Tool Output
+     ↓
+Parsing
+     ↓
+Filtering
+     ↓
+Summarization
+     ↓
+Observation
+```
+
+More specifically, it handles:
+
+* extracting relevant data
+* compressing large outputs
+* converting formats
+* structuring observations for reasoning
+
+---
+
+# Parsing Tool Outputs
+
+Many tools return **structured formats** such as JSON.
+
+Example output:
+
+```json
+{
+  "articles": [
+    {"title": "AI chip demand surges", "source": "Reuters"},
+    {"title": "Nvidia revenue grows 120%", "source": "Bloomberg"}
+  ]
+}
+```
+
+The observation processor extracts key elements:
+
+```text
+Observation:
+Two news articles mention rapid growth in AI chip demand.
+```
+
+This allows the agent to **focus on meaning rather than raw data**.
+
+---
+
+# Example: Parsing Tool Results
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def process_weather(data):
+
+    temperature = data["weather"]["temperature"]
+
+    return f"Observation: Current temperature is {temperature}°C"
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn process_weather(data: &serde_json::Value) -> String {
+
+    let temp = data["weather"]["temperature"]
+        .as_f64()
+        .unwrap();
+
+    format!("Observation: Current temperature is {}°C", temp)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This converts raw JSON into a **reasoning-friendly observation**.
+
+---
+
+# Summarization and Compression
+
+Some tools produce extremely large outputs.
+
+Examples include:
+
+* search engine results
+* long documents
+* large database queries
+* web pages
+
+These outputs may contain **thousands of tokens**.
+
+Feeding this directly to the LLM is inefficient.
+
+Instead, the observation processor performs **summarization**.
+
+Example:
+
+```text
+Raw Output: 5000-word article about AI chip demand
+
+Observation:
+AI chip demand is rising rapidly due to data center expansion and generative AI workloads.
+```
+
+---
+
+# LLM-Based Summarization
+
+Modern agent systems often use **LLMs themselves** to compress observations.
+
+Example prompt:
+
+```text
+Summarize the following tool output in one sentence
+that preserves the key information.
+```
+
+This creates compact observations suitable for **working memory**.
+
+---
+
+# Summarization Example
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def summarize_output(text, llm):
+
+    prompt = f"""
+    Summarize the following tool output:
+
+    {text}
+    """
+
+    return llm.generate(prompt)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn summarize_output(text: &str, llm: &LLMClient) -> String {
+
+    let prompt = format!(
+        "Summarize this tool output:\n{}",
+        text
+    );
+
+    llm.generate(&prompt)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+# Filtering Irrelevant Information
+
+Another responsibility of the observation processor is **filtering noise**.
+
+Example tool output:
+
+```text
+HTTP request logs
+debug messages
+metadata
+actual result
+```
+
+Only the **actual result** should become an observation.
+
+Example filtered output:
+
+```text
+Observation: The API returned three matching records.
+```
+
+This dramatically improves reasoning quality.
+
+---
+
+# Structured Observations
+
+Modern agent systems often represent observations in **structured form**.
+
+Example:
+
+```json
+{
+  "type": "search_result",
+  "summary": "Two articles report strong AI chip demand",
+  "sources": ["Reuters", "Bloomberg"]
+}
+```
+
+Structured observations allow agents to:
+
+* track state more reliably
+* avoid hallucinations
+* reuse information across reasoning steps
+
+---
+
+# Feeding Observations Back Into the Agent Loop
+
+Once observations are created, they are added to **working memory**.
+
+Example reasoning trace:
+
+```text
+Thought: I should search for AI chip demand trends.
+
+Action: web_search("AI chip demand 2025")
+
+Observation: Multiple reports indicate rapid growth in AI chip demand.
+```
+
+This observation becomes part of the **next prompt** sent to the model.
+
+```text
+Thought → Action → Observation → Thought
+```
+
+This iterative loop allows agents to **refine their understanding of the environment**.
+
+---
+
+# Example Agent Loop With Observations
+
+```text
+Goal: Analyze GPU market
+
+Thought: Search for market reports
+Action: web_search("AI GPU market size")
+
+Observation: Market expected to grow 40% annually
+
+Thought: Compare leading vendors
+Action: web_search("Nvidia vs AMD AI GPU market share")
+
+Observation: Nvidia dominates current AI accelerator market
+```
+
+Each observation improves the agent's **world model**.
+
+---
+
+# Common Observation Processing Strategies
+
+Agent systems commonly use several techniques.
+
+| Strategy      | Purpose                           |
+| ------------- | --------------------------------- |
+| Parsing       | Extract structured data           |
+| Summarization | Compress large outputs            |
+| Filtering     | Remove noise                      |
+| Structuring   | Convert to machine-readable state |
+
+Combining these techniques produces **high-quality observations**.
+
+---
+
+# Why Observation Processing Is Critical
+
+Many agent failures occur because **raw tool outputs overwhelm the model**.
+
+Common problems include:
+
+* large HTML pages filling the context window
+* irrelevant metadata confusing the model
+* verbose logs polluting reasoning
+
+Observation processors solve these issues by **curating information**.
+
+---
+
+# The Observation Processor as the Agent's Interpreter
+
+If we extend our computer architecture analogy:
+
+| Component             | Analogy               |
+| --------------------- | --------------------- |
+| LLM                   | CPU                   |
+| Agent Runtime         | Operating System      |
+| Tool Manager          | System Call Interface |
+| Execution Engine      | Kernel                |
+| Observation Processor | Input Interpreter     |
+
+It converts **machine outputs into reasoning inputs**.
+
+---
+
+# Looking Ahead
+
+In this article we explored the **Observation Processor**, which converts raw tool outputs into structured observations for reasoning.
+
+We examined:
+
+* transforming tool outputs
+* summarization and compression
+* filtering noisy data
+* feeding observations back into the agent loop
+
+In the next article we will explore **Reflection and Termination**, the final stage of the agent loop where agents evaluate their progress and decide whether to continue or stop.
+
+→ Continue to **2.8 — Reflection and Termination**

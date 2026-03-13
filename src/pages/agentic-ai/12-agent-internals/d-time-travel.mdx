@@ -1,0 +1,390 @@
+---
+
+title: Adding Time-Travel Debugging
+description: Implementing replayable agent state logs to debug reasoning paths and tool decisions
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 11 — Building a Minimal Agent Runtime**.
+
+In the previous articles we implemented:
+
+• an **agent state machine**
+• a **tool calling system**
+
+Our runtime can now execute reasoning loops and interact with tools.
+
+However, debugging agent systems can still be difficult.
+When an agent produces an incorrect answer, developers need to understand **how the agent arrived at that decision**.
+
+To solve this problem we introduce **time-travel debugging**.
+
+</Aside>
+
+# Adding Time-Travel Debugging
+
+Traditional software debugging often uses **breakpoints and step-by-step execution**.
+
+Example debugging process:
+
+```text id="1ozsdq"
+Step 1 → inspect variables
+Step 2 → execute next line
+Step 3 → inspect state again
+```
+
+Agent systems require similar debugging capabilities.
+
+However, agent workflows involve:
+
+* reasoning steps
+* tool calls
+* external observations
+* evolving internal state
+
+Instead of stepping through source code, developers must inspect **the sequence of agent states**.
+
+Time-travel debugging enables this capability.
+
+---
+
+# What Is Time-Travel Debugging?
+
+Time-travel debugging allows developers to **replay a previous execution of the agent**.
+
+Conceptually:
+
+```text id="0r34db"
+Execution Timeline
+
+State 0 → State 1 → State 2 → State 3 → Final Answer
+```
+
+Developers can move backward and forward through the timeline to inspect agent behavior.
+
+Example:
+
+```text id="m89qva"
+Step 2:
+Thought → tool call
+
+Step 3:
+Observation → reasoning update
+```
+
+This provides insight into **how the agent reached its conclusion**.
+
+---
+
+# Why Debugging Agents Is Difficult
+
+Agent systems introduce several debugging challenges.
+
+### Non-Deterministic Outputs
+
+The same prompt may produce different results across runs.
+
+---
+
+### Multi-Step Reasoning
+
+Errors may occur several steps before the final output.
+
+---
+
+### Tool Interactions
+
+Incorrect tool usage can lead to incorrect conclusions.
+
+---
+
+Without execution history, it can be difficult to identify **where the reasoning failed**.
+
+Time-travel debugging solves this problem by recording every step.
+
+---
+
+# Recording Agent States
+
+To enable replay, the runtime must record the **agent state after each step**.
+
+Example state log:
+
+```text id="cv5mx6"
+State 0:
+Goal received
+
+State 1:
+Thought: search for GPU benchmarks
+
+State 2:
+Tool call: web_search
+
+State 3:
+Observation: benchmark results
+```
+
+Each state snapshot captures the agent’s internal context.
+
+---
+
+# State Snapshot Structure
+
+A state snapshot typically contains:
+
+| Field       | Description      |
+| ----------- | ---------------- |
+| step        | iteration number |
+| thought     | reasoning output |
+| action      | selected tool    |
+| observation | tool result      |
+| state       | updated context  |
+
+Example snapshot:
+
+```json id="a4kzsm"
+{
+  "step": 2,
+  "thought": "Search for GPU benchmarks",
+  "action": "web_search",
+  "observation": "Benchmark results retrieved"
+}
+```
+
+These snapshots form a **complete execution history**.
+
+---
+
+# Building the State History
+
+The runtime can maintain a **history list** of state snapshots.
+
+Example structure:
+
+```text id="xfm4x4"
+AgentHistory
+ ├─ Step 1
+ ├─ Step 2
+ ├─ Step 3
+ └─ Step N
+```
+
+This history enables time-travel debugging.
+
+---
+
+# Python Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python id="6q5l7p"
+history = []
+
+snapshot = {
+    "step": state["step"],
+    "thought": thought,
+    "action": action,
+    "observation": observation
+}
+
+history.append(snapshot)
+```
+
+</TabItem>
+
+</Tabs>
+
+Each iteration records a snapshot.
+
+---
+
+# Rust Implementation
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust id="tkr2yz"
+struct Snapshot {
+    step: u32,
+    thought: String,
+    action: String,
+    observation: String,
+}
+
+history.push(Snapshot {
+    step: state.step,
+    thought,
+    action,
+    observation,
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+Rust’s type system ensures snapshots are stored consistently.
+
+---
+
+# Replaying Agent States
+
+Once snapshots are recorded, developers can replay execution.
+
+Example replay function:
+
+```text id="gnr78q"
+Replay Step 1 → inspect reasoning
+Replay Step 2 → inspect tool call
+Replay Step 3 → inspect observation
+```
+
+This allows developers to analyze the **decision path**.
+
+---
+
+# Example Replay Function
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python id="c4sdv2"
+def replay(history):
+
+    for step in history:
+
+        print("Step:", step["step"])
+        print("Thought:", step["thought"])
+        print("Action:", step["action"])
+        print("Observation:", step["observation"])
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust id="ncewts"
+fn replay(history: &Vec<Snapshot>) {
+
+    for step in history {
+
+        println!("Step: {}", step.step);
+        println!("Thought: {}", step.thought);
+        println!("Action: {}", step.action);
+        println!("Observation: {}", step.observation);
+    }
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This function prints the execution history.
+
+---
+
+# Debugging Decision Paths
+
+Time-travel debugging allows developers to analyze **decision paths**.
+
+Example investigation:
+
+```text id="kr1i9m"
+Final Answer: incorrect
+
+Replay Step 2:
+Agent selected wrong search query
+
+Replay Step 3:
+Observation misleading
+
+Root cause:
+Incorrect tool query
+```
+
+This insight allows developers to improve prompts or reasoning strategies.
+
+---
+
+# Identifying Common Failure Patterns
+
+Replay logs help detect recurring problems.
+
+Examples include:
+
+| Failure Pattern       | Example               |
+| --------------------- | --------------------- |
+| repeated tool calls   | search loops          |
+| incorrect assumptions | faulty reasoning      |
+| missing observations  | incomplete context    |
+| premature termination | agent stops too early |
+
+Time-travel debugging makes these issues easier to detect.
+
+---
+
+# Integrating with Observability Systems
+
+In production systems, replay logs are often integrated with observability tools.
+
+Example architecture:
+
+```text id="p88drc"
+Agent Execution
+      ↓
+State Snapshots
+      ↓
+Trace Storage
+      ↓
+Debugging Dashboard
+```
+
+Developers can explore execution history visually.
+
+---
+
+# Time-Travel Debugging as a Development Tool
+
+Time-travel debugging is particularly useful during:
+
+* prompt development
+* tool integration
+* reasoning strategy tuning
+* evaluation analysis
+
+Instead of guessing why an agent failed, developers can **inspect the exact reasoning path**.
+
+---
+
+# The Runtime So Far
+
+At this stage, the minimal runtime now contains:
+
+```text id="t26gty"
+Agent Runtime
+ ├─ State Machine
+ ├─ Agent Loop
+ ├─ Tool Calling
+ ├─ State History
+ └─ Replay Debugger
+```
+
+This system already resembles the internal architecture used in many modern agent frameworks.
+
+---
+
+# Looking Ahead
+
+In the final article of this module we will implement a **minimal LangGraph-like runtime in roughly 300 lines of code**.
+
+This example will bring together everything we have built so far.
+
+→ Continue to **11.5 — A 300-Line LangGraph Alternative**

@@ -1,0 +1,446 @@
+---
+
+title: The Anatomy of an Agent
+description: Understanding the internal architecture of autonomous AI agents
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 2 — Internal Agent Architecture** of the *Agentic AI in 2026* series.
+
+In Module 1 we studied the **conceptual foundations of agents**.
+Now we begin opening the black box and examining the **internal architecture of a modern AI agent**.
+
+</Aside>
+
+# The Anatomy of an Agent
+
+Modern AI agents often appear mysterious.
+
+You give them a goal such as:
+
+> “Research the impact of quantum computing on cryptography and produce a report.”
+
+And somehow the system:
+
+* searches the web
+* reads documents
+* calls tools
+* writes code
+* synthesizes information
+
+But internally, the architecture of an agent is surprisingly structured.
+
+A useful mental model is this:
+
+| Component     | Analogy          |
+| ------------- | ---------------- |
+| LLM           | CPU              |
+| Agent Runtime | Operating System |
+| Tools         | System Calls     |
+| Memory        | RAM + Storage    |
+| Planner       | Scheduler        |
+| Environment   | External World   |
+
+Understanding this architecture is essential if you want to:
+
+* build your own agents
+* debug agent failures
+* optimize performance
+* design safe autonomous systems
+
+---
+
+# The Core Insight
+
+The most important conceptual leap is this:
+
+<Aside type="tip" title="Key Idea">
+An **LLM alone is not an agent**.
+
+An agent emerges only when a **runtime system repeatedly invokes an LLM inside a control loop**.
+
+</Aside>
+
+In other words:
+
+```
+Agent = LLM + Runtime + Tools + Memory + Environment
+```
+
+The LLM provides **reasoning ability**.
+
+The runtime provides **control and execution**.
+
+---
+
+# The LLM as a CPU
+
+Large Language Models function as the **reasoning processor** of an agent.
+
+Just as a CPU executes machine instructions, an LLM executes **reasoning instructions encoded in text**.
+
+## What the LLM Actually Does
+
+At every step of an agent loop, the LLM performs several tasks:
+
+1. **Interpret the current state**
+2. **Reason about the goal**
+3. **Choose the next action**
+4. **Produce structured output**
+
+The output may include:
+
+* a plan
+* a tool call
+* a final answer
+* a request for more information
+
+For example, the LLM might produce structured output like:
+
+```json
+{
+  "thought": "I should search for recent research papers",
+  "action": "web_search",
+  "arguments": {
+    "query": "post quantum cryptography NIST progress"
+  }
+}
+```
+
+This output becomes an **instruction for the runtime**.
+
+---
+
+# The Limits of the LLM
+
+Despite their intelligence, LLMs have important limitations.
+
+They cannot:
+
+* access the internet
+* run code
+* query databases
+* store persistent memory
+* control external systems
+
+They only **generate tokens**.
+
+Therefore something else must execute the real work.
+
+That component is the **agent runtime**.
+
+---
+
+# The Agent Runtime as an Operating System
+
+If the LLM is the **CPU**, then the agent runtime is the **operating system**.
+
+It orchestrates everything.
+
+Responsibilities of the runtime include:
+
+* managing the agent loop
+* executing tools
+* maintaining state
+* enforcing guardrails
+* storing memory
+* preventing infinite loops
+
+A typical runtime loop looks like this:
+
+```
+while not done:
+
+    observation = environment.get_state()
+
+    reasoning = LLM(prompt + observation)
+
+    action = parse(reasoning)
+
+    result = execute(action)
+
+    environment.update(result)
+```
+
+This simple loop is the **heartbeat of every autonomous agent**.
+
+---
+
+# A Minimal Agent Loop
+
+Let us examine a minimal example.
+
+## Python Example
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+class Agent:
+
+    def __init__(self, model, tools):
+        self.model = model
+        self.tools = tools
+        self.history = []
+
+    def step(self, observation):
+
+        prompt = self.build_prompt(observation)
+
+        response = self.model.generate(prompt)
+
+        action = self.parse_action(response)
+
+        if action["type"] == "tool":
+
+            tool = self.tools[action["name"]]
+
+            result = tool(**action["args"])
+
+            return result
+
+        return response
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+struct Agent {
+    model: LLMClient,
+    tools: HashMap<String, Tool>,
+    history: Vec<String>,
+}
+
+impl Agent {
+
+    fn step(&mut self, observation: String) -> String {
+
+        let prompt = format!("{}\n{}", self.history.join("\n"), observation);
+
+        let response = self.model.generate(prompt);
+
+        if let Some(action) = parse_action(&response) {
+
+            if let Some(tool) = self.tools.get(&action.name) {
+                return tool.execute(action.args);
+            }
+
+        }
+
+        response
+    }
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+Even this tiny program already contains the **essential ingredients of an agent**.
+
+---
+
+# Agent Architecture Overview
+
+Modern agent systems typically include several layers.
+
+```
+                +--------------------+
+                |     User Goal      |
+                +---------+----------+
+                          |
+                          v
+               +----------------------+
+               |    Agent Runtime     |
+               |  (Control Loop)      |
+               +----------+-----------+
+                          |
+        +-----------------+----------------+
+        |                                  |
+        v                                  v
+
++---------------+                 +----------------+
+|      LLM      |                 |      Tools     |
+|  Reasoning    |                 | APIs / Code    |
++-------+-------+                 +-------+--------+
+        |                                 |
+        v                                 v
+
++---------------+                 +----------------+
+|  Working Mem  |                 |   Environment  |
+| Scratchpad    |                 | External Data  |
++---------------+                 +----------------+
+```
+
+In the next few articles we will examine each component in detail.
+
+---
+
+# Responsibilities of the Agent Runtime
+
+A production agent runtime performs many complex tasks.
+
+## 1 — State Management
+
+Agents maintain internal state such as:
+
+* conversation history
+* memory retrieval results
+* task progress
+* intermediate reasoning
+
+Without state, agents cannot perform **multi-step tasks**.
+
+---
+
+## 2 — Tool Execution
+
+The runtime executes external capabilities such as:
+
+* web search
+* code execution
+* database queries
+* filesystem operations
+
+These are similar to **system calls in operating systems**.
+
+---
+
+## 3 — Context Construction
+
+The runtime decides **what information the LLM receives**.
+
+This may include:
+
+* conversation history
+* retrieved documents
+* intermediate reasoning
+* tool results
+
+Because context windows are limited, this step is critical.
+
+---
+
+## 4 — Safety and Guardrails
+
+The runtime enforces constraints such as:
+
+* tool permission systems
+* rate limits
+* maximum iteration counts
+* safe code execution
+
+Without guardrails, autonomous agents can become **dangerous or unstable**.
+
+---
+
+# The Agent Execution Cycle
+
+Putting everything together, the lifecycle of an agent looks like this:
+
+```
+User Goal
+   ↓
+Perception
+   ↓
+Reasoning (LLM)
+   ↓
+Planning
+   ↓
+Tool Execution
+   ↓
+Observation
+   ↓
+Reflection
+   ↓
+Termination or Next Step
+```
+
+This loop is often called the **Agent Control Loop**.
+
+We introduced the conceptual version in Module 1:
+
+```
+observe → reason → plan → act → reflect
+```
+
+Now we see how it is implemented inside a runtime.
+
+---
+
+# Why This Architecture Matters
+
+Understanding the internal architecture of agents has several practical benefits.
+
+## 1 — Debugging Agents
+
+Most agent failures occur in the **runtime layer**, not the LLM.
+
+Examples include:
+
+* incorrect tool execution
+* missing context
+* bad memory retrieval
+* infinite loops
+
+---
+
+## 2 — Performance Optimization
+
+Agent performance depends heavily on:
+
+* prompt construction
+* context compression
+* tool latency
+* reasoning depth
+
+Optimizing the runtime can dramatically improve speed and cost.
+
+---
+
+## 3 — Building Custom Agents
+
+Many frameworks exist:
+
+* LangChain
+* LangGraph
+* CrewAI
+* AutoGen
+
+But all of them implement **the same underlying architecture**.
+
+Once you understand the internals, you can:
+
+* build your own agent frameworks
+* extend existing ones
+* debug complex systems
+
+---
+
+# Looking Ahead
+
+In this article we introduced the **two central components** of an agent:
+
+* the **LLM (reasoning processor)**
+* the **runtime (control system)**
+
+In the upcoming articles we will explore the remaining components of agent architecture.
+
+Next we will examine the **Perception Layer**, which transforms raw inputs such as:
+
+* documents
+* images
+* screenshots
+* audio
+
+into machine-readable representations that agents can reason about.
+
+This is where **embeddings, parsing pipelines, and multimodal models** enter the architecture.
+
+→ Continue to **2.2 — The Perception Layer**

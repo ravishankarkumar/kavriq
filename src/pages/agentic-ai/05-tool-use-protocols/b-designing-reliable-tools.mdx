@@ -1,0 +1,452 @@
+---
+
+title: Designing Reliable Tools
+description: How to design robust tools for AI agents using schemas, idempotent actions, and error handling
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 4 — Tool Use & Protocols**.
+
+In the previous article we explored **why tools make agents powerful** and how tool-augmented agents extend the capabilities of language models.
+
+However, simply exposing APIs to an agent is not enough.
+Tools must be designed carefully to ensure they are **safe, predictable, and reliable**.
+
+This article explores the key principles behind **reliable tool design**.
+
+</Aside>
+
+# Designing Reliable Tools
+
+In modern agent systems, tools act as the **interface between reasoning and real-world actions**.
+
+Examples include:
+
+* web search APIs
+* database queries
+* filesystem operations
+* code execution environments
+* external services
+
+However, agents interact with tools differently than humans or traditional software systems.
+
+Human developers write precise code.
+
+Agents, on the other hand, generate tool calls **probabilistically** using language models.
+
+Because of this, poorly designed tools can lead to:
+
+* invalid requests
+* repeated actions
+* inconsistent behavior
+* system failures
+
+Reliable agent systems therefore require **carefully designed tools**.
+
+---
+
+# The Three Principles of Reliable Tools
+
+Most production agent systems follow three core principles.
+
+```text
+Clear schemas
+Idempotent actions
+Robust error handling
+```
+
+These principles ensure that agents can interact with tools **predictably and safely**.
+
+---
+
+# Tool Schemas
+
+A **tool schema** defines how an agent should call a tool.
+
+It specifies:
+
+* tool name
+* description
+* input parameters
+* parameter types
+
+Schemas allow the language model to understand **what the tool does and how to use it**.
+
+---
+
+# Example Tool Schema
+
+Example schema for a weather API:
+
+```json
+{
+  "name": "get_weather",
+  "description": "Get the current weather for a city",
+  "parameters": {
+    "city": {
+      "type": "string",
+      "description": "Name of the city"
+    }
+  }
+}
+```
+
+This schema tells the agent:
+
+* the tool name
+* what it does
+* what inputs are required
+
+---
+
+# Why Schemas Matter
+
+Without schemas, agents must guess how to call tools.
+
+Example of a bad tool call:
+
+```json
+{
+  "location": "Tokyo"
+}
+```
+
+But the API expects:
+
+```json
+{
+  "city": "Tokyo"
+}
+```
+
+Schemas reduce ambiguity and guide the model toward **correct tool usage**.
+
+---
+
+# Schema Validation
+
+Tool inputs should always be validated before execution.
+
+Example validation process:
+
+```text
+Tool request
+     ↓
+Schema validation
+     ↓
+Execute tool
+```
+
+If validation fails, the system should return a **clear error message**.
+
+---
+
+# Example Validation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from jsonschema import validate
+
+schema = {
+    "type": "object",
+    "properties": {
+        "city": {"type": "string"}
+    },
+    "required": ["city"]
+}
+
+validate({"city": "Tokyo"}, schema)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use jsonschema::JSONSchema;
+
+let compiled = JSONSchema::compile(&schema_json).unwrap();
+compiled.validate(&instance_json)?;
+```
+
+</TabItem>
+
+</Tabs>
+
+Schema validation ensures that tools receive **correctly structured inputs**.
+
+---
+
+# Idempotent Actions
+
+A key property of reliable tools is **idempotency**.
+
+An operation is **idempotent** if performing it multiple times produces the same result.
+
+Example:
+
+```text
+get_weather("Tokyo")
+```
+
+Calling this tool multiple times does not change the system state.
+
+---
+
+# Why Idempotency Matters
+
+Agents may occasionally repeat actions.
+
+Example reasoning loop:
+
+```text
+Thought: I should search for weather.
+Action: get_weather("Tokyo")
+
+Thought: I should confirm weather.
+Action: get_weather("Tokyo")
+```
+
+If the action is idempotent, repeating it causes **no harm**.
+
+However, non-idempotent actions can create problems.
+
+Example:
+
+```text
+send_email()
+create_database_record()
+charge_credit_card()
+```
+
+Repeating these actions could lead to **serious issues**.
+
+---
+
+# Designing Idempotent Tools
+
+Whenever possible, tools should be designed to be **safe to repeat**.
+
+Example strategies:
+
+* read-only APIs
+* deterministic outputs
+* state checks before modification
+
+Example:
+
+```text
+create_user_if_not_exists()
+```
+
+Instead of:
+
+```text
+create_user()
+```
+
+This prevents duplicate operations.
+
+---
+
+# Tool Error Handling
+
+External tools are inherently unreliable.
+
+Possible failures include:
+
+* network errors
+* API downtime
+* rate limits
+* malformed responses
+
+Agents must therefore handle errors **gracefully**.
+
+---
+
+# Common Error Types
+
+| Error Type       | Example              |
+| ---------------- | -------------------- |
+| Network error    | request timeout      |
+| Validation error | invalid parameter    |
+| API error        | service unavailable  |
+| Permission error | unauthorized request |
+
+Each error type should produce **structured responses**.
+
+---
+
+# Structured Error Responses
+
+Example tool response:
+
+```json
+{
+  "status": "error",
+  "message": "API rate limit exceeded"
+}
+```
+
+Structured errors allow the agent to reason about the failure.
+
+Example reasoning:
+
+```text
+Observation: API rate limit exceeded.
+
+Thought: I should retry later.
+```
+
+---
+
+# Retry Strategies
+
+Agents often implement **retry strategies** for transient errors.
+
+Example retry logic:
+
+```text
+Attempt 1 → failed
+Attempt 2 → retry
+Attempt 3 → success
+```
+
+Retries usually follow **exponential backoff**.
+
+Example:
+
+```text
+1 second
+2 seconds
+4 seconds
+8 seconds
+```
+
+This prevents overwhelming the external system.
+
+---
+
+# Example Retry Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import time
+
+def retry(tool, args, retries=3):
+
+    for i in range(retries):
+
+        try:
+            return tool(**args)
+
+        except Exception:
+
+            time.sleep(2 ** i)
+
+    raise RuntimeError("Tool failed")
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn retry<F, T>(tool: F, retries: u32) -> Result<T, String>
+where
+    F: Fn() -> Result<T, String>,
+{
+    for i in 0..retries {
+
+        match tool() {
+            Ok(v) => return Ok(v),
+            Err(_) => std::thread::sleep(
+                std::time::Duration::from_secs(2_u64.pow(i))
+            ),
+        }
+    }
+
+    Err("Tool failed".into())
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+# Designing Tools for Agents vs Humans
+
+Tools originally built for human developers often require modifications for agent usage.
+
+Human APIs may assume:
+
+* perfect input formatting
+* deterministic usage patterns
+* clear user intent
+
+Agents require:
+
+* flexible schemas
+* error-tolerant inputs
+* structured responses
+
+Therefore tools should be **agent-friendly by design**.
+
+---
+
+# Best Practices for Agent Tools
+
+Reliable tools typically follow these guidelines.
+
+| Principle             | Description                          |
+| --------------------- | ------------------------------------ |
+| Clear schemas         | define inputs and outputs explicitly |
+| Idempotency           | safe to repeat operations            |
+| Structured errors     | predictable failure responses        |
+| Deterministic outputs | consistent results                   |
+| Observability         | logging and monitoring               |
+
+Following these practices dramatically improves **agent reliability**.
+
+---
+
+# Tools as the Backbone of Agent Systems
+
+As agents become more capable, tools increasingly form the **backbone of AI systems**.
+
+Modern AI architectures often consist of:
+
+```text
+LLM reasoning
+       +
+Tool ecosystem
+```
+
+The quality of the tools often determines **how powerful the agent can become**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **how to design reliable tools for agent systems**.
+
+We examined:
+
+* tool schemas
+* idempotent actions
+* error handling strategies
+
+In the next article we will explore the **Model Context Protocol (MCP)**, a new standard that allows agents to discover and interact with tools in a consistent way.
+
+→ Continue to **4.3 — The Model Context Protocol (MCP)**

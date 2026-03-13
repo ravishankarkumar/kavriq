@@ -1,0 +1,503 @@
+# Agentic AI in 2026 — Complete Blog Roadmap
+
+## Directory Structure
+
+```
+src/content/docs/agentic-ai/
+├── 01-overview/                # Conceptual layer — no code, high-level intuition
+├── 02-foundations/             # Module 1  — Agentic AI Foundations
+├── 03-agent-architecture/      # Module 2  — Internal Agent Architecture
+├── 04-planning-systems/        # Module 3  — Planning Systems
+├── 05-tool-use-protocols/      # Module 4  — Tool Use & MCP
+├── 06-memory-systems-rag/      # Module 5  — Memory Systems & RAG 2.0
+├── 07-multi-agent/             # Module 6  — Multi-Agent Orchestration
+├── 08-computer-use-vision/     # Module 7  — Computer Use & Vision
+├── 09-guardrails-safety/       # Module 8  — Guardrails & Safety
+├── 10-evaluation-metrics/      # Module 9  — Evaluation & Trajectory Metrics
+├── 11-high-perf-engineering/   # Module 10 — Production & High-Performance Engineering
+├── 12-agent-internals/         # Module 11 — Building a Minimal Agent Runtime
+└── 13-capstone-projects/       # Module 12 — Capstone Projects
+```
+
+---
+
+# 01-overview — Conceptual Layer
+
+> Rule: No code, no library recommendations. Intuition and mental models only.
+> Forward pointer to 02-foundations at the end of each article.
+
+## Existing Articles
+- introduction-to-agents.md     → What is an agent? Agentic AI vs Traditional AI
+- llm-basics-for-agents.md      → Tokenization, Context, Prompt Engineering (conceptual primer)
+- core-agentic-principles.md    → Decision loops, state, tools, memory, environment
+
+---
+
+# Module 1 — Agentic AI Foundations
+## Folder: 02-foundations/
+
+
+## 1.1 What Is an Agent?
+
+* What Makes an AI System an Agent?
+* Agents vs Traditional Workflows
+* Deterministic Pipelines vs Autonomous LLM Loops
+* When **Not** to Use Agents
+
+---
+
+## 1.2 The Cognitive Architecture of Agents
+
+* The **World Model Concept** — How Agents Represent Their Environment
+* Goal-Driven Behavior in Autonomous Systems
+* The Expanded Agent Loop
+
+```text
+observe → reason → plan → act → reflect
+```
+
+* From Chatbots to Autonomous Systems
+
+---
+
+## 1.3 The Inference-Time Compute Revolution
+
+* Why Modern Models "Think Before They Speak"
+* Understanding **Thinking Tokens**
+* Reasoning Models: o1, o3, DeepSeek-R1
+* The Cost–Accuracy Tradeoff of Deliberate Reasoning
+
+---
+
+## 1.4 Modern LLM Primitives
+
+* System Prompting 2.0: Persona–Action–Guardrail (PAG)
+* Structured Outputs and JSON Schema Enforcement
+* Function Calling and Tool Schemas
+* Context Windows vs Context Management
+* Working Memory vs Long Context
+
+---
+
+# Module 2 — Internal Agent Architecture
+## Folder: 03-agent-architecture/
+
+## 2.1 The Anatomy of an Agent
+
+* The LLM as a **CPU**
+* The Agent Runtime as an **Operating System**
+
+---
+
+## 2.2 The Perception Layer
+
+* Turning Raw Inputs Into Machine-Readable State
+* Document Parsing and Knowledge Extraction
+* Multimodal Perception (Images, Screenshots, Audio)
+* Embeddings and Semantic Representations
+
+---
+
+## 2.3 Working Memory and the Scratchpad
+
+* What Is Working Memory in Agents?
+* The Reasoning Scratchpad Pattern
+* Managing Short-Term Context
+
+---
+
+## 2.4 The Planner / Reasoner
+
+* Turning Goals Into Plans
+* Task Decomposition Strategies
+* Planning vs Reactive Agents
+
+---
+
+## 2.5 The Tool Manager
+
+* Tool Discovery and Tool Selection
+* Schema Validation
+* Tool Reliability and Retry Strategies
+
+---
+
+## 2.6 The Execution Engine
+
+* Deterministic Execution in Agent Systems
+* APIs, Databases, and File Systems
+* Running Code Safely
+
+---
+
+## 2.7 The Observation Processor
+
+* Turning Tool Output Into Structured Observations
+* Summarization and Compression
+* Feeding Observations Back Into the Agent Loop
+
+---
+
+## 2.8 Reflection and Termination
+
+* Self-Evaluation in Agents
+* Reflexion and Self-Critique
+* Preventing Infinite Loops
+
+---
+
+# Module 3 — Planning Systems
+## Folder: 04-planning-systems/
+
+## 3.1 Why Planning Matters
+
+* Why Simple Agent Loops Fail
+* The Difference Between Reasoning and Planning
+
+---
+
+## 3.2 ReAct: Reason + Act
+
+* The Original ReAct Paper
+* Combining Reasoning and Tool Use
+
+---
+
+## 3.3 Chain-of-Thought Planning
+
+* Linear Reasoning Strategies
+* When Chain-of-Thought Works (and When It Doesn't)
+
+---
+
+## 3.4 Tree-of-Thought and Algorithm-of-Thought
+
+* Exploring Multiple Reasoning Paths
+* Structured Problem Solving with LLMs
+
+---
+
+## 3.5 Execution Graphs
+
+* Modeling Agents as Graphs Instead of Loops
+* State Machines and Agent Workflows
+
+---
+
+## 3.6 Building Agents with LangGraph
+
+* Graph-Based Agent Architectures
+* Cycles, Branches, and Checkpoints
+
+---
+
+# Module 4 — Tool Use & Protocols
+## Folder: 05-tool-use-protocols/
+
+## 4.1 Why Tools Make Agents Powerful
+
+* LLMs Alone vs Tool-Augmented Agents
+* The Limits of Pure Language Models
+
+---
+
+## 4.2 Designing Reliable Tools
+
+* Tool Schemas
+* Idempotent Actions
+* Tool Error Handling
+
+---
+
+## 4.3 The Model Context Protocol (MCP)
+
+* Why MCP Was Created
+* The Architecture of MCP
+* Tool Discovery and Registration
+
+---
+
+## 4.4 Building an MCP Server in Rust
+
+* Designing Tool Interfaces
+* Exposing SQLite Databases
+* Exposing Local Filesystems
+* Performance Advantages of Rust
+
+---
+
+# Module 5 — Memory Systems & RAG 2.0
+## Folder: 06-memory-systems-rag/
+
+## 5.1 The Memory Hierarchy of Agents
+
+* Working Memory
+* Long-Term Memory
+* Memory in Cognitive Architectures
+
+---
+
+## 5.2 Episodic Memory
+
+* Storing Past Experiences
+* Learning From Successes and Failures
+
+---
+
+## 5.3 Semantic Memory
+
+* Knowledge Bases
+* Vector Databases
+* Embeddings and Similarity Search
+
+---
+
+## 5.4 Procedural Memory
+
+* Hard-Coded Workflows
+* SOPs Inside System Prompts
+
+---
+
+## 5.5 Agentic RAG
+
+* Iterative Retrieval
+* Self-RAG and Retrieval Critique
+
+---
+
+## 5.6 Multi-Hop Retrieval
+
+* Connecting Knowledge Across Sources
+* Complex Information Queries
+
+---
+
+# Module 6 — Multi-Agent Orchestration
+## Folder: 07-multi-agent/
+
+## 6.1 Why Multi-Agent Systems Exist
+
+* Scaling Agent Intelligence
+* Specialization vs General Intelligence
+
+---
+
+## 6.2 Manager–Worker Pattern
+
+* Centralized Coordination
+
+---
+
+## 6.3 Handoff Pattern (Swarm)
+
+* Peer-to-Peer Agent Collaboration
+* Delegation via `transfer_to_specialist`
+
+---
+
+## 6.4 Debate Pattern
+
+* Agents Arguing to Improve Accuracy
+
+---
+
+## 6.5 Agent-to-Agent Communication (A2A)
+
+* Google's A2A Protocol
+* Agent Discovery
+* Capability Negotiation
+* Cross-Provider Collaboration
+
+---
+
+# Module 7 — Computer Use & Vision
+## Folder: 08-computer-use-vision/
+
+## 7.1 Computer Use Agents
+
+* What Are Large Action Models (LAMs)?
+* The Future of Software Automation
+
+---
+
+## 7.2 GUI Navigation
+
+* Mouse and Keyboard Control
+* Browser Automation
+* Legacy Software Interaction
+
+---
+
+## 7.3 Visual Grounding
+
+* Detecting UI Elements
+* Form Filling
+* Chart Extraction From Screenshots
+
+---
+
+# Module 8 — Guardrails & Safety
+## Folder: 09-guardrails-safety/
+
+## 8.1 Prompt Injection Attacks
+
+* How Agents Get Hacked
+* Defensive Prompting
+
+---
+
+## 8.2 Tool Permission Systems
+
+* Restricting Tool Access
+* Capability-Based Security
+
+---
+
+## 8.3 Human-in-the-Loop (HITL)
+
+* Designing Approval Workflows
+* Strategic Breakpoints
+
+---
+
+## 8.4 Sandboxing Agent Execution
+
+* Docker Sandboxing
+* WebAssembly Isolation
+* Safe Code Execution
+
+---
+
+# Module 9 — Evaluation & Trajectory Metrics
+## Folder: 10-evaluation-metrics/
+
+## 9.1 Why Agent Evaluation Is Hard
+
+* Non-Deterministic Systems
+* Path vs Outcome
+
+---
+
+## 9.2 LLM-as-a-Judge
+
+* Teacher–Student Evaluation
+* Automatic Grading Systems
+
+---
+
+## 9.3 Trajectory Evaluation
+
+* Efficiency Metrics
+* Tool Selection Metrics
+* Reasoning Quality Metrics
+
+---
+
+## 9.4 Building Evaluation Pipelines
+
+* Golden Datasets
+* Regression Testing for Agents
+
+---
+
+# Module 10 — Production & High-Performance Engineering
+## Folder: 11-high-perf-engineering/
+
+## 10.1 The Small Model Strategy
+
+* Model Routing
+* Cost Optimization
+* Hybrid Model Architectures
+
+---
+
+## 10.2 Using Rust for Agent Infrastructure
+
+* High-Speed Orchestrators
+* Concurrent Tool Execution
+* Memory Safety for Agent Systems
+
+---
+
+## 10.3 Observability for Agents
+
+* Agent Tracing
+* Decision Tree Visualization
+* LangSmith and OpenTelemetry
+
+---
+
+# Module 11 — Building a Minimal Agent Runtime
+## Folder: 12-agent-internals/
+
+## 11.1 Why Build Your Own Agent Runtime
+
+* Understanding the Internals
+* Framework Limitations
+
+---
+
+## 11.2 Designing a Simple Agent State Machine
+
+* Implementing the Agent Loop
+* Managing Agent State
+
+---
+
+## 11.3 Implementing Tool Calling
+
+* Schema-Based Tool Execution
+* Tool Dispatching
+
+---
+
+## 11.4 Adding Time-Travel Debugging
+
+* Replaying Agent States
+* Debugging Decision Paths
+
+---
+
+## 11.5 A 300-Line LangGraph Alternative
+
+* Building a Minimal Agent Framework
+
+---
+
+# Module 12 — Capstone Projects
+## Folder: 13-capstone-projects/
+
+## 12.1 The Computer-Use Researcher
+
+An agent that:
+
+* searches the web
+* captures visual data
+* synthesizes reports
+
+---
+
+## 12.2 The Multi-Agent Coding Pipeline
+
+Agents collaborate to build software:
+
+* Product Manager
+* Developer
+* Reviewer
+
+---
+
+## 12.3 The Privacy-First Local Butler
+
+A local-only agent that manages:
+
+* calendar
+* files
+* reminders
+
+Using:
+
+* MCP
+* SLMs
+* local tools

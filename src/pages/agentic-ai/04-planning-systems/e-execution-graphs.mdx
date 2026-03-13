@@ -1,0 +1,447 @@
+---
+
+title: Execution Graphs
+description: Modeling agents as graph-based workflows instead of simple loops
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 3 — Planning Systems**.
+
+In the previous article we explored **Tree-of-Thought and Algorithm-of-Thought**, which introduced search-based reasoning strategies.
+
+Now we move from reasoning techniques to **execution architecture**.
+Modern agent systems increasingly represent workflows as **execution graphs rather than simple loops**.
+
+</Aside>
+
+# Execution Graphs
+
+Early AI agents were typically implemented using **simple control loops**.
+
+Example:
+
+```text
+observe → reason → act → observe → reason → act
+```
+
+This loop works well for simple tasks.
+
+However, real-world systems often require:
+
+* branching decisions
+* parallel actions
+* conditional execution
+* revisiting earlier states
+
+These behaviors are difficult to express using a simple loop.
+
+To address this, modern agent systems increasingly use **execution graphs**.
+
+---
+
+# From Loops to Graphs
+
+Instead of a single repeated loop, agent workflows can be represented as **directed graphs**.
+
+Conceptually:
+
+```text
+Start
+  ↓
+Search Data
+  ↓
+Analyze Results
+  ↓
+Write Summary
+  ↓
+End
+```
+
+This is a simple linear graph.
+
+But graphs allow much more complex workflows.
+
+Example:
+
+```text
+          Start
+           |
+      Collect Data
+        /     \
+       /       \
+ Analyze A   Analyze B
+       \       /
+        \     /
+        Combine Results
+             |
+           Report
+```
+
+This structure allows **branching and merging execution paths**.
+
+---
+
+# What Is an Execution Graph?
+
+An execution graph is a representation of an agent workflow as a **set of nodes connected by edges**.
+
+| Component | Meaning                   |
+| --------- | ------------------------- |
+| Node      | a computation step        |
+| Edge      | transition between steps  |
+| State     | data passed between nodes |
+
+Conceptually:
+
+```text
+Node A → Node B → Node C
+```
+
+Each node performs a specific operation such as:
+
+* reasoning
+* calling a tool
+* processing results
+* generating an answer
+
+---
+
+# Why Graphs Are Better Than Loops
+
+Execution graphs provide several advantages over simple loops.
+
+### 1 — Explicit Structure
+
+Loops hide the workflow inside reasoning.
+
+Graphs make the workflow **visible and explicit**.
+
+---
+
+### 2 — Branching Logic
+
+Graphs allow agents to choose different paths based on conditions.
+
+Example:
+
+```text
+If data quality is high → continue analysis
+Else → gather more data
+```
+
+---
+
+### 3 — Parallel Execution
+
+Some tasks can run simultaneously.
+
+Example:
+
+```text
+Search news
+Search research papers
+Search financial data
+```
+
+These can execute in **parallel branches**.
+
+---
+
+### 4 — Deterministic Control
+
+Graphs allow developers to enforce **structured workflows**.
+
+This improves reliability in production systems.
+
+---
+
+# Example Agent Execution Graph
+
+Consider an agent tasked with writing a market report.
+
+Execution graph:
+
+```text
+Start
+  ↓
+Collect Market Data
+  ↓
+Analyze Trends
+  ↓
+Generate Report
+  ↓
+Review Output
+  ↓
+End
+```
+
+Each node represents a **stage in the pipeline**.
+
+---
+
+# Nodes as Agent Functions
+
+In many implementations, each node is simply a **function**.
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def collect_data(state):
+
+    results = web_search(state["query"])
+
+    state["data"] = results
+
+    return state
+```
+
+```python
+def analyze_data(state):
+
+    analysis = llm.generate(
+        f"Analyze this data: {state['data']}"
+    )
+
+    state["analysis"] = analysis
+
+    return state
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn collect_data(state: &mut State) {
+
+    let results = web_search(&state.query);
+
+    state.data = results;
+}
+```
+
+```rust
+fn analyze_data(state: &mut State, llm: &LLMClient) {
+
+    let prompt = format!("Analyze: {}", state.data);
+
+    state.analysis = llm.generate(&prompt);
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+Each node receives and updates the **agent state**.
+
+---
+
+# State Machines
+
+Execution graphs are closely related to **state machines**.
+
+A state machine defines:
+
+* possible states
+* transitions between states
+* rules for transitions
+
+Example state machine:
+
+```text
+Idle
+ ↓
+Searching
+ ↓
+Analyzing
+ ↓
+Reporting
+ ↓
+Finished
+```
+
+Each transition is triggered by a **condition or event**.
+
+---
+
+# State Transitions
+
+Example:
+
+```text
+Searching → Analyzing
+Condition: search results retrieved
+```
+
+Or:
+
+```text
+Analyzing → Searching
+Condition: insufficient data
+```
+
+This allows the agent to **adapt its workflow dynamically**.
+
+---
+
+# Example State Machine Logic
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def next_state(state):
+
+    if state["data"] is None:
+        return "search"
+
+    if state["analysis"] is None:
+        return "analyze"
+
+    return "report"
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn next_state(state: &State) -> &str {
+
+    if state.data.is_none() {
+        return "search";
+    }
+
+    if state.analysis.is_none() {
+        return "analyze";
+    }
+
+    "report"
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The runtime uses this logic to determine the **next node in the graph**.
+
+---
+
+# Execution Graphs in Modern Frameworks
+
+Several modern agent frameworks use graph-based execution.
+
+| Framework | Graph Model            |
+| --------- | ---------------------- |
+| LangGraph | state graph execution  |
+| AutoGen   | conversational graphs  |
+| CrewAI    | role-based task graphs |
+
+These frameworks allow developers to **define workflows declaratively**.
+
+---
+
+# Example LangGraph-Style Workflow
+
+Example conceptual graph:
+
+```text
+User Input
+   ↓
+Planner
+   ↓
+Tool Execution
+   ↓
+Observation
+   ↓
+Reflection
+   ↓
+Final Output
+```
+
+Instead of repeating a loop, the runtime navigates a **structured graph of nodes**.
+
+---
+
+# Loops Still Exist Inside Graphs
+
+Interestingly, graphs can still contain loops.
+
+Example:
+
+```text
+Search Data
+   ↓
+Analyze Results
+   ↓
+More Data Needed?
+   ↓ yes
+Search Data
+```
+
+This creates a **cycle inside the graph**.
+
+Thus execution graphs combine:
+
+* loops
+* branching
+* conditional logic
+
+into a unified structure.
+
+---
+
+# Why Execution Graphs Are Becoming Standard
+
+Execution graphs are increasingly popular for several reasons.
+
+They provide:
+
+* **greater control over agent behavior**
+* **better observability**
+* **clear debugging paths**
+* **deterministic workflows**
+
+These properties are essential for **production AI systems**.
+
+---
+
+# Execution Graphs as the Future of Agent Architectures
+
+Modern agent architectures are evolving from:
+
+```text
+simple loops
+```
+
+to
+
+```text
+structured execution graphs
+```
+
+This shift allows agents to behave more like **software systems** rather than probabilistic chat loops.
+
+---
+
+# Looking Ahead
+
+In this article we explored **Execution Graphs**, which model agent workflows as structured graphs instead of simple loops.
+
+We examined:
+
+* how graphs represent agent workflows
+* the relationship between graphs and state machines
+* why graph-based systems improve reliability
+
+In the next article we will explore **Building Agents with LangGraph**, one of the most popular frameworks for implementing graph-based agent architectures.
+
+→ Continue to **3.6 — Building Agents with LangGraph**

@@ -1,0 +1,369 @@
+---
+
+title: Episodic Memory
+description: How AI agents store past experiences and learn from successes and failures
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 5 — Memory Systems & RAG 2.0**.
+
+In the previous article we introduced the **memory hierarchy of agents**, including working memory and long-term memory.
+
+In this article we explore **episodic memory**, a memory system that allows agents to store and recall past experiences.
+
+</Aside>
+
+# Episodic Memory
+
+Humans often rely on past experiences to solve new problems.
+
+For example:
+
+* remembering how a previous bug was fixed
+* recalling a conversation with a colleague
+* learning from a failed experiment
+
+These experiences form **episodic memory**.
+
+In cognitive science, episodic memory refers to:
+
+> **Memories of specific events or experiences that occurred in the past.**
+
+Modern AI agents can implement similar mechanisms.
+
+Instead of remembering events biologically, agents store **structured records of past interactions**.
+
+---
+
+# Why Episodic Memory Matters
+
+Without episodic memory, an agent must solve every task **from scratch**.
+
+Example:
+
+```text
+Task: Debug a Python error
+
+Agent: searches the web
+Agent: tries several solutions
+Agent: eventually fixes the issue
+```
+
+Later, the same problem appears again.
+
+Without episodic memory, the agent repeats the entire process.
+
+With episodic memory:
+
+```text
+Agent recalls previous debugging session
+Agent retrieves working solution
+Agent resolves issue quickly
+```
+
+This dramatically improves efficiency.
+
+---
+
+# What Counts as an Episode?
+
+An **episode** represents a recorded experience.
+
+Typical episodes include:
+
+* problem-solving attempts
+* tool usage sequences
+* conversations with users
+* completed tasks
+* failures and corrections
+
+Example episode record:
+
+```json
+{
+  "task": "Compare RTX 4090 and H100 GPUs",
+  "steps": [
+    "Search benchmark results",
+    "Extract training performance",
+    "Compare metrics"
+  ],
+  "result": "H100 significantly faster",
+  "success": true
+}
+```
+
+This record allows the agent to reuse **previous reasoning patterns**.
+
+---
+
+# Episodic Memory Structure
+
+Episodes typically contain several elements.
+
+| Field        | Description                    |
+| ------------ | ------------------------------ |
+| Task         | the goal or problem            |
+| Actions      | steps taken by the agent       |
+| Observations | results of actions             |
+| Outcome      | success or failure             |
+| Metadata     | timestamps, context, user data |
+
+Conceptually:
+
+```text
+Episode
+  ↓
+Goal
+Actions
+Observations
+Outcome
+```
+
+This structure captures **how the agent solved a problem**.
+
+---
+
+# Storing Episodes
+
+Episodes are usually stored in **long-term memory systems** such as:
+
+* vector databases
+* document stores
+* relational databases
+
+Example storage architecture:
+
+```text
+Agent
+  ↓
+Episode Logger
+  ↓
+Memory Database
+```
+
+Each completed task can generate a new memory entry.
+
+---
+
+# Example Episode Storage
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+episode = {
+    "task": "Find GPU benchmarks",
+    "actions": [
+        "search benchmarks",
+        "extract performance metrics"
+    ],
+    "result": "H100 faster",
+    "success": True
+}
+
+memory_store.append(episode)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+memory.push(Episode {
+    task: "Find GPU benchmarks".into(),
+    actions: vec![
+        "search benchmarks".into(),
+        "extract metrics".into()
+    ],
+    result: "H100 faster".into(),
+    success: true,
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+These stored experiences become part of the agent's **episodic memory**.
+
+---
+
+# Retrieving Past Experiences
+
+When a new task arrives, the agent can search episodic memory for **similar past episodes**.
+
+Example:
+
+```text
+New Task
+   ↓
+Search episodic memory
+   ↓
+Retrieve similar episodes
+   ↓
+Reuse strategy
+```
+
+Example reasoning:
+
+```text
+Goal: Compare GPUs
+
+Memory retrieved:
+Previous benchmark comparison workflow
+
+Agent uses same analysis strategy
+```
+
+This process is similar to **case-based reasoning**.
+
+---
+
+# Learning From Successes
+
+Successful episodes provide **templates for solving future problems**.
+
+Example:
+
+```text
+Past Episode:
+Search benchmarks → extract metrics → compare results
+
+Outcome: Success
+```
+
+The agent can reuse this workflow for similar tasks.
+
+This effectively creates **learned problem-solving strategies**.
+
+---
+
+# Learning From Failures
+
+Failures are equally valuable.
+
+Example failure record:
+
+```json
+{
+  "task": "Retrieve financial data",
+  "actions": ["run SQL query"],
+  "error": "table not found",
+  "success": false
+}
+```
+
+Future reasoning:
+
+```text
+Observation: table not found error occurred previously.
+
+Thought: verify database schema before querying.
+```
+
+This allows agents to **avoid repeating mistakes**.
+
+---
+
+# Reflection and Episodic Learning
+
+Many agent systems combine episodic memory with **reflection mechanisms**.
+
+After completing a task, the agent may generate a summary.
+
+Example:
+
+```text
+Reflection:
+The search query was too broad.
+Next time use a more specific query.
+```
+
+This reflection becomes part of the episode.
+
+---
+
+# Episodic Memory vs Semantic Memory
+
+Episodic memory stores **experiences**.
+
+Semantic memory stores **facts**.
+
+| Memory Type | Example                                      |
+| ----------- | -------------------------------------------- |
+| Episodic    | "Yesterday I compared GPU benchmarks."       |
+| Semantic    | "The H100 GPU is designed for AI workloads." |
+
+Both types of memory are essential for intelligent agents.
+
+---
+
+# Episodic Memory in Modern Agent Systems
+
+Several agent frameworks already experiment with episodic memory.
+
+Examples include:
+
+* AutoGPT memory systems
+* LangChain memory modules
+* research agents storing task histories
+
+These systems enable agents to **improve performance over time**.
+
+---
+
+# Challenges of Episodic Memory
+
+Episodic memory introduces several challenges.
+
+### Memory Growth
+
+Episodes accumulate over time and may require **pruning or summarization**.
+
+---
+
+### Retrieval Quality
+
+Finding the most relevant episode requires effective **similarity search**.
+
+---
+
+### Noise
+
+Poor-quality episodes may lead to incorrect reasoning.
+
+Careful memory management is essential.
+
+---
+
+# Episodic Memory as Experience
+
+If we compare agent components to human cognition:
+
+| Human System        | Agent System    |
+| ------------------- | --------------- |
+| Experiences         | episodic memory |
+| Knowledge           | semantic memory |
+| Short-term thoughts | working memory  |
+
+This analogy helps explain how agents can evolve from **stateless programs into learning systems**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **episodic memory**, which allows agents to store and reuse past experiences.
+
+We examined:
+
+* how episodes are structured
+* how agents retrieve past experiences
+* how agents learn from successes and failures
+
+In the next article we will explore **semantic memory**, which stores factual knowledge using techniques such as embeddings and vector databases.
+
+→ Continue to **5.3 — Semantic Memory**

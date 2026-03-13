@@ -1,0 +1,470 @@
+---
+
+title: Building an MCP Server in Rust
+description: Implementing a Model Context Protocol server in Rust to expose tools, databases, and filesystems to AI agents
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 4 — Tool Use & Protocols**.
+
+In the previous article we explored the **Model Context Protocol (MCP)**, which standardizes how AI agents discover and interact with tools.
+
+In this article we move from theory to practice by implementing a **basic MCP server in Rust** that exposes tools, databases, and local resources to AI agents.
+
+</Aside>
+
+# Building an MCP Server in Rust
+
+The Model Context Protocol allows AI agents to interact with external systems through a standardized interface.
+
+An **MCP server** acts as a gateway that exposes tools and resources.
+
+Example architecture:
+
+```text
+AI Agent
+   ↓
+MCP Client
+   ↓
+MCP Server
+   ↓
+Tools / Databases / Filesystem
+```
+
+The server advertises available tools and executes requests sent by the agent.
+
+In this article we will explore how to build a **simple MCP server in Rust**.
+
+---
+
+# Why Rust for MCP Servers?
+
+Rust is an excellent language for building infrastructure services.
+
+Key advantages include:
+
+| Feature          | Benefit                             |
+| ---------------- | ----------------------------------- |
+| Memory safety    | prevents many runtime errors        |
+| High performance | ideal for high-throughput systems   |
+| Concurrency      | efficient handling of many requests |
+| Reliability      | predictable behavior in production  |
+
+Because MCP servers may handle:
+
+* multiple concurrent tool calls
+* large data transfers
+* long-running agent workflows
+
+Rust is a natural choice for implementing them.
+
+---
+
+# MCP Server Responsibilities
+
+An MCP server typically performs several tasks.
+
+```text
+Register tools
+      ↓
+Advertise tool schemas
+      ↓
+Accept tool requests
+      ↓
+Execute tools
+      ↓
+Return results
+```
+
+The server must also expose **resources** such as files or databases.
+
+---
+
+# Designing Tool Interfaces
+
+The first step is defining a **tool interface**.
+
+Each tool should define:
+
+* a name
+* a description
+* input parameters
+* execution logic
+
+Conceptually:
+
+```text
+Tool Definition
+    ↓
+Schema
+    ↓
+Execution Function
+```
+
+---
+
+# Example Tool Interface
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+struct Tool {
+    name: String,
+    description: String,
+}
+
+trait ToolExecutor {
+    fn execute(&self, args: serde_json::Value) -> serde_json::Value;
+}
+```
+
+</TabItem>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+class Tool:
+
+    def __init__(self, name, description, handler):
+        self.name = name
+        self.description = description
+        self.handler = handler
+
+    def execute(self, args):
+        return self.handler(**args)
+```
+
+</TabItem>
+
+</Tabs>
+
+This abstraction allows the server to **register multiple tools dynamically**.
+
+---
+
+# Registering Tools
+
+Tools must be registered with the MCP server.
+
+Example:
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use std::collections::HashMap;
+
+let mut tools = HashMap::new();
+
+tools.insert("web_search", web_search_tool);
+tools.insert("run_sql", sql_query_tool);
+```
+
+</TabItem>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+tools = {
+    "web_search": web_search,
+    "run_sql": run_sql
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The MCP server can now expose these tools to agents.
+
+---
+
+# Exposing SQLite Databases
+
+One common use case for MCP servers is exposing **databases to agents**.
+
+SQLite is especially convenient because it requires **no external server**.
+
+Example architecture:
+
+```text
+Agent
+  ↓
+MCP Server
+  ↓
+SQLite Database
+```
+
+---
+
+# Example SQLite Tool
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use rusqlite::{Connection, Result};
+
+fn run_sql(query: &str) -> Result<Vec<String>> {
+
+    let conn = Connection::open("data.db")?;
+
+    let mut stmt = conn.prepare(query)?;
+
+    let rows = stmt.query_map([], |row| row.get(0))?;
+
+    Ok(rows.filter_map(Result::ok).collect())
+}
+```
+
+</TabItem>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import sqlite3
+
+def run_sql(query):
+
+    conn = sqlite3.connect("data.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute(query)
+
+    return cursor.fetchall()
+```
+
+</TabItem>
+
+</Tabs>
+
+This allows agents to perform **database queries through MCP**.
+
+---
+
+# Exposing Local Filesystems
+
+Another useful capability is allowing agents to access **local files**.
+
+Example operations:
+
+* read files
+* list directories
+* search documents
+
+Example architecture:
+
+```text
+Agent
+ ↓
+MCP Server
+ ↓
+Filesystem
+```
+
+---
+
+# Example File Reader Tool
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use std::fs;
+
+fn read_file(path: &str) -> String {
+
+    fs::read_to_string(path).unwrap()
+}
+```
+
+</TabItem>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def read_file(path):
+
+    with open(path) as f:
+        return f.read()
+```
+
+</TabItem>
+
+</Tabs>
+
+For security, production systems should restrict access to **specific directories**.
+
+---
+
+# Handling Tool Requests
+
+The MCP server receives requests from the agent and routes them to the appropriate tool.
+
+Conceptual workflow:
+
+```text
+Request Received
+      ↓
+Parse Tool Name
+      ↓
+Lookup Tool
+      ↓
+Execute Tool
+      ↓
+Return Result
+```
+
+Example response:
+
+```json
+{
+  "status": "success",
+  "result": "query results"
+}
+```
+
+---
+
+# Example Tool Dispatcher
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn execute_tool(
+    tools: &HashMap<String, Tool>,
+    name: &str,
+    args: serde_json::Value
+) -> serde_json::Value {
+
+    tools.get(name).unwrap().execute(args)
+}
+```
+
+</TabItem>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def execute_tool(tools, name, args):
+
+    return tools[name](**args)
+```
+
+</TabItem>
+
+</Tabs>
+
+This dispatcher allows the server to handle **dynamic tool calls**.
+
+---
+
+# Performance Advantages of Rust
+
+Rust provides several advantages for MCP infrastructure.
+
+### High Throughput
+
+Rust servers can handle thousands of concurrent requests.
+
+---
+
+### Memory Safety
+
+Rust prevents common issues such as:
+
+* null pointer dereferences
+* buffer overflows
+* data races
+
+---
+
+### Efficient Concurrency
+
+Rust supports async runtimes such as:
+
+* Tokio
+* async-std
+
+Example:
+
+```rust
+#[tokio::main]
+async fn main() {
+    println!("MCP server running");
+}
+```
+
+This enables efficient **parallel tool execution**.
+
+---
+
+# When Rust Is Particularly Valuable
+
+Rust becomes especially useful when MCP servers must:
+
+* serve many agents simultaneously
+* execute heavy data processing
+* stream large files
+* run continuously in production environments
+
+In these situations, Rust can significantly outperform dynamic languages.
+
+---
+
+# Production Considerations
+
+Real MCP servers often include additional features.
+
+These include:
+
+* authentication
+* rate limiting
+* request logging
+* caching
+* sandboxing
+
+These capabilities ensure that agents interact with tools **safely and efficiently**.
+
+---
+
+# Summary of Module 4
+
+In this module we explored **how agents interact with external tools**.
+
+| Topic                    | Concept                       |
+| ------------------------ | ----------------------------- |
+| Why Tools Matter         | extending LLM capabilities    |
+| Designing Reliable Tools | schemas and error handling    |
+| Model Context Protocol   | standardizing tool interfaces |
+| MCP Servers              | exposing tools to agents      |
+
+Together, these concepts form the **tool interaction layer of agent systems**.
+
+---
+
+# Looking Ahead
+
+In the next module we will explore **Memory Systems & Retrieval-Augmented Generation (RAG)**.
+
+Topics include:
+
+* memory hierarchies in agents
+* episodic vs semantic memory
+* vector databases
+* multi-hop retrieval
+
+These systems allow agents to **remember and retrieve knowledge across tasks**.
+
+→ Continue to **5.1 — The Memory Hierarchy of Agents**

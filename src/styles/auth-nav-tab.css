@@ -1,0 +1,28 @@
+/* 1. Remove the underline from the active state and apply color */
+.active-nav,
+nav a.active,
+nav a[aria-current="page"] {
+  text-decoration: none !important;
+  /* Use your theme's accent color variable */
+  color: var(--color-accent) !important;
+  opacity: 1 !important;
+  font-weight: 500;
+}
+
+/* 2. Style the hover state for all nav links */
+nav a:hover {
+  @apply decoration-dashed underline-offset-4;
+  /* @apply underline decoration-wavy decoration-2 underline-offset-8; */
+  text-decoration-line: underline !important;
+  text-decoration-style: dashed !important;
+  color: var(--color-accent) !important;
+}
+
+/* 3. Optional: If you want content links to match this behavior */
+.app-prose a {
+  @apply transition-colors duration-200;
+}
+
+.app-prose a:hover {
+  text-decoration-style: dashed !important;
+}

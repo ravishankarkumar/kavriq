@@ -1,0 +1,356 @@
+---
+
+title: The Memory Hierarchy of Agents
+description: Understanding working memory, long-term memory, and how memory structures enable intelligent AI agents
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 5 — Memory Systems & RAG 2.0**.
+
+In the previous module we explored **Tool Use & Protocols**, which allow agents to interact with external systems such as APIs, databases, and files.
+
+However, intelligent agents require more than tools.
+They must also **remember information across reasoning steps and tasks**.
+
+This module explores how modern agents implement **memory systems**, enabling them to store, retrieve, and use knowledge effectively.
+
+</Aside>
+
+# The Memory Hierarchy of Agents
+
+Memory is a fundamental component of intelligent systems.
+
+Humans rely on several forms of memory:
+
+* short-term memory for immediate reasoning
+* long-term memory for accumulated knowledge
+* contextual memory for recent experiences
+
+Modern AI agents implement similar concepts.
+
+Instead of relying solely on the language model’s internal knowledge, agents maintain **external memory systems** that store and retrieve information as needed.
+
+These systems form a **memory hierarchy**.
+
+---
+
+# Why Memory Matters for Agents
+
+Without memory, an agent behaves like a **stateless chatbot**.
+
+Example interaction:
+
+```text
+User: What papers did we discuss earlier?
+
+Agent: I don't have access to past conversations.
+```
+
+This limitation prevents agents from performing tasks such as:
+
+* multi-step research
+* long-running workflows
+* personalized interactions
+* knowledge accumulation
+
+Memory systems allow agents to **retain and reuse information across tasks**.
+
+---
+
+# The Memory Hierarchy
+
+Modern agents typically implement a **hierarchical memory structure**.
+
+Conceptually:
+
+```text
+Long-Term Memory
+       ↓
+Retrieved Context
+       ↓
+Working Memory
+```
+
+Each layer serves a different purpose.
+
+| Memory Layer      | Purpose                                      |
+| ----------------- | -------------------------------------------- |
+| Working Memory    | reasoning during the current task            |
+| Long-Term Memory  | persistent knowledge storage                 |
+| Retrieved Context | relevant information retrieved for reasoning |
+
+This hierarchy allows agents to handle **large knowledge spaces efficiently**.
+
+---
+
+# Working Memory
+
+Working memory stores the information an agent needs **during a specific reasoning process**.
+
+Examples include:
+
+* intermediate reasoning steps
+* tool outputs
+* partial plans
+* observations
+
+Working memory is usually implemented as part of the **prompt context**.
+
+Example reasoning trace:
+
+```text
+Thought: Search for GPU benchmarks
+Action: web_search("RTX 4090 vs H100 benchmark")
+
+Observation: H100 significantly faster
+```
+
+These steps exist in working memory only for the duration of the task.
+
+---
+
+# Characteristics of Working Memory
+
+Working memory has several important properties.
+
+| Property  | Description                         |
+| --------- | ----------------------------------- |
+| Temporary | exists only during a task           |
+| Small     | limited by context window           |
+| Dynamic   | constantly updated during reasoning |
+
+Because context windows are limited, working memory must be **carefully managed**.
+
+Strategies include:
+
+* summarization
+* pruning old steps
+* compressing observations
+
+---
+
+# Long-Term Memory
+
+Long-term memory stores information that persists **across tasks and sessions**.
+
+Examples include:
+
+* documents
+* knowledge bases
+* conversation history
+* user preferences
+* past agent experiences
+
+Unlike working memory, long-term memory can grow **indefinitely**.
+
+Example architecture:
+
+```text
+Agent
+  ↓
+Memory Retrieval
+  ↓
+Vector Database
+```
+
+The agent retrieves relevant information from this store when needed.
+
+---
+
+# Example Long-Term Memory Storage
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+memory_store.append({
+    "topic": "AI chips",
+    "summary": "Nvidia dominates AI accelerator market"
+})
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+memory.push(MemoryEntry {
+    topic: "AI chips".into(),
+    summary: "Nvidia dominates AI accelerator market".into(),
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+These records can later be retrieved during reasoning.
+
+---
+
+# Retrieved Context
+
+Between working memory and long-term memory lies an intermediate layer:
+
+**retrieved context**.
+
+This layer contains the **specific pieces of knowledge retrieved for the current task**.
+
+Example:
+
+```text
+User Query
+    ↓
+Memory Retrieval
+    ↓
+Relevant Documents
+    ↓
+Agent Reasoning
+```
+
+This mechanism is commonly implemented using **Retrieval-Augmented Generation (RAG)**.
+
+RAG allows agents to retrieve relevant information from large knowledge bases without loading everything into the prompt.
+
+---
+
+# Example Retrieval Flow
+
+```text
+User: Explain Nvidia's AI chip strategy
+
+Agent:
+  ↓
+Search vector database
+  ↓
+Retrieve relevant documents
+  ↓
+Insert into context
+  ↓
+Generate answer
+```
+
+This allows the agent to reason using **external knowledge**.
+
+---
+
+# Memory in Cognitive Architectures
+
+The idea of memory hierarchies originates from **cognitive architectures in AI research**.
+
+Classic systems such as:
+
+* **Soar**
+* **ACT-R**
+
+distinguished between multiple memory types.
+
+Example cognitive memory structure:
+
+```text
+Procedural Memory
+Declarative Memory
+Working Memory
+```
+
+Modern AI agents implement similar ideas using:
+
+* context windows
+* vector databases
+* retrieval pipelines
+
+Although the technologies differ, the **conceptual structure is remarkably similar**.
+
+---
+
+# Procedural vs Declarative Memory
+
+Many agent systems distinguish between two types of long-term memory.
+
+| Memory Type        | Purpose                    |
+| ------------------ | -------------------------- |
+| Declarative memory | facts and knowledge        |
+| Procedural memory  | instructions and workflows |
+
+Example:
+
+Declarative memory:
+
+```text
+"The H100 GPU is designed for AI workloads."
+```
+
+Procedural memory:
+
+```text
+"To analyze GPU benchmarks: search → extract metrics → compare results"
+```
+
+Agents often combine both forms of memory.
+
+---
+
+# Why Memory Hierarchies Are Essential
+
+The memory hierarchy allows agents to scale their intelligence.
+
+Without memory:
+
+```text
+Agent knowledge limited to prompt
+```
+
+With memory:
+
+```text
+Agent knowledge = prompt + retrieved context + persistent storage
+```
+
+This dramatically increases the agent's effective knowledge capacity.
+
+---
+
+# The Emergence of RAG 2.0
+
+Early retrieval systems simply fetched documents.
+
+Modern **RAG 2.0 architectures** go much further.
+
+They include:
+
+* iterative retrieval
+* memory compression
+* multi-hop retrieval
+* self-evaluation
+
+These techniques allow agents to **reason over large knowledge spaces**.
+
+We will explore these techniques in the upcoming articles.
+
+---
+
+# Memory as the Foundation of Intelligent Agents
+
+Planning allows agents to **decide what to do**.
+
+Tools allow agents to **interact with the world**.
+
+Memory allows agents to **learn from experience and accumulate knowledge**.
+
+Together, these components form the foundation of **autonomous intelligent systems**.
+
+---
+
+# Looking Ahead
+
+In this article we introduced the **memory hierarchy of AI agents**, including working memory, long-term memory, and retrieved context.
+
+In the next articles we will explore the specific types of memory used in modern agents.
+
+Next we will examine **Episodic Memory**, which allows agents to store and learn from past experiences.
+
+→ Continue to **5.2 — Episodic Memory**

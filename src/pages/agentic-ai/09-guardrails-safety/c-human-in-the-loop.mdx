@@ -1,0 +1,341 @@
+---
+
+title: Human-in-the-Loop (HITL)
+description: Designing approval workflows and strategic breakpoints to keep AI agent systems safe and controllable
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 8 — Guardrails & Safety**.
+
+In the previous article we explored **Tool Permission Systems**, which restrict what tools an agent can access.
+
+However, even with strict permissions, some decisions are too sensitive to be fully automated.
+
+To address this challenge, many systems implement **Human-in-the-Loop (HITL)** workflows that require human approval for critical actions.
+
+</Aside>
+
+# Human-in-the-Loop (HITL)
+
+As AI agents become more capable, they increasingly perform tasks that may have **real-world consequences**.
+
+Examples include:
+
+* sending emails to customers
+* modifying databases
+* executing financial transactions
+* deploying software systems
+
+Fully autonomous execution can be risky.
+
+To reduce these risks, many systems incorporate **Human-in-the-Loop (HITL)** control.
+
+Human-in-the-Loop systems require **human approval before certain actions are executed**.
+
+Conceptually:
+
+```text
+Agent proposes action
+        ↓
+Human review
+        ↓
+Approve or reject
+        ↓
+Action executed
+```
+
+This ensures that humans maintain **ultimate control over important decisions**.
+
+---
+
+# Why HITL Is Important
+
+Autonomous agents can sometimes make mistakes due to:
+
+* incorrect reasoning
+* incomplete information
+* hallucinated facts
+* malicious prompt injections
+
+Human oversight helps detect these issues before they cause harm.
+
+Example scenario:
+
+```text
+Agent decision:
+Delete customer records older than 3 years.
+
+Human review:
+Policy requires 5 years of retention.
+
+Action rejected.
+```
+
+Without HITL, the agent might have performed an **irreversible operation**.
+
+---
+
+# Designing Approval Workflows
+
+A Human-in-the-Loop system typically includes **approval workflows**.
+
+These workflows define when human intervention is required.
+
+Example workflow:
+
+```text
+Agent proposes action
+       ↓
+Risk evaluation
+       ↓
+Low risk → auto execute
+High risk → human approval
+```
+
+This ensures that humans are involved only when necessary.
+
+---
+
+# Risk-Based Approvals
+
+Many systems classify actions based on **risk level**.
+
+Example policy:
+
+| Risk Level | Action                |
+| ---------- | --------------------- |
+| Low        | automatic execution   |
+| Medium     | optional human review |
+| High       | mandatory approval    |
+
+Example high-risk actions:
+
+* deleting records
+* sending financial transactions
+* deploying production systems
+
+These operations typically require **explicit human authorization**.
+
+---
+
+# Example Approval Interface
+
+An approval system might present information such as:
+
+```text
+Agent Request:
+Send email to 2,500 customers.
+
+Email Content:
+"We are updating our pricing model."
+
+Approve action?
+[Approve] [Reject]
+```
+
+The human reviewer evaluates the request before allowing execution.
+
+---
+
+# Example HITL Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def request_approval(action):
+
+    print("Agent proposes:", action)
+
+    decision = input("Approve? (y/n): ")
+
+    return decision == "y"
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn request_approval(action: &str) -> bool {
+
+    println!("Agent proposes: {}", action);
+
+    let mut input = String::new();
+
+    std::io::stdin().read_line(&mut input).unwrap();
+
+    input.trim() == "y"
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+In real systems, approval requests are usually presented through **dashboards or notification systems**.
+
+---
+
+# Strategic Breakpoints
+
+Human oversight does not need to occur at every step.
+
+Instead, systems often define **strategic breakpoints**.
+
+A breakpoint is a stage in the workflow where execution pauses for review.
+
+Example workflow:
+
+```text
+Task planning
+      ↓
+Breakpoint → approve plan
+      ↓
+Execute steps
+      ↓
+Breakpoint → approve final action
+      ↓
+Complete task
+```
+
+Breakpoints allow humans to supervise critical moments.
+
+---
+
+# Planning Breakpoints
+
+One useful breakpoint occurs **after the agent generates a plan**.
+
+Example:
+
+```text
+Agent plan:
+1. Query database
+2. Generate customer report
+3. Send email summary
+```
+
+Human review ensures the plan is safe before execution begins.
+
+---
+
+# Execution Breakpoints
+
+Another breakpoint occurs before executing **high-risk actions**.
+
+Example:
+
+```text
+Agent action:
+Delete inactive user accounts.
+
+System response:
+Awaiting approval.
+```
+
+The action is paused until a human reviewer approves it.
+
+---
+
+# Oversight Dashboards
+
+Many systems provide **monitoring dashboards** for reviewing agent activity.
+
+These dashboards display:
+
+* agent plans
+* tool usage
+* pending approvals
+* execution logs
+
+Example dashboard view:
+
+```text
+Pending Approvals:
+• send_email campaign
+• deploy production update
+```
+
+Operators can approve or reject actions.
+
+---
+
+# HITL in Enterprise Systems
+
+Human-in-the-loop architectures are widely used in enterprise environments.
+
+Examples include:
+
+| Application        | HITL Role            |
+| ------------------ | -------------------- |
+| finance automation | approve transactions |
+| customer support   | review responses     |
+| code generation    | approve deployment   |
+| legal analysis     | verify compliance    |
+
+These workflows ensure that AI systems remain **accountable and auditable**.
+
+---
+
+# Balancing Automation and Oversight
+
+Too much human oversight can slow down systems.
+
+Too little oversight can introduce risks.
+
+Designers must balance:
+
+```text
+Automation speed
+        vs
+Human supervision
+```
+
+Effective systems apply HITL **only where necessary**.
+
+---
+
+# Human Oversight as a Safety Layer
+
+Human-in-the-loop control acts as a **safety layer** within the agent architecture.
+
+Example security stack:
+
+```text
+Prompt filtering
+      ↓
+Tool permission systems
+      ↓
+Human approval workflows
+```
+
+This layered approach improves system reliability.
+
+---
+
+# The Role of Humans in Autonomous Systems
+
+Even as AI systems become more capable, humans continue to play an essential role.
+
+Humans provide:
+
+* ethical judgment
+* contextual understanding
+* accountability
+
+HITL architectures ensure that **AI systems remain aligned with human intentions**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **Human-in-the-Loop (HITL)** systems, including approval workflows and strategic breakpoints.
+
+In the next article we will examine **Sandboxing Agent Execution**, which protects systems by isolating agents inside secure environments.
+
+→ Continue to **8.4 — Sandboxing Agent Execution**

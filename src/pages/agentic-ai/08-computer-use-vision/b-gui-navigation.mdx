@@ -1,0 +1,394 @@
+---
+
+title: GUI Navigation
+description: How AI agents interact with graphical interfaces using mouse control, keyboard input, and browser automation
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 7 — Computer Use & Vision**.
+
+In the previous article we introduced **Computer Use Agents** and **Large Action Models (LAMs)**, which enable AI systems to operate computers by interacting with graphical interfaces.
+
+In this article we explore how agents navigate software interfaces using **mouse control, keyboard input, and browser automation**.
+
+</Aside>
+
+# GUI Navigation
+
+Most software applications are designed to be used through **graphical user interfaces (GUIs)**.
+
+Humans interact with GUIs using:
+
+* mouse movements
+* clicks
+* keyboard input
+* scrolling
+* menus and buttons
+
+Computer-use agents must replicate these interactions.
+
+Conceptually:
+
+```text
+Agent
+  ↓
+Understand screen
+  ↓
+Decide action
+  ↓
+Mouse / keyboard interaction
+```
+
+This capability allows agents to interact with **any graphical software system**.
+
+---
+
+# Mouse and Keyboard Control
+
+The most basic form of GUI interaction involves **mouse and keyboard events**.
+
+Examples of mouse actions:
+
+* move cursor
+* left click
+* right click
+* drag and drop
+* scroll
+
+Examples of keyboard actions:
+
+* typing text
+* pressing keys
+* keyboard shortcuts
+
+These actions allow the agent to control software the same way a human user would.
+
+---
+
+# Example Mouse Interaction
+
+A typical mouse action sequence might look like this:
+
+```text
+Move mouse to search bar
+Click search bar
+Type query
+Press Enter
+```
+
+This sequence corresponds to structured commands.
+
+Example representation:
+
+```json
+{
+  "action": "move_mouse",
+  "x": 540,
+  "y": 220
+}
+```
+
+Followed by:
+
+```json
+{
+  "action": "click"
+}
+```
+
+These commands simulate **human input devices**.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import pyautogui
+
+pyautogui.moveTo(500, 300)
+pyautogui.click()
+pyautogui.write("AI chips")
+pyautogui.press("enter")
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use enigo::{Enigo, MouseButton, MouseControllable, KeyboardControllable};
+
+let mut enigo = Enigo::new();
+
+enigo.mouse_move_to(500, 300);
+enigo.mouse_click(MouseButton::Left);
+enigo.key_sequence("AI chips");
+```
+
+</TabItem>
+
+</Tabs>
+
+These libraries allow agents to control **mouse and keyboard input programmatically**.
+
+---
+
+# Keyboard Shortcuts
+
+Keyboard shortcuts provide a faster way to interact with software.
+
+Examples include:
+
+| Shortcut | Action |
+| -------- | ------ |
+| Ctrl+C   | copy   |
+| Ctrl+V   | paste  |
+| Ctrl+S   | save   |
+| Ctrl+F   | search |
+
+Agents can use these shortcuts to speed up workflows.
+
+Example action:
+
+```text
+press("Ctrl+S")
+```
+
+This approach reduces the number of GUI interactions required.
+
+---
+
+# Browser Automation
+
+Many computer-use agents perform tasks inside **web browsers**.
+
+Examples include:
+
+* collecting data from websites
+* filling forms
+* navigating dashboards
+* downloading files
+
+Instead of interacting with pixels directly, browser automation tools can interact with **web page structure**.
+
+---
+
+# DOM-Based Interaction
+
+Web pages expose a **Document Object Model (DOM)** that describes their structure.
+
+Example:
+
+```text
+HTML Document
+   ↓
+DOM Tree
+   ↓
+Elements (buttons, inputs, links)
+```
+
+Browser automation tools allow agents to interact with these elements directly.
+
+Example:
+
+```text
+click(button="Search")
+type(input="query", value="AI chips")
+```
+
+This approach is often more reliable than coordinate-based clicking.
+
+---
+
+# Example Browser Automation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from selenium import webdriver
+
+driver = webdriver.Chrome()
+
+driver.get("https://google.com")
+
+search = driver.find_element("name", "q")
+
+search.send_keys("AI chips")
+
+search.submit()
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use thirtyfour::prelude::*;
+
+let driver = WebDriver::new("http://localhost:4444", caps).await?;
+
+driver.goto("https://google.com").await?;
+
+let elem = driver.find(By::Name("q")).await?;
+
+elem.send_keys("AI chips").await?;
+```
+
+</TabItem>
+
+</Tabs>
+
+Browser automation enables agents to interact with **web applications efficiently**.
+
+---
+
+# Screen-Based vs DOM-Based Interaction
+
+There are two main approaches to browser automation.
+
+| Method       | Description                           |
+| ------------ | ------------------------------------- |
+| Screen-based | interact with pixels on the screen    |
+| DOM-based    | interact with structured web elements |
+
+DOM-based automation is generally more reliable.
+
+However, screen-based methods are necessary when:
+
+* DOM access is unavailable
+* applications use custom rendering
+* interacting with non-web software
+
+---
+
+# Interacting with Legacy Software
+
+Many enterprise systems were designed long before modern APIs.
+
+Examples include:
+
+* desktop accounting systems
+* internal data entry applications
+* legacy ERP systems
+
+These applications may only support **graphical interfaces**.
+
+Computer-use agents can interact with them using:
+
+```text
+Screen recognition
+Mouse interaction
+Keyboard input
+```
+
+This enables automation even when no API exists.
+
+---
+
+# Example Legacy Workflow
+
+Consider a legacy accounting system.
+
+An agent might perform the following steps:
+
+```text
+Open accounting application
+Navigate to invoice entry
+Fill customer details
+Enter invoice amount
+Save record
+```
+
+These steps mimic how a human employee would operate the software.
+
+---
+
+# Combining Vision with GUI Control
+
+To navigate complex interfaces, agents often combine:
+
+* **computer vision** to identify interface elements
+* **action models** to perform interactions
+
+Example pipeline:
+
+```text
+Screen capture
+     ↓
+Vision model detects buttons
+     ↓
+Agent selects target element
+     ↓
+Mouse click executed
+```
+
+This enables agents to operate **unstructured interfaces**.
+
+---
+
+# Challenges of GUI Navigation
+
+GUI automation introduces several challenges.
+
+### Dynamic Interfaces
+
+Interface layouts may change across updates.
+
+---
+
+### Ambiguous Elements
+
+Multiple buttons may have similar appearance.
+
+---
+
+### Timing Issues
+
+Applications may take time to load new screens.
+
+---
+
+### Error Recovery
+
+Agents must detect when actions fail and retry.
+
+Robust systems require **error detection and recovery strategies**.
+
+---
+
+# GUI Navigation as Universal Automation
+
+One powerful feature of GUI navigation is that it works across **almost any software system**.
+
+Unlike APIs, graphical interfaces are nearly universal.
+
+Conceptually:
+
+```text
+Human Interface
+      ↓
+Agent Interaction
+      ↓
+Automated Workflow
+```
+
+This capability dramatically expands the scope of **AI-driven automation**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **GUI Navigation**, including mouse control, keyboard interaction, browser automation, and legacy software automation.
+
+In the next article we will examine **Visual Grounding**, which allows agents to identify interface elements such as buttons, forms, and charts directly from screenshots.
+
+→ Continue to **7.3 — Visual Grounding**

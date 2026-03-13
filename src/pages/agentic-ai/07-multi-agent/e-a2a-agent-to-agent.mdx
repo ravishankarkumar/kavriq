@@ -1,0 +1,370 @@
+---
+
+title: Agent-to-Agent Communication (A2A)
+description: Understanding how AI agents discover, negotiate, and collaborate across systems using Agent-to-Agent protocols
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 6 — Multi-Agent Orchestration**.
+
+In previous articles we explored several coordination patterns such as **Manager–Worker**, **Swarm delegation**, and **Debate architectures**.
+
+In this article we examine **Agent-to-Agent Communication (A2A)** — a protocol that allows independent agents to discover and collaborate with each other across systems.
+
+</Aside>
+
+# Agent-to-Agent Communication (A2A)
+
+As AI systems evolve, agents are increasingly deployed across **different platforms, organizations, and services**.
+
+For example:
+
+* a coding assistant
+* a research agent
+* an enterprise automation agent
+* a financial analysis agent
+
+Each agent may run in a different environment.
+
+To collaborate effectively, agents need a way to **communicate with each other in a standardized way**.
+
+This need led to the development of **Agent-to-Agent (A2A) communication protocols**.
+
+---
+
+# Why A2A Protocols Are Needed
+
+Without standardized communication, integrating agents requires **custom integrations**.
+
+Example architecture:
+
+```text
+Agent A → custom API → Agent B
+Agent A → custom API → Agent C
+Agent B → custom API → Agent C
+```
+
+This quickly becomes difficult to maintain.
+
+A2A protocols introduce a **standard communication layer**.
+
+Conceptually:
+
+```text
+Agent A
+   ↓
+A2A Protocol
+   ↓
+Agent B
+```
+
+This enables agents built by different developers to collaborate seamlessly.
+
+---
+
+# Google's A2A Protocol
+
+One of the most notable developments in this area is **Google's Agent-to-Agent (A2A) protocol**.
+
+The goal of A2A is to provide a standard mechanism for:
+
+* agent discovery
+* capability negotiation
+* secure communication
+* task delegation
+
+Conceptually:
+
+```text
+Agent
+  ↓
+A2A Network
+  ↓
+Other Agents
+```
+
+The protocol allows agents to **interoperate across systems and providers**.
+
+---
+
+# Agent Discovery
+
+The first step in agent collaboration is **discovery**.
+
+Agents need to know:
+
+* which agents exist
+* what services they provide
+* how to contact them
+
+Example discovery query:
+
+```text
+Find agents capable of:
+• financial analysis
+• market research
+• data visualization
+```
+
+Example response:
+
+```json
+{
+  "agents": [
+    {
+      "name": "finance_agent",
+      "capabilities": ["financial modeling", "market analysis"]
+    },
+    {
+      "name": "research_agent",
+      "capabilities": ["web research", "data collection"]
+    }
+  ]
+}
+```
+
+This allows agents to dynamically locate collaborators.
+
+---
+
+# Capability Negotiation
+
+After discovering another agent, the next step is **capability negotiation**.
+
+Agents must determine:
+
+* what tasks each agent can perform
+* what inputs are required
+* what outputs will be produced
+
+Example negotiation process:
+
+```text
+Agent A:
+I need financial analysis.
+
+Agent B:
+I can provide:
+• revenue forecasting
+• market trend analysis
+```
+
+This exchange ensures that agents **understand each other's capabilities**.
+
+---
+
+# Task Delegation
+
+Once capabilities are established, one agent can delegate tasks to another.
+
+Example delegation request:
+
+```json
+{
+  "task": "analyze_market_trends",
+  "data": {
+    "industry": "AI hardware"
+  }
+}
+```
+
+The receiving agent processes the request and returns results.
+
+---
+
+# Cross-Provider Collaboration
+
+One of the most important goals of A2A protocols is enabling **cross-provider collaboration**.
+
+In the future, agents may operate across:
+
+* cloud platforms
+* enterprise systems
+* developer ecosystems
+* consumer applications
+
+Example scenario:
+
+```text
+Personal assistant agent
+      ↓
+Financial analysis agent (bank)
+      ↓
+Travel planning agent (airline)
+      ↓
+Scheduling agent (calendar service)
+```
+
+These agents may belong to **different organizations**.
+
+A2A protocols make this collaboration possible.
+
+---
+
+# Example A2A Interaction
+
+Conceptual workflow:
+
+```text
+Agent A receives user request
+      ↓
+Discovers relevant agents
+      ↓
+Negotiates capabilities
+      ↓
+Delegates subtask
+      ↓
+Receives response
+      ↓
+Combines results
+```
+
+This architecture allows agents to function as **networked collaborators**.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def delegate_task(agent_url, task):
+
+    response = requests.post(
+        f"{agent_url}/execute",
+        json={"task": task}
+    )
+
+    return response.json()
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+async fn delegate_task(url: &str, task: Task) -> Result<Response> {
+
+    let client = reqwest::Client::new();
+
+    let response = client
+        .post(format!("{}/execute", url))
+        .json(&task)
+        .send()
+        .await?;
+
+    Ok(response.json().await?)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+In practice, A2A protocols define **structured message formats and negotiation flows**.
+
+---
+
+# Security Considerations
+
+Allowing agents to interact across systems introduces important security concerns.
+
+Typical safeguards include:
+
+* authentication
+* permission scopes
+* sandboxed execution
+* audit logging
+
+Example rule:
+
+```text
+Agent may analyze data
+Agent may not modify financial records
+```
+
+These safeguards prevent agents from performing unsafe actions.
+
+---
+
+# A2A vs MCP
+
+You may notice similarities between **A2A** and **MCP**.
+
+However, they serve different purposes.
+
+| Protocol | Purpose                        |
+| -------- | ------------------------------ |
+| MCP      | connect agents to tools        |
+| A2A      | connect agents to other agents |
+
+Conceptually:
+
+```text
+Agent → MCP → Tools
+Agent → A2A → Other Agents
+```
+
+Together, these protocols form the **infrastructure layer of agent ecosystems**.
+
+---
+
+# Toward an Internet of Agents
+
+As these protocols mature, we may see the emergence of an **Internet of Agents**.
+
+In such an ecosystem:
+
+* agents discover each other dynamically
+* tasks are delegated across networks
+* specialized agents collaborate globally
+
+Conceptually:
+
+```text
+Agent Network
+   ↓
+Discover
+   ↓
+Collaborate
+   ↓
+Solve Complex Problems
+```
+
+This vision represents the next step in **distributed AI systems**.
+
+---
+
+# Summary of Module 6
+
+In this module we explored how multiple agents can collaborate to solve complex tasks.
+
+| Topic                         | Concept                   |
+| ----------------------------- | ------------------------- |
+| Why Multi-Agent Systems Exist | scaling intelligence      |
+| Manager–Worker Pattern        | centralized coordination  |
+| Handoff Pattern (Swarm)       | decentralized delegation  |
+| Debate Pattern                | adversarial reasoning     |
+| A2A Communication             | cross-agent collaboration |
+
+These architectures enable AI systems to function as **cooperative networks of specialized agents**.
+
+---
+
+# Looking Ahead
+
+In the next module we will explore **Computer Use & Vision Agents**, which allow AI systems to interact with graphical interfaces, screenshots, and real-world environments.
+
+Topics include:
+
+* large action models (LAMs)
+* GUI automation
+* visual grounding
+* multimodal perception
+
+→ Continue to **7.1 — Computer Use Agents**

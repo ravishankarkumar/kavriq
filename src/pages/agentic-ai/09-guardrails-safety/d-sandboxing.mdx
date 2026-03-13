@@ -1,0 +1,407 @@
+---
+
+title: Sandboxing Agent Execution
+description: How Docker containers, WebAssembly, and secure runtimes protect systems from unsafe AI agent behavior
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 8 — Guardrails & Safety**.
+
+In previous articles we explored **prompt injection defenses**, **tool permission systems**, and **human-in-the-loop oversight**.
+
+However, some agents are capable of executing code or interacting with operating systems.
+Without proper isolation, these actions could damage the system or expose sensitive data.
+
+In this article we examine **sandboxing**, a technique that isolates agent execution inside controlled environments.
+
+</Aside>
+
+# Sandboxing Agent Execution
+
+Many modern AI agents can execute code.
+
+Examples include:
+
+* data analysis agents running Python
+* coding assistants compiling programs
+* automation agents executing shell commands
+* research agents running scripts
+
+While this capability is powerful, it also introduces significant risks.
+
+Example malicious or faulty code:
+
+```python
+import os
+os.system("rm -rf /")
+```
+
+If executed directly on a host system, this could cause catastrophic damage.
+
+To prevent such risks, agent systems execute code inside **sandboxes**.
+
+A sandbox is an **isolated environment that restricts access to the host system**.
+
+---
+
+# What Is a Sandbox?
+
+A sandbox limits what code can do.
+
+Example restrictions:
+
+* limited filesystem access
+* restricted network access
+* limited CPU and memory usage
+* no access to host operating system
+
+Conceptually:
+
+```text
+Agent Code
+    ↓
+Sandbox Environment
+    ↓
+Host System
+```
+
+The sandbox protects the host even if the agent executes unsafe code.
+
+---
+
+# Docker Sandboxing
+
+One common sandboxing technique is **containerization using Docker**.
+
+Docker containers package applications into isolated environments.
+
+Example architecture:
+
+```text
+Host Machine
+   ↓
+Docker Container
+   ↓
+Agent Code Execution
+```
+
+The container isolates:
+
+* filesystem
+* processes
+* networking
+* system libraries
+
+This prevents agent code from affecting the host system.
+
+---
+
+# Example Docker Execution
+
+A system might run agent-generated code inside a container.
+
+Example command:
+
+```text
+docker run --rm sandbox-python python script.py
+```
+
+The `--rm` flag ensures that the container is destroyed after execution.
+
+This prevents persistent modifications.
+
+---
+
+# Example Containerized Execution
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import subprocess
+
+subprocess.run([
+    "docker",
+    "run",
+    "--rm",
+    "sandbox-python",
+    "python",
+    "script.py"
+])
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use std::process::Command;
+
+Command::new("docker")
+    .args([
+        "run",
+        "--rm",
+        "sandbox-python",
+        "python",
+        "script.py"
+    ])
+    .output()?;
+```
+
+</TabItem>
+
+</Tabs>
+
+This approach isolates execution inside a temporary container.
+
+---
+
+# Resource Limits
+
+Containers can also enforce **resource limits**.
+
+Example restrictions:
+
+```text
+Memory: 512 MB
+CPU: 1 core
+Execution time: 30 seconds
+```
+
+These limits prevent agents from consuming excessive resources.
+
+Example Docker flags:
+
+```text
+--memory=512m
+--cpus=1
+```
+
+This ensures that agent code cannot overwhelm the system.
+
+---
+
+# WebAssembly Isolation
+
+Another powerful sandboxing technology is **WebAssembly (WASM)**.
+
+WebAssembly is a portable execution format designed for **secure, sandboxed environments**.
+
+Conceptually:
+
+```text
+Agent Code
+   ↓
+WebAssembly Runtime
+   ↓
+Sandboxed Execution
+```
+
+Unlike native code, WebAssembly programs cannot access the system directly.
+
+They interact only through **explicitly allowed interfaces**.
+
+---
+
+# Why WebAssembly Is Attractive
+
+WebAssembly offers several advantages for sandboxing.
+
+| Feature                | Benefit                 |
+| ---------------------- | ----------------------- |
+| strong isolation       | protects host system    |
+| portable runtime       | runs on many platforms  |
+| fast startup           | low latency execution   |
+| deterministic behavior | predictable performance |
+
+These properties make WASM a popular choice for **secure agent execution**.
+
+---
+
+# Example WebAssembly Execution
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import wasmtime
+
+engine = wasmtime.Engine()
+module = wasmtime.Module.from_file(engine, "program.wasm")
+
+store = wasmtime.Store(engine)
+
+instance = wasmtime.Instance(store, module, [])
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use wasmtime::*;
+
+let engine = Engine::default();
+
+let module = Module::from_file(&engine, "program.wasm")?;
+
+let mut store = Store::new(&engine, ());
+
+let instance = Instance::new(&mut store, &module, &[])?;
+```
+
+</TabItem>
+
+</Tabs>
+
+The WebAssembly runtime strictly controls available system functions.
+
+---
+
+# Safe Code Execution
+
+Sandboxing systems must also control **what code is allowed to run**.
+
+Example safeguards include:
+
+* disabling system commands
+* restricting filesystem access
+* preventing network calls
+* limiting runtime duration
+
+Example policy:
+
+```text
+Allowed:
+• numerical computation
+• data processing
+
+Restricted:
+• file deletion
+• system commands
+• external network requests
+```
+
+These restrictions prevent dangerous behavior.
+
+---
+
+# Combining Multiple Isolation Layers
+
+Production systems often combine multiple sandboxing layers.
+
+Example architecture:
+
+```text
+Agent Code
+    ↓
+Language Runtime Restrictions
+    ↓
+WebAssembly Sandbox
+    ↓
+Docker Container
+    ↓
+Host System
+```
+
+Each layer adds additional protection.
+
+---
+
+# Sandboxing in Modern AI Systems
+
+Many AI platforms already rely on sandboxed execution.
+
+Examples include:
+
+| System                 | Isolation Method                  |
+| ---------------------- | --------------------------------- |
+| code interpreter tools | containerized execution           |
+| cloud functions        | sandboxed runtimes                |
+| AI coding assistants   | isolated compilation environments |
+| enterprise automation  | restricted containers             |
+
+These systems prevent AI-generated code from damaging infrastructure.
+
+---
+
+# Challenges of Sandboxing
+
+Sandboxing introduces several challenges.
+
+### Performance Overhead
+
+Isolation layers can increase execution latency.
+
+---
+
+### Resource Management
+
+Systems must carefully allocate CPU and memory.
+
+---
+
+### Security Gaps
+
+Improperly configured sandboxes may still expose vulnerabilities.
+
+Designing secure sandboxes requires **careful engineering and continuous auditing**.
+
+---
+
+# Sandboxing as a Safety Boundary
+
+Sandboxing acts as the **last line of defense** in agent systems.
+
+Even if an agent:
+
+* generates malicious code
+* is compromised by prompt injection
+* misuses tools
+
+the sandbox prevents damage to the host environment.
+
+Conceptually:
+
+```text
+Unsafe code
+   ↓
+Sandbox boundary
+   ↓
+Host system protected
+```
+
+---
+
+# Summary of Module 8
+
+In this module we explored how to build **safe and secure agent systems**.
+
+| Topic                   | Concept                          |
+| ----------------------- | -------------------------------- |
+| Prompt Injection        | how agents can be manipulated    |
+| Tool Permission Systems | restricting agent capabilities   |
+| Human-in-the-Loop       | oversight and approval workflows |
+| Sandboxing              | isolating code execution         |
+
+Together, these techniques form the **security layer of modern AI agent architectures**.
+
+---
+
+# Looking Ahead
+
+In the next module we will explore **Evaluation & Metrics for Agent Systems**.
+
+Topics include:
+
+* why evaluating agents is difficult
+* LLM-as-a-judge evaluation
+* trajectory-based metrics
+* building evaluation pipelines
+
+→ Continue to **9.1 — Why Agent Evaluation Is Hard**

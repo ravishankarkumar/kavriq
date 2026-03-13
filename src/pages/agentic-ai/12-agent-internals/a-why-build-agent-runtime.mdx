@@ -1,0 +1,352 @@
+---
+
+title: Why Build Your Own Agent Runtime
+description: Understanding how agent runtimes work internally and why developers sometimes build their own frameworks
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 11 — Building a Minimal Agent Runtime**.
+
+In previous modules we explored how agents reason, plan, use tools, retrieve knowledge, collaborate with other agents, and operate in production environments.
+
+However, most developers interact with these systems through frameworks such as **LangChain**, **LangGraph**, or other orchestration libraries.
+
+In this module we will look beneath these abstractions and examine **how agent runtimes actually work internally**.
+
+</Aside>
+
+# Why Build Your Own Agent Runtime
+
+Modern agent frameworks provide powerful abstractions.
+
+Examples include:
+
+* tool calling APIs
+* planning loops
+* memory management
+* workflow graphs
+
+These tools allow developers to build complex systems quickly.
+
+Example architecture:
+
+```text
+User Request
+     ↓
+Agent Framework
+     ↓
+LLM + Tools
+     ↓
+Final Response
+```
+
+However, these frameworks hide many important implementation details.
+
+To truly understand how agent systems work, it is useful to build a **minimal agent runtime from scratch**.
+
+---
+
+# What Is an Agent Runtime?
+
+An **agent runtime** is the system responsible for executing the agent's reasoning loop.
+
+Typical responsibilities include:
+
+* maintaining agent state
+* calling language models
+* invoking tools
+* processing observations
+* deciding when to terminate
+
+Conceptually:
+
+```text
+Agent Runtime
+     ↓
+observe → reason → act → reflect
+```
+
+This loop forms the **core execution engine of the agent**.
+
+---
+
+# A Simplified Agent Loop
+
+A minimal agent runtime often looks like this:
+
+```text
+User Goal
+   ↓
+Generate reasoning step
+   ↓
+Select tool
+   ↓
+Execute tool
+   ↓
+Process observation
+   ↓
+Repeat until task complete
+```
+
+This cycle continues until the agent produces a final answer.
+
+---
+
+# Why Learn the Internals?
+
+Understanding the internals of agent runtimes offers several benefits.
+
+### Deeper Understanding
+
+Building a runtime reveals how components such as:
+
+* planning
+* tool selection
+* memory
+* reasoning
+
+interact with each other.
+
+---
+
+### Debugging Complex Systems
+
+Frameworks sometimes obscure the root cause of problems.
+
+Example issue:
+
+```text
+Agent fails to use correct tool
+```
+
+Without understanding the runtime, debugging this behavior can be difficult.
+
+---
+
+### Custom Architectures
+
+Real-world applications often require custom behavior.
+
+Examples include:
+
+* specialized tool execution policies
+* custom memory architectures
+* domain-specific reasoning loops
+* optimized evaluation pipelines
+
+Building your own runtime enables **full control over system design**.
+
+---
+
+# Framework Limitations
+
+Agent frameworks provide convenience, but they also introduce limitations.
+
+Common issues include:
+
+### Abstraction Overhead
+
+Frameworks may add additional layers of abstraction.
+
+Example architecture:
+
+```text
+Application
+   ↓
+Agent Framework
+   ↓
+Execution Engine
+   ↓
+LLM API
+```
+
+These layers can increase complexity and latency.
+
+---
+
+### Limited Flexibility
+
+Frameworks often assume a specific architecture.
+
+Example:
+
+```text
+ReAct loop
+```
+
+If you want to experiment with different reasoning strategies, the framework may impose constraints.
+
+---
+
+### Hidden Behavior
+
+Frameworks may perform internal operations that are not immediately visible.
+
+Examples include:
+
+* implicit prompt modifications
+* automatic retries
+* hidden state management
+
+These behaviors can make debugging difficult.
+
+---
+
+# Performance Considerations
+
+General-purpose frameworks must support many use cases.
+
+This often results in **additional overhead**.
+
+Example:
+
+```text
+Framework abstraction → additional runtime cost
+```
+
+In high-performance systems, developers may prefer a **lightweight custom runtime**.
+
+---
+
+# Minimal Runtimes vs Frameworks
+
+The goal of building a minimal runtime is not necessarily to replace existing frameworks.
+
+Instead, it helps developers understand the **core mechanisms** behind them.
+
+Comparison:
+
+| Approach        | Characteristics  |
+| --------------- | ---------------- |
+| framework-based | fast development |
+| custom runtime  | maximum control  |
+
+Many teams combine both approaches.
+
+---
+
+# The Core Components of an Agent Runtime
+
+A minimal agent runtime usually includes several key components.
+
+| Component         | Responsibility          |
+| ----------------- | ----------------------- |
+| agent loop        | reasoning cycle         |
+| state manager     | track agent context     |
+| tool dispatcher   | execute tool calls      |
+| prompt generator  | construct model prompts |
+| termination logic | decide when to stop     |
+
+Together, these components implement the agent execution process.
+
+---
+
+# What We Will Build in This Module
+
+In the next articles we will build a **minimal agent runtime step by step**.
+
+The system will include:
+
+* an agent state machine
+* tool calling infrastructure
+* execution loop
+* debugging capabilities
+
+The entire runtime will be implemented in **roughly 300 lines of code**.
+
+This simplified implementation reveals the **core architecture behind modern agent frameworks**.
+
+---
+
+# A Preview of the Runtime
+
+The minimal runtime will follow a simple execution cycle.
+
+Conceptually:
+
+```text
+Goal
+  ↓
+LLM reasoning
+  ↓
+Tool call
+  ↓
+Observation
+  ↓
+State update
+  ↓
+Repeat
+```
+
+This loop forms the foundation of many agent frameworks.
+
+---
+
+# Example Minimal Loop
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+while not done:
+
+    thought = llm.generate(prompt)
+
+    action = parse_action(thought)
+
+    observation = execute_tool(action)
+
+    state.update(observation)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+while !done {
+
+    let thought = llm.generate(prompt);
+
+    let action = parse_action(&thought);
+
+    let observation = execute_tool(action);
+
+    state.update(observation);
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+Although simple, this loop captures the essence of many modern agent systems.
+
+---
+
+# Learning by Building
+
+Building a runtime from scratch helps clarify how agent systems work internally.
+
+Instead of relying on abstract frameworks, developers gain direct insight into:
+
+* reasoning loops
+* tool invocation
+* state management
+* termination conditions
+
+This knowledge makes it easier to design **custom agent architectures**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **why developers sometimes build their own agent runtimes**, focusing on understanding internals and overcoming framework limitations.
+
+In the next article we will begin implementing the runtime by designing a **simple agent state machine**.
+
+→ Continue to **11.2 — Designing a Simple Agent State Machine**

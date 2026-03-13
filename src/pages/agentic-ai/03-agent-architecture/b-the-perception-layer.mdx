@@ -1,0 +1,510 @@
+---
+
+title: The Perception Layer
+description: How AI agents convert raw inputs into machine-readable state
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 2 — Internal Agent Architecture**.
+
+In the previous article we studied the **core anatomy of an agent**, where the **LLM acts as the reasoning processor** and the **runtime behaves like an operating system**.
+
+Now we examine the first stage of the agent loop: **Perception**.
+
+</Aside>
+
+# The Perception Layer
+
+Before an agent can reason, plan, or act, it must first **understand the world around it**.
+
+Humans do this through senses:
+
+* vision
+* hearing
+* touch
+* language
+
+AI agents perform an equivalent process through the **perception layer**.
+
+The job of this layer is simple in principle:
+
+> Convert **raw inputs** into **structured machine-readable state**.
+
+Without perception, an agent is effectively **blind to its environment**.
+
+---
+
+# The Role of Perception in the Agent Loop
+
+Recall the expanded agent loop introduced earlier:
+
+```
+observe → reason → plan → act → reflect
+```
+
+Perception implements the **observe** step.
+
+```
+Raw Input
+   ↓
+Perception Layer
+   ↓
+Structured State
+   ↓
+Reasoning (LLM)
+```
+
+Raw inputs may include:
+
+* documents
+* PDFs
+* screenshots
+* images
+* audio
+* websites
+* database results
+* tool outputs
+
+These inputs are **too unstructured for reliable reasoning**.
+
+The perception layer transforms them into **representations that the agent can process**.
+
+---
+
+# Raw Inputs vs Structured State
+
+Consider a simple example.
+
+### Raw Input
+
+A PDF report might contain:
+
+* paragraphs of text
+* tables
+* charts
+* images
+* footnotes
+
+From the agent's perspective, this is **unstructured noise**.
+
+### Structured State
+
+After perception, the information might be represented as:
+
+```json
+{
+  "title": "Global Energy Outlook",
+  "sections": [
+    {
+      "heading": "Solar Adoption",
+      "key_points": [
+        "Solar installations increased by 24%",
+        "Asia leads global capacity growth"
+      ]
+    }
+  ]
+}
+```
+
+This transformation dramatically improves **reasoning reliability**.
+
+---
+
+# Perception Pipeline
+
+Most agent systems implement perception as a **multi-stage pipeline**.
+
+```
+Raw Input
+   ↓
+Parsing
+   ↓
+Extraction
+   ↓
+Transformation
+   ↓
+Semantic Encoding
+   ↓
+Agent State
+```
+
+Each stage serves a specific purpose.
+
+---
+
+# Stage 1 — Document Parsing
+
+The first step is converting raw files into **extractable content**.
+
+Agents frequently encounter formats such as:
+
+* PDFs
+* Word documents
+* HTML pages
+* spreadsheets
+* markdown files
+
+These formats contain **layout information** that must be interpreted.
+
+For example, a PDF parser may extract:
+
+* headings
+* paragraphs
+* tables
+* image captions
+
+---
+
+## Example: Parsing a Document
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from pypdf import PdfReader
+
+reader = PdfReader("report.pdf")
+
+text = ""
+
+for page in reader.pages:
+    text += page.extract_text()
+
+print(text[:500])
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use pdf_extract::extract_text;
+
+fn main() {
+    let text = extract_text("report.pdf").unwrap();
+
+    println!("{}", &text[..500]);
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This produces raw text, which is the **starting point for further analysis**.
+
+---
+
+# Stage 2 — Knowledge Extraction
+
+Once text has been parsed, the next step is **extracting meaningful information**.
+
+This often involves identifying:
+
+* entities
+* relationships
+* facts
+* summaries
+* structured records
+
+For example, an agent reading a research paper might extract:
+
+```
+Paper Title
+Authors
+Key Findings
+Methodology
+Conclusion
+```
+
+This extraction step is often performed by **LLMs themselves**.
+
+---
+
+# Structured Extraction Example
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+prompt = """
+Extract structured information from this document.
+
+Return JSON with:
+- title
+- key findings
+- main conclusion
+"""
+
+response = llm.generate(prompt + document_text)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+let prompt = format!(
+    "Extract key findings and conclusion:\n{}",
+    document_text
+);
+
+let response = llm.generate(prompt);
+```
+
+</TabItem>
+
+</Tabs>
+
+The output becomes **structured knowledge** usable by the agent.
+
+---
+
+# Stage 3 — Multimodal Perception
+
+Modern agents increasingly interact with **multimodal environments**.
+
+This means inputs may include:
+
+* images
+* screenshots
+* audio recordings
+* video frames
+
+These inputs must be interpreted before reasoning can occur.
+
+---
+
+## Image Perception
+
+For images, perception systems may extract:
+
+* objects
+* text (OCR)
+* UI elements
+* charts
+* diagrams
+
+Example:
+
+```
+Screenshot → UI detection → clickable elements
+```
+
+This is essential for **computer-use agents** that operate software interfaces.
+
+---
+
+## Audio Perception
+
+Audio must first be converted into text.
+
+```
+Audio
+ ↓
+Speech-to-text
+ ↓
+Transcript
+ ↓
+Agent reasoning
+```
+
+This enables voice assistants and meeting summarization agents.
+
+---
+
+# Example: Image Understanding
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import base64
+
+image = base64.b64encode(open("chart.png","rb").read()).decode()
+
+response = llm.generate({
+    "image": image,
+    "prompt": "Describe the chart"
+})
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+let image_bytes = std::fs::read("chart.png").unwrap();
+
+let response = model.analyze_image(image_bytes);
+```
+
+</TabItem>
+
+</Tabs>
+
+The perception layer converts the image into **semantic descriptions**.
+
+---
+
+# Stage 4 — Embeddings and Semantic Representation
+
+After extraction, the system often converts information into **embeddings**.
+
+Embeddings are numerical vectors that represent **semantic meaning**.
+
+Example:
+
+```
+Text → Embedding → Vector Database
+```
+
+These vectors allow the agent to perform:
+
+* semantic search
+* similarity comparison
+* retrieval augmentation
+
+---
+
+# Why Embeddings Are Important
+
+LLMs cannot search large datasets efficiently using raw text.
+
+Embeddings allow agents to retrieve relevant information using **vector similarity**.
+
+Example query:
+
+```
+"How does solar energy growth affect electricity markets?"
+```
+
+The embedding system retrieves semantically similar documents even if the wording differs.
+
+---
+
+## Embedding Example
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+embedding = client.embeddings.create(
+    model="text-embedding-3-small",
+    input="Solar power adoption trends"
+)
+
+vector = embedding.data[0].embedding
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+let embedding = client
+    .embeddings()
+    .create("text-embedding-3-small", "Solar adoption trends")
+    .await?;
+```
+
+</TabItem>
+
+</Tabs>
+
+The resulting vectors can be stored in systems like:
+
+* FAISS
+* Qdrant
+* Weaviate
+* Chroma
+
+---
+
+# The Final Output: Agent State
+
+After perception completes, the system produces a **structured state representation**.
+
+Example:
+
+```json
+{
+  "documents": [...],
+  "entities": [...],
+  "embeddings": [...],
+  "observations": [...]
+}
+```
+
+This state becomes the **input to the reasoning engine**.
+
+Without this step, the LLM would be forced to interpret **raw, messy inputs**.
+
+---
+
+# Why the Perception Layer Is Critical
+
+Many agent failures occur **before reasoning even begins**.
+
+Common problems include:
+
+* incorrect document parsing
+* missing information
+* OCR errors
+* noisy embeddings
+* incomplete context
+
+Poor perception leads to **poor reasoning**.
+
+This is similar to how humans struggle to reason correctly when they **misread information**.
+
+---
+
+# Perception in Modern Agent Systems
+
+Most modern agent frameworks implement perception implicitly.
+
+Examples include:
+
+* **LangChain document loaders**
+* **LangGraph retrieval pipelines**
+* **RAG ingestion systems**
+* **Computer-use vision models**
+
+However, in advanced agent systems, perception becomes a **dedicated subsystem**.
+
+This is especially true for agents interacting with:
+
+* enterprise data
+* graphical interfaces
+* robotics environments
+
+---
+
+# Looking Ahead
+
+In this article we explored the **perception layer**, which transforms raw inputs into machine-readable state.
+
+We examined:
+
+* document parsing
+* knowledge extraction
+* multimodal perception
+* embeddings and semantic representations
+
+In the next article we will explore **Working Memory and the Scratchpad**.
+
+This component allows agents to maintain **short-term reasoning context**, track intermediate steps, and manage limited context windows.
+
+→ Continue to **2.3 — Working Memory and the Scratchpad**

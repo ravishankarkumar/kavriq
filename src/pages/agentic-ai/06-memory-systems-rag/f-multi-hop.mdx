@@ -1,0 +1,400 @@
+---
+
+title: Multi-Hop Retrieval
+description: How AI agents connect information across multiple documents and knowledge sources
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 5 — Memory Systems & RAG 2.0**.
+
+In the previous article we explored **Agentic RAG**, where agents iteratively retrieve knowledge during reasoning.
+
+In this article we examine **Multi-Hop Retrieval**, a technique that allows agents to connect information across multiple documents to answer complex queries.
+
+</Aside>
+
+# Multi-Hop Retrieval
+
+Many real-world questions cannot be answered using a **single document**.
+
+Instead, the answer must be assembled by combining information from multiple sources.
+
+Example:
+
+> “Which company designed the GPU used in the fastest AI supercomputer?”
+
+To answer this question, an agent might need to:
+
+1. Identify the fastest AI supercomputer
+2. Determine which GPU it uses
+3. Identify the company that designed that GPU
+
+This reasoning requires **multiple retrieval steps**.
+
+This process is called **multi-hop retrieval**.
+
+---
+
+# What Is a Retrieval Hop?
+
+A **hop** represents a single retrieval step.
+
+Example query:
+
+```text
+What company designed the GPU used in the fastest AI supercomputer?
+```
+
+Hop 1:
+
+```text
+Retrieve: fastest AI supercomputer
+→ Frontier supercomputer
+```
+
+Hop 2:
+
+```text
+Retrieve: GPU used in Frontier
+→ AMD Instinct MI250X
+```
+
+Hop 3:
+
+```text
+Retrieve: company that designed MI250X
+→ AMD
+```
+
+Answer:
+
+```text
+AMD designed the GPU.
+```
+
+Each step depends on information retrieved in the previous step.
+
+---
+
+# Why Multi-Hop Retrieval Matters
+
+Many advanced queries require **connecting multiple pieces of knowledge**.
+
+Examples include:
+
+| Query Type           | Example                          |
+| -------------------- | -------------------------------- |
+| Scientific research  | connecting results across papers |
+| technical analysis   | linking system components        |
+| historical reasoning | tracing events across sources    |
+| enterprise knowledge | combining internal documents     |
+
+Traditional RAG pipelines often fail on these tasks because they retrieve only **one set of documents**.
+
+Multi-hop retrieval allows agents to **build knowledge chains**.
+
+---
+
+# Multi-Hop Reasoning
+
+Multi-hop retrieval is closely related to **multi-step reasoning**.
+
+Conceptually:
+
+```text
+Question
+   ↓
+Retrieve Evidence A
+   ↓
+Retrieve Evidence B
+   ↓
+Combine Evidence
+   ↓
+Answer
+```
+
+Each retrieval step expands the **agent’s knowledge graph**.
+
+---
+
+# Example Multi-Hop Query
+
+Consider this question:
+
+> “What programming language is used to implement the Linux kernel module system?”
+
+Step 1:
+
+```text
+Retrieve:
+Linux kernel module system
+```
+
+Observation:
+
+```text
+Kernel modules are part of the Linux kernel.
+```
+
+Step 2:
+
+```text
+Retrieve:
+Linux kernel programming language
+```
+
+Observation:
+
+```text
+The Linux kernel is primarily written in C.
+```
+
+Final Answer:
+
+```text
+The Linux kernel module system is implemented in C.
+```
+
+The answer required **two knowledge hops**.
+
+---
+
+# Multi-Hop Retrieval Architecture
+
+A typical multi-hop retrieval pipeline looks like this:
+
+```text
+User Query
+   ↓
+First Retrieval
+   ↓
+Reasoning Step
+   ↓
+Second Retrieval
+   ↓
+Combine Knowledge
+   ↓
+Generate Answer
+```
+
+This process may repeat several times depending on the complexity of the query.
+
+---
+
+# Implementing Multi-Hop Retrieval
+
+Multi-hop retrieval usually requires:
+
+* iterative retrieval
+* reasoning between retrieval steps
+* query refinement
+
+Example algorithm:
+
+```text
+1. Retrieve initial documents
+2. Extract intermediate information
+3. Formulate new query
+4. Retrieve additional documents
+5. Combine results
+```
+
+This process resembles **research workflows used by human analysts**.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def multi_hop_query(question, retriever, llm):
+
+    context = []
+
+    # First retrieval
+    docs = retriever.search(question)
+    context.extend(docs)
+
+    # Reason about missing information
+    intermediate_query = llm.generate(
+        f"What additional information is needed?\n{context}"
+    )
+
+    # Second retrieval
+    docs2 = retriever.search(intermediate_query)
+    context.extend(docs2)
+
+    # Final answer
+    return llm.generate(
+        f"Answer the question using:\n{context}"
+    )
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn multi_hop_query(question: &str, retriever: &Retriever, llm: &LLMClient) -> String {
+
+    let mut context = Vec::new();
+
+    let docs = retriever.search(question);
+    context.extend(docs);
+
+    let intermediate_query = llm.generate(
+        &format!("What information is missing?\n{:?}", context)
+    );
+
+    let docs2 = retriever.search(&intermediate_query);
+    context.extend(docs2);
+
+    llm.generate(&format!("Answer using context: {:?}", context))
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This approach combines **retrieval and reasoning**.
+
+---
+
+# Graph-Based Retrieval
+
+Some systems represent knowledge retrieval as a **graph traversal problem**.
+
+Conceptually:
+
+```text
+Document A → Document B → Document C
+```
+
+Each document leads to another related piece of information.
+
+Example knowledge graph:
+
+```text
+Supercomputer
+      ↓
+GPU Model
+      ↓
+Manufacturer
+```
+
+Traversing this graph produces the final answer.
+
+---
+
+# Multi-Hop Retrieval in Research Systems
+
+Multi-hop retrieval is widely used in:
+
+* scientific research assistants
+* legal document analysis
+* medical knowledge systems
+* enterprise intelligence platforms
+
+These applications often require connecting **multiple sources of evidence**.
+
+---
+
+# Challenges of Multi-Hop Retrieval
+
+Multi-hop retrieval introduces several challenges.
+
+### Query Drift
+
+Intermediate queries may drift away from the original question.
+
+---
+
+### Retrieval Errors
+
+If one hop retrieves incorrect information, the entire reasoning chain may fail.
+
+---
+
+### Latency
+
+Multiple retrieval steps increase response time.
+
+---
+
+### Context Management
+
+Combining many documents may exceed context limits.
+
+Agents must carefully manage **memory and summarization**.
+
+---
+
+# Multi-Hop Retrieval vs Agentic RAG
+
+Multi-hop retrieval is closely related to **Agentic RAG**, but focuses specifically on **knowledge chaining**.
+
+| Technique           | Purpose                             |
+| ------------------- | ----------------------------------- |
+| Agentic RAG         | iterative retrieval and critique    |
+| Multi-Hop Retrieval | connecting knowledge across sources |
+
+In practice, many modern systems combine both techniques.
+
+---
+
+# The Evolution of Retrieval Systems
+
+Retrieval systems have evolved through several stages.
+
+```text
+Keyword Search
+      ↓
+Vector Search
+      ↓
+Retrieval-Augmented Generation
+      ↓
+Agentic RAG
+      ↓
+Multi-Hop Retrieval
+```
+
+Each stage allows agents to reason over **larger and more complex knowledge spaces**.
+
+---
+
+# Summary of Module 5
+
+In this module we explored how AI agents store and retrieve knowledge.
+
+| Topic               | Concept                             |
+| ------------------- | ----------------------------------- |
+| Memory Hierarchy    | working vs long-term memory         |
+| Episodic Memory     | storing experiences                 |
+| Semantic Memory     | knowledge bases and embeddings      |
+| Procedural Memory   | workflows and strategies            |
+| Agentic RAG         | iterative retrieval                 |
+| Multi-Hop Retrieval | connecting knowledge across sources |
+
+Together, these systems form the **memory and knowledge layer of modern AI agents**.
+
+---
+
+# Looking Ahead
+
+In the next module we will explore **Multi-Agent Systems**, where multiple specialized agents collaborate to solve complex tasks.
+
+Topics include:
+
+* manager–worker architectures
+* swarm-style collaboration
+* debate-based reasoning
+* agent-to-agent communication protocols
+
+→ Continue to **6.1 — Why Multi-Agent Systems Exist**

@@ -1,0 +1,347 @@
+---
+
+title: ReAct - Reason + Act
+description: How reasoning and tool use combine in the ReAct planning pattern
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 3 — Planning Systems**.
+
+In the previous article we examined **why planning matters** and why simple agent loops often fail.
+
+Now we explore **ReAct (Reason + Act)** — one of the most influential techniques for building modern AI agents.
+
+</Aside>
+
+# ReAct: Reason + Act
+
+One of the biggest challenges in early agent systems was coordinating two capabilities:
+
+* **reasoning about a problem**
+* **taking actions in the environment**
+
+Early prompting techniques focused heavily on reasoning.
+
+For example, **Chain-of-Thought prompting** encouraged models to write intermediate reasoning steps.
+
+However, these approaches had a major limitation:
+
+> They reasoned well, but they could not **interact with the world**.
+
+On the other hand, tool-based systems could perform actions, but often **lacked structured reasoning**.
+
+The **ReAct framework** was introduced to solve this problem.
+
+---
+
+# The ReAct Paper
+
+ReAct was introduced in the paper:
+
+> **“ReAct: Synergizing Reasoning and Acting in Language Models”**
+> Yao et al., 2022
+
+The key idea is simple but powerful:
+
+> Agents should **alternate between reasoning and actions**.
+
+Instead of separating reasoning from tool use, ReAct integrates them into a **single loop**.
+
+---
+
+# The ReAct Loop
+
+The ReAct framework structures agent reasoning as a sequence of steps.
+
+```text
+Thought → Action → Observation
+```
+
+Each cycle contains three elements:
+
+| Step        | Description                 |
+| ----------- | --------------------------- |
+| Thought     | Reason about the problem    |
+| Action      | Execute a tool or operation |
+| Observation | Receive the result          |
+
+The observation then informs the **next reasoning step**.
+
+---
+
+# Example ReAct Reasoning
+
+Consider the task:
+
+> “What is the population of the capital of Germany?”
+
+A ReAct reasoning trace might look like this:
+
+```text
+Thought: The capital of Germany is Berlin.
+
+Action: search("Berlin population")
+
+Observation: Berlin has a population of about 3.6 million.
+
+Thought: I now know the population of the capital of Germany.
+
+Final Answer: The population of Berlin is about 3.6 million.
+```
+
+Notice how **reasoning and tool usage are tightly integrated**.
+
+---
+
+# Why ReAct Works
+
+ReAct solves several problems present in earlier agent architectures.
+
+### 1 — Dynamic Information Gathering
+
+Instead of relying only on training data, agents can **query external sources**.
+
+Example:
+
+```text
+Thought: I need benchmark data.
+Action: web_search("H100 vs RTX 4090 benchmark")
+```
+
+---
+
+### 2 — Step-by-Step Reasoning
+
+Each action is guided by explicit reasoning.
+
+This reduces hallucinations.
+
+Example:
+
+```text
+Thought: I should verify the benchmark source.
+```
+
+---
+
+### 3 — Adaptive Behavior
+
+The agent can adjust its strategy based on new information.
+
+Example:
+
+```text
+Observation: Benchmark data is incomplete.
+
+Thought: I should search another source.
+```
+
+This makes the system far more **flexible** than static workflows.
+
+---
+
+# ReAct vs Chain-of-Thought
+
+ReAct builds upon **Chain-of-Thought reasoning**, but extends it with actions.
+
+| Method           | Capability           |
+| ---------------- | -------------------- |
+| Chain-of-Thought | reasoning only       |
+| ReAct            | reasoning + tool use |
+
+Example comparison:
+
+### Chain-of-Thought
+
+```text
+Thought: The capital of Germany is Berlin.
+Thought: Berlin has about 3.6 million people.
+Answer: 3.6 million.
+```
+
+### ReAct
+
+```text
+Thought: The capital of Germany is Berlin.
+Action: search("Berlin population")
+Observation: Population 3.6 million.
+Answer: 3.6 million.
+```
+
+ReAct ensures that reasoning is **grounded in external data**.
+
+---
+
+# Implementing a ReAct Agent
+
+Let us implement a minimal ReAct-style loop.
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def react_agent(goal, llm, tools):
+
+    scratchpad = ""
+
+    while True:
+
+        prompt = f"""
+        Goal: {goal}
+
+        Previous steps:
+        {scratchpad}
+
+        Decide the next Thought and Action.
+        """
+
+        response = llm.generate(prompt)
+
+        thought, action = parse_response(response)
+
+        result = tools[action.name](**action.args)
+
+        observation = str(result)
+
+        scratchpad += f"""
+        Thought: {thought}
+        Action: {action}
+        Observation: {observation}
+        """
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn react_agent(goal: &str, llm: &LLMClient) {
+
+    let mut scratchpad = String::new();
+
+    loop {
+
+        let prompt = format!(
+            "Goal: {}\nPrevious steps:\n{}\nDecide next step.",
+            goal, scratchpad
+        );
+
+        let response = llm.generate(&prompt);
+
+        let (thought, action) = parse_response(&response);
+
+        let observation = execute_tool(&action);
+
+        scratchpad.push_str(&format!(
+            "Thought: {}\nAction: {}\nObservation: {}\n",
+            thought, action, observation
+        ));
+    }
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This loop forms the **foundation of many agent frameworks**.
+
+---
+
+# ReAct in Modern Frameworks
+
+Many popular frameworks implement variations of the ReAct pattern.
+
+Examples include:
+
+| Framework | ReAct Variant                  |
+| --------- | ------------------------------ |
+| LangChain | Tool-based ReAct agents        |
+| LangGraph | Graph-based ReAct workflows    |
+| AutoGen   | conversational reasoning loops |
+| CrewAI    | role-based ReAct coordination  |
+
+Even when the framework hides the details, the underlying pattern often looks like:
+
+```text
+Thought → Action → Observation
+```
+
+---
+
+# Strengths of ReAct
+
+ReAct offers several important advantages.
+
+### Grounded Reasoning
+
+Actions allow agents to verify information.
+
+---
+
+### Iterative Problem Solving
+
+Agents can progressively refine their understanding.
+
+---
+
+### Tool Integration
+
+ReAct naturally integrates APIs, databases, and code execution.
+
+---
+
+# Limitations of ReAct
+
+Despite its strengths, ReAct has limitations.
+
+### Shallow Planning
+
+ReAct typically chooses **one action at a time**, rather than generating full plans.
+
+---
+
+### Limited Exploration
+
+It follows a **single reasoning path**, which may not always be optimal.
+
+---
+
+### Inefficient for Complex Problems
+
+Tasks requiring deeper search may require more advanced planning strategies.
+
+---
+
+# ReAct as the Foundation of Agent Systems
+
+Despite these limitations, ReAct remains the **dominant paradigm** for agent design.
+
+Most modern agent frameworks implement some form of:
+
+```text
+Reason → Act → Observe → Reason
+```
+
+This pattern provides a simple yet powerful structure for **interactive reasoning systems**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **ReAct (Reason + Act)**, the technique that combines reasoning and tool usage into a unified loop.
+
+We examined:
+
+* the original ReAct research paper
+* the Thought → Action → Observation loop
+* how ReAct enables interactive reasoning
+* how modern frameworks implement the pattern
+
+In the next article we will explore **Chain-of-Thought Planning**, a technique that improves reasoning by encouraging models to **explicitly generate intermediate steps**.
+
+→ Continue to **3.3 — Chain-of-Thought Planning**
