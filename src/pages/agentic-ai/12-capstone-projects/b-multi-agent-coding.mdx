@@ -1,0 +1,391 @@
+---
+
+title: The Multi-Agent Coding Pipeline
+description: Building a collaborative AI system where specialized agents work together to design, implement, and review software
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Capstone Project">
+This article is part of **Module 12 — Capstone Projects**.
+
+In the previous article we built a **Computer-Use Researcher**, an agent that gathers information from the web and synthesizes research reports.
+
+In this project we will explore **multi-agent collaboration**, where multiple specialized agents work together to build software.
+
+</Aside>
+
+# The Multi-Agent Coding Pipeline
+
+Software development is rarely a single-person activity.
+
+In real engineering teams, different roles collaborate:
+
+* product managers define requirements
+* developers implement features
+* reviewers evaluate code quality
+
+This collaborative workflow can also be implemented using **multiple AI agents**.
+
+Conceptually:
+
+```text id="j4q1hx"
+User Request
+      ↓
+Product Manager Agent
+      ↓
+Developer Agent
+      ↓
+Reviewer Agent
+      ↓
+Final Software Output
+```
+
+Each agent specializes in a specific task.
+
+---
+
+# Why Multi-Agent Systems?
+
+Single agents can struggle with complex tasks such as software development.
+
+Challenges include:
+
+* long reasoning chains
+* large context requirements
+* multiple stages of problem solving
+
+Multi-agent systems address these challenges by **dividing the task among specialized agents**.
+
+Example advantages:
+
+| Advantage         | Description                     |
+| ----------------- | ------------------------------- |
+| specialization    | agents focus on specific roles  |
+| modular reasoning | tasks are decomposed            |
+| error detection   | reviewers catch mistakes        |
+| scalability       | complex tasks become manageable |
+
+This mirrors how real engineering teams operate.
+
+---
+
+# System Architecture
+
+The multi-agent coding pipeline consists of three main agents.
+
+```text id="qit0b4"
+User Request
+      ↓
+Product Manager Agent
+      ↓
+Developer Agent
+      ↓
+Reviewer Agent
+      ↓
+Approved Code
+```
+
+Each agent receives input from the previous stage.
+
+---
+
+# Agent Roles
+
+### Product Manager Agent
+
+The product manager translates user requests into **technical specifications**.
+
+Example output:
+
+```text id="8q4q9j"
+Feature specification:
+
+Goal:
+Build a REST API for user authentication
+
+Requirements:
+- login endpoint
+- password hashing
+- JWT authentication
+```
+
+This structured plan guides the development process.
+
+---
+
+### Developer Agent
+
+The developer agent implements the specification.
+
+Example output:
+
+```python id="jnd2fn"
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"status": "running"}
+```
+
+The developer converts requirements into working code.
+
+---
+
+### Reviewer Agent
+
+The reviewer agent analyzes the generated code.
+
+Responsibilities include:
+
+* detecting bugs
+* identifying security issues
+* suggesting improvements
+
+Example feedback:
+
+```text id="k1jtfp"
+Code review:
+
+Issue:
+Password hashing missing.
+
+Suggestion:
+Use bcrypt for secure hashing.
+```
+
+The developer can then revise the implementation.
+
+---
+
+# Agent Collaboration Loop
+
+Agents collaborate through a feedback loop.
+
+```text id="kldz7b"
+Specification
+      ↓
+Code Generation
+      ↓
+Code Review
+      ↓
+Revision
+```
+
+This process continues until the reviewer approves the code.
+
+---
+
+# Communication Between Agents
+
+Agents exchange information through structured messages.
+
+Example message format:
+
+```json id="g5jsde"
+{
+  "sender": "product_manager",
+  "task": "implement_api",
+  "specification": "Build login endpoint"
+}
+```
+
+Structured communication ensures clarity between agents.
+
+---
+
+# Example Pipeline Execution
+
+Example workflow:
+
+```text id="wq3qoi"
+User Request:
+Build a REST API for user login.
+
+Step 1:
+Product Manager → writes specification.
+
+Step 2:
+Developer → generates API code.
+
+Step 3:
+Reviewer → checks security and structure.
+
+Step 4:
+Developer → revises code.
+
+Step 5:
+Reviewer → approves.
+```
+
+The result is a **validated software component**.
+
+---
+
+# Implementing the Pipeline
+
+The system can be implemented using a coordinator that orchestrates agent interactions.
+
+Conceptually:
+
+```text id="6ke7b7"
+Coordinator
+   ├─ Product Manager Agent
+   ├─ Developer Agent
+   └─ Reviewer Agent
+```
+
+The coordinator passes outputs between agents.
+
+---
+
+# Python Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python id="f0q1x5"
+spec = pm_agent.generate(user_request)
+
+code = dev_agent.generate(spec)
+
+review = reviewer_agent.evaluate(code)
+
+if review["approved"]:
+    return code
+```
+
+</TabItem>
+
+</Tabs>
+
+This loop can be repeated until approval.
+
+---
+
+# Rust Implementation
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust id="zmy8yx"
+let spec = pm_agent.generate(request);
+
+let code = dev_agent.generate(&spec);
+
+let review = reviewer_agent.evaluate(&code);
+
+if review.approved {
+    return code;
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The coordinator manages the workflow.
+
+---
+
+# Iterative Improvement
+
+The pipeline often requires multiple iterations.
+
+Example:
+
+```text id="sl9dc0"
+Iteration 1 → code generated
+Iteration 2 → reviewer suggests improvements
+Iteration 3 → developer updates code
+Iteration 4 → approval
+```
+
+This iterative process improves output quality.
+
+---
+
+# Scaling the Pipeline
+
+More agents can be added to extend the workflow.
+
+Example extended architecture:
+
+```text id="v7a7b6"
+User Request
+      ↓
+Product Manager
+      ↓
+Developer
+      ↓
+Reviewer
+      ↓
+Security Auditor
+      ↓
+Deployment Agent
+```
+
+Each agent contributes specialized expertise.
+
+---
+
+# Real-World Applications
+
+Multi-agent coding systems can support many workflows.
+
+Examples include:
+
+| Application       | Example                |
+| ----------------- | ---------------------- |
+| code generation   | AI coding assistants   |
+| automated testing | test generation agents |
+| DevOps automation | deployment agents      |
+| documentation     | auto-generated docs    |
+
+These systems can significantly accelerate software development.
+
+---
+
+# Human-in-the-Loop Development
+
+In real-world systems, humans often remain part of the workflow.
+
+Example pipeline:
+
+```text id="2s70ok"
+AI Developer → AI Reviewer → Human Engineer
+```
+
+Human oversight ensures correctness and reliability.
+
+---
+
+# Lessons from the Project
+
+The multi-agent coding pipeline illustrates several key principles of agentic systems.
+
+| Principle             | Example                                 |
+| --------------------- | --------------------------------------- |
+| specialization        | different agents handle different roles |
+| collaboration         | agents exchange structured messages     |
+| iterative improvement | feedback loops refine outputs           |
+| modular design        | agents can be added or removed          |
+
+These patterns are widely used in modern AI agent architectures.
+
+---
+
+# Looking Ahead
+
+In the final project we will build a **privacy-first local AI assistant** that runs entirely on local hardware and manages personal data such as:
+
+* calendars
+* files
+* reminders
+
+→ Continue to **12.3 — The Privacy-First Local Butler**

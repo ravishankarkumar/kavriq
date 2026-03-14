@@ -1,0 +1,376 @@
+---
+title: "Manager–Worker Pattern"
+---
+
+# Manager–Worker Pattern
+
+(Placeholder)
+---
+
+title: Manager–Worker Pattern
+description: A centralized coordination architecture for multi-agent systems
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 6 — Multi-Agent Orchestration**.
+
+In the previous article we explored **why multi-agent systems exist** and how dividing intelligence across specialized agents can improve performance.
+
+In this article we examine one of the most common multi-agent architectures: the **Manager–Worker pattern**, where a central coordinator assigns tasks to specialized worker agents.
+
+</Aside>
+
+# Manager–Worker Pattern
+
+One of the simplest ways to coordinate multiple agents is to introduce a **central coordinator**.
+
+This architecture is known as the **Manager–Worker pattern**.
+
+Conceptually:
+
+```text
+User Request
+     ↓
+ Manager Agent
+     ↓
+ ┌─────────────┬─────────────┬─────────────┐
+ │             │             │
+Worker A     Worker B     Worker C
+```
+
+The manager agent receives the user’s request and decides:
+
+* how to break the task into subtasks
+* which worker agent should handle each subtask
+* how to combine the results
+
+This architecture is widely used because it provides **clear coordination and control**.
+
+---
+
+# Centralized Coordination
+
+In the Manager–Worker pattern, **all coordination happens through the manager agent**.
+
+Workers do not communicate directly with each other.
+
+Instead, the communication flow looks like this:
+
+```text
+Worker → Manager → Worker
+```
+
+Example workflow:
+
+```text
+User Request
+      ↓
+Manager Agent
+      ↓
+Assign task to Research Worker
+      ↓
+Research results returned
+      ↓
+Assign task to Analysis Worker
+      ↓
+Analysis results returned
+      ↓
+Manager composes final answer
+```
+
+The manager orchestrates the entire process.
+
+---
+
+# Why Centralized Coordination Works
+
+Centralized orchestration offers several advantages.
+
+### Clear Control Flow
+
+The manager defines the entire workflow.
+
+This reduces ambiguity about which agent should act next.
+
+---
+
+### Simplified Communication
+
+Workers only communicate with the manager.
+
+This avoids complex peer-to-peer messaging.
+
+---
+
+### Easier Debugging
+
+Because the manager controls the workflow, it becomes easier to:
+
+* inspect decisions
+* log task assignments
+* trace execution steps
+
+---
+
+# Example: Multi-Agent Research System
+
+Consider a research assistant composed of three agents.
+
+| Agent           | Role                 |
+| --------------- | -------------------- |
+| Manager         | coordinates the task |
+| Research Worker | collects sources     |
+| Analysis Worker | extracts insights    |
+| Writer Worker   | generates report     |
+
+Execution flow:
+
+```text
+User: Write a report about AI chip market trends.
+
+Manager:
+   ↓
+Assign task → Research Worker
+
+Research Worker:
+   ↓
+Returns list of sources
+
+Manager:
+   ↓
+Assign task → Analysis Worker
+
+Analysis Worker:
+   ↓
+Returns insights
+
+Manager:
+   ↓
+Assign task → Writer Worker
+
+Writer Worker:
+   ↓
+Produces final report
+```
+
+The manager integrates the results.
+
+---
+
+# Task Decomposition
+
+A critical responsibility of the manager is **task decomposition**.
+
+The manager converts a large problem into smaller subtasks.
+
+Example:
+
+```text
+Goal: Build a market analysis report
+```
+
+Decomposition:
+
+```text
+1. Gather relevant data
+2. Analyze trends
+3. Generate summary
+```
+
+Each subtask is assigned to a worker agent.
+
+---
+
+# Worker Agents
+
+Worker agents are typically specialized.
+
+Examples include:
+
+| Worker         | Capability          |
+| -------------- | ------------------- |
+| Search agent   | retrieves documents |
+| Coding agent   | writes programs     |
+| Analysis agent | interprets data     |
+| Writing agent  | generates text      |
+
+Workers focus on **execution**, not coordination.
+
+---
+
+# Manager Decision Logic
+
+The manager often uses an LLM to decide which worker to call.
+
+Example decision prompt:
+
+```text
+Goal: Write a research report.
+
+Available workers:
+• research_agent
+• analysis_agent
+• writer_agent
+
+Which worker should execute the next step?
+```
+
+The manager selects the appropriate worker.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def manager(goal, workers, llm):
+
+    state = {"goal": goal}
+
+    while True:
+
+        decision = llm.generate(
+            f"Goal: {goal}\nAvailable workers: {list(workers.keys())}"
+        )
+
+        worker = workers[decision]
+
+        result = worker(state)
+
+        state["last_result"] = result
+
+        if decision == "writer_agent":
+            return result
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn manager(goal: &str, workers: &HashMap<String, Worker>, llm: &LLMClient) -> String {
+
+    let mut state = State::new(goal);
+
+    loop {
+
+        let decision = llm.generate(
+            &format!("Goal: {}\nChoose next worker.", goal)
+        );
+
+        let worker = workers.get(&decision).unwrap();
+
+        let result = worker.execute(&mut state);
+
+        state.last_result = result.clone();
+
+        if decision == "writer_agent" {
+            return result;
+        }
+    }
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The manager coordinates worker execution.
+
+---
+
+# Advantages of the Manager–Worker Pattern
+
+This architecture has several benefits.
+
+### Simplicity
+
+The structure is easy to understand and implement.
+
+---
+
+### Structured Workflows
+
+The manager ensures tasks occur in the correct order.
+
+---
+
+### Flexible Worker Roles
+
+New workers can be added without redesigning the entire system.
+
+---
+
+# Limitations of Centralized Architectures
+
+Despite its strengths, the Manager–Worker pattern has limitations.
+
+### Bottlenecks
+
+The manager becomes a **single point of coordination**.
+
+If it becomes overloaded, the system slows down.
+
+---
+
+### Limited Autonomy
+
+Workers cannot independently collaborate.
+
+All decisions must go through the manager.
+
+---
+
+### Single Point of Failure
+
+If the manager fails, the entire system stops.
+
+---
+
+# When to Use the Manager–Worker Pattern
+
+This architecture works best when:
+
+* workflows have clear structure
+* tasks can be decomposed into stages
+* coordination complexity is moderate
+
+Examples include:
+
+* document generation pipelines
+* research assistants
+* software development agents
+* enterprise workflow automation
+
+---
+
+# Manager–Worker vs Other Architectures
+
+The Manager–Worker pattern represents **centralized coordination**.
+
+Later architectures will explore alternatives.
+
+| Architecture    | Coordination Model          |
+| --------------- | --------------------------- |
+| Manager–Worker  | centralized                 |
+| Swarm / Handoff | decentralized               |
+| Debate agents   | adversarial reasoning       |
+| A2A systems     | network-based collaboration |
+
+Each model offers different trade-offs.
+
+---
+
+# Looking Ahead
+
+In this article we explored the **Manager–Worker pattern**, a centralized orchestration architecture where a manager agent assigns tasks to specialized worker agents.
+
+In the next article we will explore the **Handoff Pattern (Swarm)**, where agents can directly delegate tasks to each other without a central coordinator.
+
+→ Continue to **6.3 — Handoff Pattern (Swarm)**

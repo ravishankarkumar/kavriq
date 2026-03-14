@@ -1,0 +1,196 @@
+---
+pubDatetime: 2026-03-14T15:00:00Z
+modDatetime: 2026-03-14T15:00:00Z
+title: "Setting Up Your Environment"
+description: Prepare your development environment for Agentic AI with full support for both Python and Rust.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Steps, Aside, LinkButton } from '@astrojs/starlight/components';
+import { YouTube } from 'astro-embed';
+
+To follow this series on Agentic AI, you’ll need a solid foundation. In this tutorial series, **Python and Rust are first-class citizens.** No matter which language you choose, you will find full implementation support and native patterns for every agentic concept we cover.
+
+This guide covers the two pillars of our environment: **The Programming Stack** and **The LLM Reasoning Engine.**
+
+---
+
+## 1. Programming Language Setup
+
+We have designed these tutorials so that you can follow along entirely in one language or switch between them to see how different ecosystems handle autonomous loops.
+
+### Choose Your Path
+- **Python Path:** Ideal for rapid prototyping and accessing the vast library of AI research tools.
+- **Rust Path:** Ideal for building production-grade, memory-safe agents with high-concurrency needs.
+
+**Setup Links:**
+- **Python:** [Official Python Installation Guide](https://www.python.org/downloads/) (Version 3.10+ recommended)
+- **Rust:** [Rust Toolchain Setup (rustup)](https://rustup.rs/)
+
+<Aside type="note" title="Hardware Support">
+The code provided in these tutorials is tested and optimized for **macOS (Apple Silicon)**. While the logic is cross-platform, Mac users will enjoy the best experience with our local benchmarking and performance tracking.
+</Aside>
+
+---
+
+## 2. LLM Configuration (The "Brain")
+
+In these tutorials, we use **Google Gemini** as our primary reasoning engine. 
+
+### Why Gemini?
+While our code is designed to be **OpenAI-compatible** (allowing you to swap in GPT-4 or local models via Ollama), we use Gemini because Google provides a **generous free tier** for developers. I want to ensure my readers can keep learning with free resources and only move to paid services when they are ready for production.
+
+### Obtaining your API Key
+
+You can generate your key via Google AI Studio.
+
+<LinkButton 
+  href="https://aistudio.google.com/" 
+  variant="primary"
+  target="_blank"
+  >
+  Get your Gemini API Key →
+</LinkButton>
+
+<Steps>
+1. Log in to **Google AI Studio** using the link above.
+2. Click on **"Get API key"** in the left-hand sidebar.
+3. Select **"Create API key in new project."**
+</Steps>
+
+<YouTube id="https://www.youtube.com/watch?v=BYBeQm_AsCI" />
+
+---
+
+## 3. Tool Setup & SDK Integration
+
+To interact with Gemini, we utilize official and community-supported SDKs. Given the rapid evolution of the "Agentic AI" space, we prioritize libraries that offer the most stable support for generative features.
+
+### Supported SDKs
+
+| Language | SDK Package | Source |
+| --- | --- | --- |
+| **Python** | `google-genai` | [Official PyPI](https://pypi.org/project/google-genai/) |
+| **Rust** | `gemini-client-api` | [Community Crates.io](https://crates.io/crates/gemini-client-api) |
+
+### Installation & Initialization
+
+#### **Python**
+
+We use the modern `google-genai` SDK. This replaces the legacy `google-generativeai` package and provides a more streamlined interface for Gemini 2.0+ models.
+
+```bash
+pip install google-genai
+
+```
+
+#### **Rust**
+
+As there is currently no "official" Google-maintained crate for Rust, we have adopted `gemini-client-api`. It provides the most robust asynchronous implementation for community-driven projects.
+
+```toml
+# Add to your Cargo.toml
+[dependencies]
+gemini-client-api = "7.4.5" 
+
+```
+
+> **Note on Ecosystem Evolution:** The AI landscape moves fast. We continuously evaluate emerging libraries (such as potential official Vertex AI Rust SDKs) and will update our stack as more mature or feature-complete options become available.
+
+---
+## 4. Verifying Your Setup
+
+Once you have your key, create a `.env` file in your project root to keep your credentials safe:
+
+```bash
+GEMINI_API_KEY=your_actual_key_here
+
+```
+
+### Quick Connection Test
+
+Test your environment by running the snippet for your chosen language:
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+First, install the necessary libraries:
+
+```bash
+pip install -U google-genai python-dotenv
+
+```
+
+Then, run this script:
+
+```python
+import os
+from dotenv import load_dotenv
+from google import genai
+from pathlib import Path
+
+env_path = Path(__file__).parent.parent.parent / ".env"
+# Replace the env_path with the actual path to your .env file if it's located elsewhere
+load_dotenv(dotenv_path=env_path)
+
+api_key = os.getenv("GEMIN_API_KEY")
+if not api_key:
+    raise ValueError("GEMIN_API_KEY not found in environment variables. Please set it in the .env file.")
+
+try:
+    client = genai.Client(api_key=api_key)
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash", contents="Explain how AI works in a few words"
+    )
+    print(response.text)
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+Add these to your `Cargo.toml`:
+
+```toml
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+dotenv = "0.15"
+gemini-client-api = "7.4.5"
+```
+
+Run this in your `main.rs`:
+
+```rust
+use dotenvy::dotenv_override;
+use std::env;
+
+use gemini_client_api::gemini::ask::Gemini;
+use gemini_client_api::gemini::types::sessions::Session;
+
+#[tokio::main]
+async fn main() {
+    // Please ensure you are putting in the actual path of the .env file as mentioned in the README, and not the placeholder path shown below.
+    dotenvy::from_path("../.env").ok(); 
+
+    let api_key = env::var("GEMIN_API_KEY")
+        .expect("GEMIN_API_KEY must be set in the workspace root .env");
+        
+    let mut session = Session::new(10); // Keep last 10 messages
+    let ai = Gemini::new(
+        api_key, 
+        "gemini-2.5-flash", 
+        None, // Optional system instruction
+    );
+
+    let response = ai.ask(session.ask("Hello, Gemini!")).await.unwrap();
+    println!("Gemini: {}", response.get_chat().get_text_no_think("\n"));
+}
+```
+
+</TabItem>
+</Tabs>
+

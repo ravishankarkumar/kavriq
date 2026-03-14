@@ -1,0 +1,45 @@
+@theme inline {
+  /* 1. Define Inter as the primary sans font */
+  --font-inter: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  
+  /* 2. Overwrite the main app font to use Inter instead of Mono */
+  --font-app: var(--font-inter);
+  
+  /* 3. Define a dedicated mono font for code/technical accents */
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    /* Use the variables defined in your global.css */
+    color: var(--foreground);
+    background-color: var(--background);
+    
+    /* Typography Polish */
+    font-family: var(--font-app);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    /* Reading optimization */
+    line-height: 1.6;
+    letter-spacing: -0.011em; /* Inter looks most professional with slight tightening */
+    word-spacing: 0.02em;
+  }
+
+  /* Make headings slightly tighter and bolder to contrast with Inter body */
+  h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5em;
+    color: var(--foreground);
+  }
+
+  /* Keep "Module" labels or small technical metadata in Mono for that 'Tech' hint */
+  .tech-label, 
+  header span, 
+  code {
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+  }
+}

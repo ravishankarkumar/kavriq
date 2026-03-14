@@ -1,0 +1,365 @@
+---
+
+title: Procedural Memory
+description: How AI agents store workflows, strategies, and operational knowledge
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 5 — Memory Systems & RAG 2.0**.
+
+In the previous articles we explored **episodic memory** (storing experiences) and **semantic memory** (storing factual knowledge).
+
+In this article we examine **procedural memory**, which stores knowledge about **how to perform tasks**.
+
+</Aside>
+
+# Procedural Memory
+
+Human knowledge is not limited to facts and experiences.
+
+We also remember **procedures**.
+
+Examples include:
+
+* how to ride a bicycle
+* how to debug a program
+* how to conduct a scientific experiment
+
+These skills form **procedural memory**.
+
+In cognitive science, procedural memory refers to:
+
+> **Knowledge of how to perform actions or execute processes.**
+
+AI agents implement similar mechanisms.
+
+Instead of storing procedures in the brain, agents encode them as:
+
+* workflows
+* instructions
+* system prompts
+* reusable strategies
+
+---
+
+# Why Procedural Memory Matters
+
+Without procedural memory, agents must figure out **how to solve a task every time**.
+
+Example:
+
+```text
+Goal: Analyze financial data
+
+Agent must decide:
+• which tools to use
+• what order to execute them
+• how to interpret results
+```
+
+With procedural memory:
+
+```text
+Procedure:
+1. Load dataset
+2. Compute summary statistics
+3. Identify trends
+4. Generate report
+```
+
+The agent can immediately follow a **known workflow**.
+
+---
+
+# Procedural Memory in Agents
+
+Procedural memory can be implemented in several ways.
+
+| Implementation     | Example                         |
+| ------------------ | ------------------------------- |
+| System prompts     | instructions given to the model |
+| Workflow templates | predefined task pipelines       |
+| Agent graphs       | structured execution workflows  |
+| Code modules       | reusable tool sequences         |
+
+These mechanisms allow agents to **reuse strategies across tasks**.
+
+---
+
+# Hard-Coded Workflows
+
+One simple form of procedural memory is **hard-coded workflows**.
+
+These workflows define a sequence of steps for solving a particular problem.
+
+Example workflow:
+
+```text
+Analyze dataset:
+1. Load dataset
+2. Clean missing values
+3. Compute summary statistics
+4. Visualize trends
+5. Generate report
+```
+
+This workflow becomes a **procedural template**.
+
+---
+
+# Example Workflow Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def analyze_dataset(data):
+
+    cleaned = clean_data(data)
+
+    stats = compute_statistics(cleaned)
+
+    report = generate_report(stats)
+
+    return report
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn analyze_dataset(data: Dataset) -> Report {
+
+    let cleaned = clean_data(data);
+
+    let stats = compute_statistics(cleaned);
+
+    generate_report(stats)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This program encodes **procedural knowledge directly in code**.
+
+---
+
+# Procedural Memory in Agent Prompts
+
+Another common approach is embedding procedures inside **system prompts**.
+
+Example prompt:
+
+```text
+You are a research assistant.
+
+When analyzing a topic:
+
+1. Search for relevant sources
+2. Extract key facts
+3. Compare findings
+4. Summarize the results
+```
+
+This instruction acts as **procedural guidance**.
+
+---
+
+# SOPs Inside System Prompts
+
+Many production AI systems rely on **Standard Operating Procedures (SOPs)** embedded in prompts.
+
+Example SOP:
+
+```text
+Customer support workflow:
+
+1. Identify the user's issue
+2. Search the knowledge base
+3. Suggest solutions
+4. Escalate if unresolved
+```
+
+This procedure ensures that the agent follows **consistent behavior**.
+
+---
+
+# Procedural Memory vs Planning
+
+Procedural memory and planning are closely related.
+
+| Concept           | Purpose                           |
+| ----------------- | --------------------------------- |
+| Planning          | create a plan for a specific task |
+| Procedural memory | store reusable strategies         |
+
+Example:
+
+Planning:
+
+```text
+Goal: Write research report
+
+Agent decides:
+• search papers
+• extract insights
+• write summary
+```
+
+Procedural memory:
+
+```text
+Research workflow:
+
+1. Search literature
+2. Extract key insights
+3. Compare findings
+4. Write summary
+```
+
+Procedural memory provides **ready-made plans**.
+
+---
+
+# Combining Memory Types
+
+Modern agents often combine multiple memory types.
+
+Example workflow:
+
+```text
+User request
+   ↓
+Retrieve semantic memory (facts)
+   ↓
+Retrieve episodic memory (past experiences)
+   ↓
+Apply procedural memory (workflow)
+   ↓
+Execute task
+```
+
+This combination allows agents to behave more like **knowledge workers**.
+
+---
+
+# Procedural Memory in Graph-Based Agents
+
+Graph-based agent frameworks often implement procedural memory as **execution graphs**.
+
+Example:
+
+```text
+Start
+  ↓
+Search Data
+  ↓
+Analyze Results
+  ↓
+Generate Report
+  ↓
+End
+```
+
+This graph represents a **stored procedure** for completing a task.
+
+---
+
+# Advantages of Procedural Memory
+
+Procedural memory offers several benefits.
+
+### Consistency
+
+Agents follow standardized workflows.
+
+---
+
+### Efficiency
+
+Agents do not need to rediscover strategies repeatedly.
+
+---
+
+### Reliability
+
+Procedures reduce random or chaotic behavior.
+
+---
+
+### Knowledge Transfer
+
+Best practices can be encoded once and reused across tasks.
+
+---
+
+# Challenges of Procedural Memory
+
+Despite its benefits, procedural memory introduces several challenges.
+
+### Rigidity
+
+Hard-coded workflows may not adapt well to unusual situations.
+
+---
+
+### Maintenance
+
+Procedures must be updated when tools or systems change.
+
+---
+
+### Over-Constraining Agents
+
+Too many rigid procedures can limit creativity.
+
+Balancing **structure and flexibility** is essential.
+
+---
+
+# Procedural Memory as Organizational Knowledge
+
+In many organizations, procedural memory corresponds to:
+
+* company playbooks
+* operational guidelines
+* troubleshooting workflows
+* best practice documents
+
+When encoded into agent systems, these resources allow AI to act as a **digital operational assistant**.
+
+---
+
+# The Three Types of Agent Memory
+
+At this point in the module we have covered three major memory systems.
+
+| Memory Type       | Purpose                          |
+| ----------------- | -------------------------------- |
+| Working Memory    | reasoning during a task          |
+| Episodic Memory   | storing past experiences         |
+| Semantic Memory   | storing factual knowledge        |
+| Procedural Memory | storing workflows and strategies |
+
+Together, these systems enable agents to:
+
+* remember information
+* learn from experience
+* reuse successful strategies
+
+---
+
+# Looking Ahead
+
+In this article we explored **procedural memory**, which stores workflows and strategies that agents can reuse across tasks.
+
+In the next article we will examine **Agentic RAG**, an advanced retrieval architecture where agents actively control how knowledge is retrieved and evaluated.
+
+→ Continue to **5.5 — Agentic RAG**

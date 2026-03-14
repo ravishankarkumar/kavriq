@@ -1,0 +1,402 @@
+---
+title: The Inference-Time Compute Revolution
+description: Why modern reasoning models spend extra compute before answering, and how that changes the way we design agents.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+In the early years of large language models, the main recipe for getting better performance was simple: train bigger models on more data with more compute. Intelligence was mostly scaled at **training time**.
+
+That still matters. But modern reasoning models introduced a second axis of improvement:
+
+**scaling at inference time**.
+
+This is one of the most important shifts in modern AI systems. It changes how we think about reasoning, how we route tasks between models, and how we design agents.
+
+In the previous article, we described the external cognitive loop of an agent:
+
+```text
+observe → reason → plan → act → reflect
+````
+
+Inference-time compute changes that picture. Some of the reasoning and planning that older agent systems had to externalize through repeated prompting and looping can now happen *inside* a single model call.
+
+That does not eliminate the agent loop. But it changes where the intelligence lives.
+
+---
+
+## From Fast Prediction to Deliberate Reasoning
+
+Classic LLMs are optimized to continue text quickly. They read the prompt and begin generating the most likely next token sequence.
+
+Conceptually, the process looks like this:
+
+```text
+prompt → generate answer
+```
+
+This is fast and often very capable, but it has a weakness: the model may commit early to a plausible answer before sufficiently exploring alternatives, checking edge cases, or revising its approach.
+
+Reasoning models introduce a different pattern. Instead of moving directly from prompt to answer, they are allowed to spend extra compute on intermediate reasoning before producing the final response.
+
+Conceptually:
+
+```text
+prompt → internal reasoning → final answer
+```
+
+That intermediate reasoning may involve:
+
+* decomposing the problem
+* testing possible approaches
+* checking consistency
+* revising an initial plan
+* compressing a longer internal trace into a better final answer
+
+This is the basic idea behind inference-time compute.
+
+---
+
+## What “Thinking Before Speaking” Actually Means
+
+People often describe reasoning models as models that “think before they speak.” That phrase is useful, but it should be understood carefully.
+
+The model is not thinking like a symbolic theorem prover. It is still a neural sequence model. What changes is that it is allowed to spend more inference compute on intermediate reasoning before emitting the visible answer.
+
+Different providers expose this differently:
+
+* some expose **reasoning effort controls** while hiding the internal reasoning
+* some expose a **visible thinking block**
+* some expose a **reasoning trace** alongside the answer
+
+So the important idea is not one specific UI or API format. The important idea is:
+
+---
+
+## A Mental Model: Internal Reasoning Tokens
+
+A helpful mental model is to imagine the model generating an internal scratchpad before answering.
+
+For example, a simple arithmetic question might look like this conceptually:
+
+```text
+User: What is 17 × 24?
+
+[internal reasoning]
+17 × 24 = 17 × 20 + 17 × 4
+= 340 + 68
+= 408
+
+Final answer: 408
+```
+
+This is just a teaching model, not a universal literal API format. But it captures the important point: the model may spend tokens on intermediate reasoning that are distinct from the final user-visible answer.
+
+For some providers, this intermediate reasoning is hidden. For others, it is partially visible. OpenAI’s docs note that reasoning tokens are still counted in total completion tokens for billing and limits, even when the reasoning itself is not exposed. Anthropic exposes extended thinking with a token budget, and DeepSeek documents visible reasoning content for `deepseek-reasoner`. ([OpenAI][1])
+
+---
+
+## Reasoning Budget and Deliberation Depth
+
+Once you understand that extra reasoning consumes compute, the next idea becomes obvious: more deliberation usually means more cost and latency.
+
+That is why reasoning-oriented APIs often expose controls that let you trade off speed against depth.
+
+OpenAI documents `reasoning_effort` for reasoning models in Chat Completions. Anthropic documents extended thinking with a `budget_tokens` parameter, where the thinking budget is included within `max_tokens`. ([OpenAI][1])
+
+The broad tradeoff is:
+
+| Reasoning Budget | Speed    | Cost     | Typical Use                              |
+| ---------------- | -------- | -------- | ---------------------------------------- |
+| Low              | Faster   | Lower    | Simple structured decisions              |
+| Medium           | Moderate | Moderate | Multi-step reasoning                     |
+| High             | Slower   | Higher   | Hard planning, math, code, or evaluation |
+
+The exact controls vary by provider, but the design principle is stable:
+
+* do not pay for deep reasoning when the task is routine
+* do pay for it when a wrong decision would create cascading failures
+
+---
+
+## Representative Reasoning Models
+
+Several modern model families illustrate this shift.
+
+## OpenAI reasoning models
+
+OpenAI’s reasoning models support controls such as `reasoning_effort`, while keeping internal reasoning hidden from the final output. The docs also indicate that reasoning tokens count toward completion usage. ([OpenAI][1])
+
+That means you can benefit from deliberate reasoning without directly seeing the internal chain of thought.
+
+## Anthropic extended thinking
+
+Anthropic exposes extended thinking more explicitly. Their docs describe enabling thinking and setting a token budget, and the thinking content can be returned as part of the response structure. ([Claude API Docs][2])
+
+This makes the system easier to inspect in some workflows.
+
+## DeepSeek reasoning models
+
+DeepSeek’s docs for `deepseek-reasoner` explicitly describe visible reasoning content, and their beta docs also describe cases where `reasoning_content` is passed back in multi-turn flows. ([api-docs.deepseek.com][3])
+
+This is especially interesting for agent builders because it can make debugging and trajectory analysis more transparent.
+
+---
+
+## Code Examples
+
+<Tabs syncKey="programming-language">
+  <TabItem label="Python" icon="python">
+
+```python
+# OpenAI reasoning model
+from openai import OpenAI
+
+client = OpenAI()
+
+response = client.chat.completions.create(
+    model="o1",
+    messages=[
+        {
+            "role": "user",
+            "content": "Design a multi-agent system to automate code review for a GitHub repository."
+        }
+    ],
+    reasoning_effort="high",
+)
+
+print(response.choices[0].message.content)
+
+# Reasoning usage is accounted for in token usage metadata
+print(response.usage)
+```
+
+```python
+# Anthropic extended thinking
+import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.messages.create(
+    model="claude-3-7-sonnet-20250219",
+    max_tokens=16000,
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 4000
+    },
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain the tradeoffs between ReAct and Tree-of-Thought planning for agents."
+        }
+    ],
+)
+
+for block in response.content:
+    print(block.type)
+```
+
+```python
+# DeepSeek reasoning model
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-deepseek-api-key",
+    base_url="https://api.deepseek.com",
+)
+
+response = client.chat.completions.create(
+    model="deepseek-reasoner",
+    messages=[
+        {
+            "role": "user",
+            "content": "Should I use an agent or a pipeline for summarizing a fixed PDF report?"
+        }
+    ],
+)
+
+msg = response.choices[0].message
+
+if hasattr(msg, "reasoning_content") and msg.reasoning_content:
+    print("=== Reasoning ===")
+    print(msg.reasoning_content)
+
+print("=== Final Answer ===")
+print(msg.content)
+```
+
+  </TabItem>
+
+  <TabItem label="Rust" icon="rust">
+
+```rust
+use reqwest::Client;
+use serde_json::{json, Value};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new();
+
+    let body = json!({
+        "model": "deepseek-reasoner",
+        "messages": [{
+            "role": "user",
+            "content": "Should I use an agent or a pipeline for summarizing a fixed PDF report?"
+        }]
+    });
+
+    let response = client
+        .post("https://api.deepseek.com/chat/completions")
+        .header("Authorization", format!("Bearer {}", std::env::var("DEEPSEEK_API_KEY")?))
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
+        .await?
+        .json::<Value>()
+        .await?;
+
+    let msg = &response["choices"][0]["message"];
+
+    if let Some(reasoning) = msg["reasoning_content"].as_str() {
+        println!("=== Reasoning ===\n{}\n", &reasoning[..reasoning.len().min(500)]);
+    }
+
+    if let Some(answer) = msg["content"].as_str() {
+        println!("=== Final Answer ===\n{}", answer);
+    }
+
+    Ok(())
+}
+```
+
+  </TabItem>
+</Tabs>
+
+---
+
+## Why This Matters for Agent Design
+
+This is the part that matters most for your series.
+
+In earlier agent systems, you often had to externalize reasoning through repeated loops:
+
+* prompt the model
+* ask it to think step by step
+* inspect the result
+* re-prompt
+* revise the plan
+* continue looping
+
+Reasoning models shift some of that work inside the model call itself.
+
+That changes the design of the agent loop.
+
+| Loop Phase | Fast Model Agent        | Reasoning Model Agent         |
+| ---------- | ----------------------- | ----------------------------- |
+| Observe    | External                | External                      |
+| Reason     | Mostly externalized     | More internalized             |
+| Plan       | Often explicit          | More often internalized       |
+| Act        | External                | External                      |
+| Reflect    | Often another loop turn | Sometimes partly internalized |
+
+This has an important consequence:
+
+> a reasoning model may reduce the number of outer-loop iterations needed for hard tasks.
+
+That does not mean you no longer need tools, memory, or agent control flow. It means the boundary between model reasoning and runtime orchestration shifts.
+
+---
+
+## The Real Tradeoff: External Loops vs Internal Deliberation
+
+There are now two broad ways to make an agent smarter:
+
+### Option 1: externalize intelligence
+
+Use a faster model and rely on:
+
+* more loop iterations
+* explicit planning prompts
+* retries
+* separate critique steps
+* more orchestration in your runtime
+
+### Option 2: internalize more intelligence
+
+Use a reasoning model and rely on:
+
+* deeper internal deliberation
+* fewer but more expensive model calls
+* better one-shot planning on hard tasks
+
+Neither is universally superior.
+
+Fast models are often better for:
+
+* routing
+* formatting
+* simple tool choice
+* extraction
+* lightweight summarization
+
+Reasoning models are often better for:
+
+* difficult planning
+* code reasoning
+* mathematical or logical tasks
+* evaluation and critique
+* high-stakes decision points in an agent workflow
+
+This hybrid approach is one of the most important design patterns in modern agents.
+
+---
+
+## A Better Rule of Thumb for Builders
+
+Instead of asking:
+
+> “Should I use a reasoning model everywhere?”
+
+ask:
+
+> “Where in my agent loop is a wrong decision most expensive?”
+
+Those are the places where extra inference-time compute is often worth paying for.
+
+Examples:
+
+* choosing a long multi-step plan
+* evaluating whether evidence is sufficient
+* deciding whether to escalate or stop
+* reviewing code changes before execution
+* grading or critiquing an agent output
+
+This is the practical bridge to later topics like routing, evaluation, and the small-model strategy.
+
+---
+
+## Wrapping Up
+
+Inference-time compute is one of the major shifts in modern AI.
+
+The old scaling story was:
+
+* more training data
+* larger models
+* better base capability
+
+The new story adds another axis:
+
+* more compute at inference time
+* deeper intermediate reasoning
+* better performance on hard tasks
+
+For agent builders, this matters because it changes where reasoning happens. Some of the work that once required explicit outer-loop prompting can now happen inside the model call itself.
+
+That does not remove the need for agent architecture. It changes how you allocate intelligence between the model and the runtime.
+
+In the next article, we will look at the concrete implementation layer: the modern LLM primitives that make agent systems possible — system prompts, structured outputs, tool calling, and context management.
+
+→ **Next up**: [Modern LLM Primitives](/agentic-ai/01-foundations/d-modern-llm-primitives)

@@ -1,0 +1,407 @@
+---
+
+title: Reflection and Termination
+description: How AI agents evaluate their progress and decide when to stop
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 2 — Internal Agent Architecture**.
+
+In the previous article we explored the **Observation Processor**, which converts raw tool outputs into structured observations.
+
+Now we examine the final stage of the agent loop: **Reflection and Termination** — the mechanisms that allow agents to evaluate their progress and determine when a task is complete.
+
+</Aside>
+
+# Reflection and Termination
+
+A critical question every autonomous system must answer is:
+
+> **“Am I done yet?”**
+
+Without this capability, an agent would continue reasoning indefinitely.
+
+Modern agent systems therefore include a final stage in the loop:
+
+```text
+observe → reason → plan → act → observe → reflect
+```
+
+Reflection determines:
+
+* whether the goal has been achieved
+* whether additional steps are needed
+* whether the agent should terminate
+
+This stage transforms a sequence of actions into a **goal-directed process**.
+
+---
+
+# Why Reflection Is Necessary
+
+LLMs are powerful reasoning systems, but they **do not automatically know when to stop**.
+
+Consider this task:
+
+> “Summarize the latest research on fusion energy.”
+
+An agent might:
+
+1. search for papers
+2. read summaries
+3. extract key points
+
+But without reflection, the agent might continue searching endlessly:
+
+```text
+search → summarize → search → summarize → search → summarize
+```
+
+Reflection ensures the system **recognizes completion**.
+
+---
+
+# The Reflection Stage
+
+The reflection stage evaluates the agent’s current state.
+
+Conceptually:
+
+```text
+Current State
+     ↓
+Reflection
+     ↓
+Decision
+```
+
+Possible decisions include:
+
+* continue reasoning
+* execute another action
+* produce a final answer
+* terminate the loop
+
+This step acts as the **quality control mechanism** of the agent.
+
+---
+
+# Self-Evaluation in Agents
+
+Self-evaluation allows the agent to determine whether the goal has been achieved.
+
+Example reasoning step:
+
+```text
+Goal: Find the cheapest flight to Tokyo.
+
+Observation: Found three flight options.
+
+Reflection: I should compare prices before answering.
+```
+
+Or:
+
+```text
+Reflection: I have enough information to answer the user.
+```
+
+This capability is essential for **goal-directed behavior**.
+
+---
+
+# A Simple Reflection Prompt
+
+Many agent systems implement reflection using a dedicated prompt.
+
+Example:
+
+```text
+Given the goal and the current observations,
+decide whether the task is complete.
+
+If complete → produce FINAL ANSWER
+If incomplete → propose next step
+```
+
+This prompt transforms the LLM into a **self-evaluating system**.
+
+---
+
+# Implementing Reflection
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def reflect(goal, state, llm):
+
+    prompt = f"""
+    Goal: {goal}
+
+    Current state:
+    {state}
+
+    Decide whether the task is complete.
+    If complete, respond with FINAL.
+    Otherwise suggest the next action.
+    """
+
+    return llm.generate(prompt)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn reflect(goal: &str, state: &str, llm: &LLMClient) -> String {
+
+    let prompt = format!(
+        "Goal: {}\nState:\n{}\nIs the task complete?",
+        goal, state
+    );
+
+    llm.generate(&prompt)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The runtime interprets the result to decide whether to **continue the loop**.
+
+---
+
+# Reflexion: Learning From Mistakes
+
+An important extension of reflection is the **Reflexion technique**.
+
+Reflexion allows agents to **critique their own reasoning** and improve performance.
+
+Instead of simply asking:
+
+```text
+Am I done?
+```
+
+The agent asks:
+
+```text
+Did I make a mistake?
+```
+
+Example reasoning trace:
+
+```text
+Thought: I searched for population data.
+
+Observation: Population of France is 67 million.
+
+Reflection: I answered for France but the question asked about Germany.
+```
+
+The agent can then **correct its course**.
+
+---
+
+# Reflexion Loop
+
+Reflexion introduces a feedback cycle:
+
+```text
+Action
+   ↓
+Observation
+   ↓
+Reflection
+   ↓
+Critique
+   ↓
+Improved Action
+```
+
+This dramatically improves performance on complex reasoning tasks.
+
+---
+
+# Preventing Infinite Loops
+
+A major risk in autonomous systems is **infinite reasoning loops**.
+
+Example:
+
+```text
+search → summarize → search → summarize → search → summarize
+```
+
+If the agent never recognizes completion, it may continue indefinitely.
+
+Agent runtimes therefore enforce **termination safeguards**.
+
+---
+
+# Safeguard 1 — Maximum Iterations
+
+The simplest safeguard is a **step limit**.
+
+Example policy:
+
+```text
+Maximum reasoning steps: 10
+```
+
+After the limit is reached, the agent must terminate.
+
+---
+
+# Safeguard 2 — Time Limits
+
+Agents may also enforce execution time limits.
+
+Example:
+
+```text
+Maximum runtime: 60 seconds
+```
+
+This prevents long-running tasks from consuming excessive resources.
+
+---
+
+# Safeguard 3 — Confidence Checks
+
+Some systems ask the model to estimate **confidence**.
+
+Example prompt:
+
+```text
+Rate confidence in your answer from 1–10.
+```
+
+If confidence is low, the agent may continue reasoning.
+
+---
+
+# Safeguard 4 — Human-in-the-Loop
+
+In high-risk environments, agents may require **human approval** before continuing.
+
+Example:
+
+```text
+Agent proposes action → human approves → execution continues
+```
+
+This is common in:
+
+* financial systems
+* healthcare agents
+* enterprise automation
+
+---
+
+# A Full Agent Loop With Reflection
+
+Putting everything together:
+
+```text
+User Goal
+   ↓
+Perception
+   ↓
+Reasoning
+   ↓
+Planning
+   ↓
+Tool Selection
+   ↓
+Execution
+   ↓
+Observation
+   ↓
+Reflection
+   ↓
+Terminate OR Continue
+```
+
+Reflection ensures the system remains **goal-oriented rather than reactive**.
+
+---
+
+# Example Reasoning Cycle
+
+```text
+Goal: Compare RTX 4090 and H100
+
+Thought: Search for benchmark results
+Action: web_search("RTX 4090 vs H100 ML benchmark")
+
+Observation: H100 significantly faster
+
+Reflection: I have enough information to compare GPUs.
+
+Final Answer: H100 outperforms RTX 4090 for large-scale training.
+```
+
+Reflection determines **when reasoning should end**.
+
+---
+
+# Reflection as the Agent’s Meta-Cognition
+
+In cognitive science, **metacognition** refers to thinking about one's own thinking.
+
+Reflection plays the same role in AI agents.
+
+It allows the system to:
+
+* evaluate its reasoning
+* detect mistakes
+* decide when to stop
+
+Without reflection, agents would behave like **blind action machines**.
+
+With reflection, they become **self-aware problem solvers**.
+
+---
+
+# Summary of Module 2
+
+Across this module we explored the **internal architecture of modern AI agents**.
+
+| Component             | Role                                    |
+| --------------------- | --------------------------------------- |
+| LLM                   | reasoning engine                        |
+| Runtime               | control loop                            |
+| Perception            | convert raw input into structured state |
+| Working Memory        | maintain short-term context             |
+| Planner               | convert goals into actions              |
+| Tool Manager          | manage external capabilities            |
+| Execution Engine      | run tools safely                        |
+| Observation Processor | transform outputs into observations     |
+| Reflection            | evaluate progress and terminate         |
+
+Together, these components form the **agent control loop**.
+
+---
+
+# Looking Ahead
+
+In **Module 3 — Planning Systems**, we will explore advanced reasoning strategies that dramatically improve agent intelligence.
+
+These include:
+
+* **ReAct (Reason + Act)**
+* **Chain-of-Thought Planning**
+* **Tree-of-Thought Search**
+* **Execution Graphs**
+
+These techniques enable agents to tackle **much more complex tasks** than simple loops.
+
+→ Continue to **3.1 — Why Planning Matters**

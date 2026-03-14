@@ -1,0 +1,417 @@
+---
+
+title: Semantic Memory
+description: How AI agents store and retrieve knowledge using embeddings, vector databases, and similarity search
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 5 — Memory Systems & RAG 2.0**.
+
+In the previous article we explored **episodic memory**, which allows agents to store past experiences.
+
+In this article we examine **semantic memory**, which allows agents to store and retrieve factual knowledge using embeddings and vector search.
+
+</Aside>
+
+# Semantic Memory
+
+Humans possess different types of memory.
+
+* **Episodic memory** stores experiences.
+* **Semantic memory** stores facts and knowledge.
+
+For example:
+
+| Type     | Example                                  |
+| -------- | ---------------------------------------- |
+| Episodic | “Yesterday I debugged a Python program.” |
+| Semantic | “Python is a programming language.”      |
+
+AI agents implement a similar distinction.
+
+Semantic memory stores structured knowledge such as:
+
+* documents
+* research papers
+* knowledge base entries
+* company data
+* technical documentation
+
+Instead of memorizing everything inside the model weights, modern agents store this knowledge in **external databases**.
+
+---
+
+# Why Semantic Memory Is Needed
+
+Language models have a fixed knowledge capacity determined during training.
+
+They cannot:
+
+* update knowledge easily
+* store new documents
+* access large proprietary datasets
+* keep up with rapidly changing information
+
+Semantic memory solves this problem.
+
+Example architecture:
+
+```text
+Agent
+ ↓
+Semantic Retrieval
+ ↓
+Knowledge Base
+ ↓
+Relevant Documents
+```
+
+The agent retrieves the knowledge it needs at runtime.
+
+This approach is known as **Retrieval-Augmented Generation (RAG)**.
+
+---
+
+# Knowledge Bases
+
+A semantic memory system typically begins with a **knowledge base**.
+
+A knowledge base is a collection of documents that the agent can search.
+
+Examples include:
+
+* product documentation
+* research papers
+* internal company knowledge
+* technical manuals
+* customer support articles
+
+Example knowledge base entry:
+
+```json
+{
+  "title": "Nvidia H100 Architecture",
+  "content": "The H100 GPU is designed for AI workloads and high-performance computing."
+}
+```
+
+However, searching large document collections using keyword matching is often unreliable.
+
+Instead, modern systems use **vector embeddings**.
+
+---
+
+# Embeddings
+
+An embedding is a numerical vector representing the **semantic meaning of text**.
+
+Example:
+
+```text
+"AI accelerators"
+```
+
+may be converted into a vector such as:
+
+```text
+[0.12, -0.43, 0.89, 0.21, ...]
+```
+
+Embeddings allow machines to measure **semantic similarity** between texts.
+
+For example:
+
+| Query           | Similar Document     |
+| --------------- | -------------------- |
+| AI chips        | GPU architecture     |
+| neural networks | deep learning models |
+| vector search   | similarity retrieval |
+
+Although the wording may differ, embeddings capture **similar meanings**.
+
+---
+
+# Embedding Generation
+
+Embeddings are usually produced by specialized models.
+
+Example embedding pipeline:
+
+```text
+Document
+   ↓
+Embedding Model
+   ↓
+Vector Representation
+```
+
+Example using Python:
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+embedding = client.embeddings.create(
+    model="text-embedding-3-small",
+    input="AI accelerator chips"
+)
+
+vector = embedding.data[0].embedding
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+let embedding = client
+    .embeddings()
+    .create("text-embedding-3-small", "AI accelerator chips")
+    .await?;
+
+let vector = embedding.data[0].embedding;
+```
+
+</TabItem>
+
+</Tabs>
+
+These vectors are stored in a **vector database**.
+
+---
+
+# Vector Databases
+
+A vector database is designed to store and search **high-dimensional vectors** efficiently.
+
+Instead of matching text directly, the system compares **vector similarity**.
+
+Example architecture:
+
+```text
+Documents
+   ↓
+Embeddings
+   ↓
+Vector Database
+   ↓
+Similarity Search
+```
+
+Popular vector databases include:
+
+| Database | Notes                             |
+| -------- | --------------------------------- |
+| FAISS    | high-performance research library |
+| Qdrant   | production vector database        |
+| Weaviate | scalable knowledge systems        |
+| Chroma   | lightweight vector storage        |
+
+---
+
+# Storing Documents in a Vector Database
+
+Each document is converted into an embedding and stored.
+
+Example structure:
+
+```json
+{
+  "embedding": [0.21, -0.33, 0.44, ...],
+  "text": "The H100 GPU is designed for AI workloads."
+}
+```
+
+Example code:
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+collection.add(
+    documents=["The H100 GPU is designed for AI workloads"],
+    embeddings=[vector]
+)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+vector_db.insert(Document {
+    embedding: vector,
+    text: "The H100 GPU is designed for AI workloads".into(),
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+Once stored, these embeddings become searchable.
+
+---
+
+# Similarity Search
+
+When the agent receives a query, the system performs **vector similarity search**.
+
+Example:
+
+```text
+Query: AI accelerator architecture
+```
+
+Process:
+
+```text
+Query
+ ↓
+Generate embedding
+ ↓
+Search vector database
+ ↓
+Return most similar documents
+```
+
+Example retrieved documents:
+
+```text
+1. Nvidia H100 architecture
+2. Tensor processing units
+3. AI accelerator design principles
+```
+
+These documents are then inserted into the **agent context**.
+
+---
+
+# How Similarity Is Measured
+
+Vector similarity is often computed using **cosine similarity**.
+
+Conceptually:
+
+```text
+Similarity = cosine(query_vector, document_vector)
+```
+
+The system retrieves documents with the **highest similarity scores**.
+
+This allows the agent to find relevant knowledge even when wording differs.
+
+---
+
+# Retrieval-Augmented Generation (RAG)
+
+Once relevant documents are retrieved, they are added to the prompt.
+
+Example:
+
+```text
+User Question
+ ↓
+Vector Search
+ ↓
+Relevant Documents
+ ↓
+LLM Reasoning
+ ↓
+Answer
+```
+
+Example prompt:
+
+```text
+Context:
+The H100 GPU is designed for AI workloads.
+
+Question:
+What makes the H100 suitable for machine learning?
+```
+
+The LLM now answers using **external knowledge**.
+
+---
+
+# Advantages of Semantic Memory
+
+Semantic memory provides several benefits.
+
+### Knowledge Expansion
+
+Agents can access large knowledge bases.
+
+---
+
+### Updatable Knowledge
+
+New documents can be added without retraining the model.
+
+---
+
+### Domain Specialization
+
+Agents can learn company-specific or project-specific information.
+
+---
+
+### Reduced Hallucination
+
+Providing relevant documents helps ground the model’s responses.
+
+---
+
+# Challenges of Semantic Memory
+
+Semantic memory systems must also address several challenges.
+
+### Retrieval Accuracy
+
+Poor embeddings or search algorithms may retrieve irrelevant documents.
+
+---
+
+### Context Limits
+
+Too many retrieved documents may exceed context windows.
+
+---
+
+### Knowledge Freshness
+
+Systems must ensure that stored knowledge remains up-to-date.
+
+---
+
+# Semantic Memory as the Agent’s Knowledge System
+
+If we compare agent components with human cognition:
+
+| Human System        | Agent System    |
+| ------------------- | --------------- |
+| Knowledge           | semantic memory |
+| Experiences         | episodic memory |
+| Short-term thinking | working memory  |
+
+Together, these systems allow agents to **store knowledge, learn from experience, and reason effectively**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **semantic memory**, including knowledge bases, embeddings, vector databases, and similarity search.
+
+In the next article we will explore **procedural memory**, which allows agents to store and reuse workflows, instructions, and operational knowledge.
+
+→ Continue to **5.4 — Procedural Memory**

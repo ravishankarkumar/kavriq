@@ -1,0 +1,384 @@
+---
+
+title: Computer Use Agents
+description: Understanding Large Action Models and the next generation of AI-driven software automation
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 7 — Computer Use & Vision**.
+
+In previous modules we explored how agents reason, use tools, retrieve knowledge, and collaborate with other agents.
+
+In this module we examine a new frontier in agent systems: **agents that can directly operate computers by interacting with graphical interfaces, screens, and software applications**.
+
+</Aside>
+
+# Computer Use Agents
+
+Most modern AI agents interact with software using **APIs and structured tools**.
+
+Example workflow:
+
+```text
+User Request
+   ↓
+Agent
+   ↓
+API Call
+   ↓
+External Service
+```
+
+This architecture works well when systems expose clean APIs.
+
+However, many real-world applications do not provide such interfaces.
+
+Examples include:
+
+* legacy enterprise software
+* desktop applications
+* graphical dashboards
+* internal tools without APIs
+
+To interact with these systems, agents must operate the computer **the same way humans do**.
+
+This capability is known as **computer use**.
+
+---
+
+# What Are Computer Use Agents?
+
+Computer use agents are AI systems that can interact with computers by:
+
+* reading screens
+* moving the mouse
+* typing on the keyboard
+* navigating graphical interfaces
+* interpreting visual elements
+
+Conceptually:
+
+```text
+Agent
+  ↓
+Screen perception
+  ↓
+Action decision
+  ↓
+Mouse / Keyboard actions
+```
+
+This allows agents to operate **any software interface**, even without APIs.
+
+---
+
+# The Rise of Large Action Models (LAMs)
+
+Traditional language models specialize in generating text.
+
+Large Action Models (LAMs) extend this capability by generating **actions in an environment**.
+
+Instead of predicting the next token, a LAM predicts the next **interaction step**.
+
+Example:
+
+```text
+Observation: browser window open
+Goal: search for weather
+
+Action:
+click search bar
+type "Tokyo weather"
+press enter
+```
+
+LAMs therefore combine:
+
+* perception
+* reasoning
+* action generation
+
+---
+
+# LLMs vs LAMs
+
+The difference between language models and action models is primarily about **output type**.
+
+| Model Type | Output                    |
+| ---------- | ------------------------- |
+| LLM        | text tokens               |
+| LAM        | actions in an environment |
+
+Example comparison:
+
+LLM output:
+
+```text
+"The weather in Tokyo is currently 26°C."
+```
+
+LAM output:
+
+```text
+move_mouse(400, 200)
+click()
+type("Tokyo weather")
+press_enter()
+```
+
+LAMs enable agents to **control software interfaces directly**.
+
+---
+
+# Computer Use Architecture
+
+A typical computer-use agent includes several components.
+
+```text
+Screen Capture
+     ↓
+Vision Model
+     ↓
+Environment Representation
+     ↓
+Planner
+     ↓
+Action Executor
+```
+
+The agent repeatedly observes the screen and performs actions.
+
+This loop is similar to reinforcement learning environments.
+
+---
+
+# Example Computer Use Loop
+
+Conceptually:
+
+```text
+Observe Screen
+      ↓
+Understand UI Elements
+      ↓
+Decide Next Action
+      ↓
+Execute Mouse / Keyboard Input
+      ↓
+Observe Updated Screen
+```
+
+This process continues until the task is completed.
+
+---
+
+# Example Task
+
+Consider the request:
+
+> “Download the latest NVIDIA GPU drivers.”
+
+A computer-use agent might perform the following actions:
+
+```text
+Open browser
+Search "NVIDIA drivers"
+Click official NVIDIA website
+Select GPU model
+Click download
+Save file
+```
+
+Each step involves **interpreting visual elements on the screen**.
+
+---
+
+# Representing Actions
+
+Actions are usually represented as structured commands.
+
+Example:
+
+```json
+{
+  "action": "click",
+  "x": 520,
+  "y": 310
+}
+```
+
+Other actions might include:
+
+```json
+{
+  "action": "type",
+  "text": "GPU benchmarks"
+}
+```
+
+These commands control the system’s input devices.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import pyautogui
+
+def click(x, y):
+    pyautogui.click(x, y)
+
+def type_text(text):
+    pyautogui.write(text)
+
+click(500, 300)
+type_text("AI chips")
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use enigo::{Enigo, MouseButton, MouseControllable, KeyboardControllable};
+
+let mut enigo = Enigo::new();
+
+enigo.mouse_move_to(500, 300);
+enigo.mouse_click(MouseButton::Left);
+enigo.key_sequence("AI chips");
+```
+
+</TabItem>
+
+</Tabs>
+
+These libraries allow agents to simulate **human computer interaction**.
+
+---
+
+# Why Computer Use Matters
+
+Computer-use agents unlock several powerful capabilities.
+
+### Automation Without APIs
+
+Agents can interact with software that was never designed for automation.
+
+---
+
+### Legacy System Integration
+
+Many enterprise systems lack modern APIs but have graphical interfaces.
+
+---
+
+### End-to-End Automation
+
+Agents can perform complete workflows across multiple applications.
+
+Example:
+
+```text
+Open spreadsheet
+Extract data
+Generate report
+Upload to dashboard
+Send email summary
+```
+
+---
+
+# Real-World Applications
+
+Computer-use agents are already being explored in many domains.
+
+Examples include:
+
+| Application          | Example                       |
+| -------------------- | ----------------------------- |
+| office automation    | filling forms                 |
+| customer support     | navigating dashboards         |
+| research assistants  | collecting web data           |
+| software testing     | interacting with applications |
+| enterprise workflows | automating repetitive tasks   |
+
+These systems are sometimes described as **AI-powered robotic process automation (RPA)**.
+
+---
+
+# Challenges of Computer Use Agents
+
+Despite their potential, computer-use agents face several challenges.
+
+### Visual Understanding
+
+The agent must correctly identify:
+
+* buttons
+* text fields
+* menus
+* icons
+
+---
+
+### Interface Variability
+
+UI layouts may change across versions of software.
+
+---
+
+### Precision Requirements
+
+Incorrect clicks or keystrokes can break workflows.
+
+---
+
+### Security Concerns
+
+Allowing agents to control computers introduces security risks.
+
+Careful sandboxing and permission systems are required.
+
+---
+
+# Computer Use as the Next Frontier
+
+Computer-use agents represent a significant shift in AI capabilities.
+
+Earlier systems could:
+
+* generate text
+* answer questions
+* analyze documents
+
+Computer-use agents can **interact directly with the digital world**.
+
+Conceptually:
+
+```text
+LLMs → reasoning
+Tools → APIs
+Computer-use agents → interface control
+```
+
+This capability may dramatically expand the scope of **AI-driven automation**.
+
+---
+
+# Looking Ahead
+
+In this article we introduced **Computer Use Agents** and the concept of **Large Action Models (LAMs)**.
+
+We explored how agents can interact with graphical interfaces by observing screens and generating actions.
+
+In the next article we will examine **GUI Navigation**, including how agents detect interface elements and control mouse and keyboard interactions.
+
+→ Continue to **7.2 — GUI Navigation**

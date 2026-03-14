@@ -1,0 +1,396 @@
+---
+
+title: Observability for Agents
+description: How tracing, decision tree visualization, and observability platforms help developers monitor and debug AI agent systems
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 10 — Production & High-Performance Engineering**.
+
+In the previous articles we explored **model routing strategies** and **Rust-based agent infrastructure** for building scalable systems.
+
+However, once agents become complex—using tools, planning tasks, and interacting with external systems—developers need ways to **observe what the agent is doing internally**.
+
+This capability is known as **observability**.
+
+</Aside>
+
+# Observability for Agents
+
+Traditional software systems are relatively straightforward to debug.
+
+Example execution path:
+
+```text
+Request → Function → Database → Response
+```
+
+Logs and stack traces usually reveal what happened.
+
+Agent systems behave differently.
+
+An agent may:
+
+* generate internal reasoning steps
+* call multiple tools
+* interact with external APIs
+* revise plans dynamically
+
+Example agent workflow:
+
+```text
+User Question
+      ↓
+Thought
+      ↓
+Search Tool
+      ↓
+Observation
+      ↓
+Second Tool
+      ↓
+Reasoning
+      ↓
+Final Answer
+```
+
+Understanding what happened inside this process requires **specialized observability tools**.
+
+---
+
+# What Is Observability?
+
+Observability refers to the ability to **inspect the internal behavior of a system while it is running**.
+
+In agent systems, observability typically includes:
+
+* reasoning traces
+* tool execution logs
+* decision paths
+* latency metrics
+
+Conceptually:
+
+```text
+Agent Execution
+      ↓
+Tracing + Logging
+      ↓
+Observability Dashboard
+```
+
+These tools allow developers to understand **why the agent behaved in a certain way**.
+
+---
+
+# Agent Tracing
+
+One of the most important observability tools is **agent tracing**.
+
+Tracing records the sequence of steps taken by an agent.
+
+Example trace:
+
+```text
+Step 1:
+Thought: search for GPU benchmarks
+
+Step 2:
+Action: web_search("H100 vs RTX 4090")
+
+Step 3:
+Observation: benchmark results
+
+Step 4:
+Thought: compare throughput
+```
+
+This trace reveals the **agent's reasoning trajectory**.
+
+Tracing helps developers answer questions such as:
+
+* Why did the agent call this tool?
+* Why did the reasoning fail?
+* Where did the workflow slow down?
+
+---
+
+# Trace Structure
+
+Traces typically capture several types of events.
+
+| Event Type      | Example           |
+| --------------- | ----------------- |
+| reasoning step  | internal thoughts |
+| tool invocation | API calls         |
+| observations    | tool outputs      |
+| model outputs   | generated text    |
+| system events   | retries, failures |
+
+These events form a **timeline of agent execution**.
+
+---
+
+# Example Trace Format
+
+```json
+{
+  "step": 2,
+  "type": "tool_call",
+  "tool": "web_search",
+  "input": "GPU training benchmarks",
+  "latency_ms": 420
+}
+```
+
+Trace data can be stored for later analysis.
+
+---
+
+# Debugging with Traces
+
+Tracing makes debugging agent failures much easier.
+
+Example failure scenario:
+
+```text
+User Question:
+What GPU architecture powers the H100?
+
+Agent trace:
+Search → incorrect source → hallucinated answer
+```
+
+The trace reveals exactly where the problem occurred.
+
+Without tracing, developers would only see the **incorrect final answer**.
+
+---
+
+# Decision Tree Visualization
+
+Another powerful observability technique is **decision tree visualization**.
+
+Instead of viewing a simple linear trace, developers can see how the agent explored different reasoning paths.
+
+Conceptually:
+
+```text
+User Question
+      ↓
+   Decision
+   /      \
+Search   Recall
+   ↓        ↓
+Answer   Answer
+```
+
+This structure resembles a **reasoning tree**.
+
+---
+
+# Visualizing Agent Reasoning
+
+Visualization tools often display agent execution as graphs.
+
+Example representation:
+
+```text
+Node: User Question
+      ↓
+Node: Thought
+      ↓
+Node: Tool Call
+      ↓
+Node: Observation
+      ↓
+Node: Final Answer
+```
+
+Each node represents a decision or action.
+
+This visualization makes it easier to analyze complex workflows.
+
+---
+
+# Benefits of Decision Visualization
+
+Visual representations help developers quickly identify issues.
+
+Common problems include:
+
+* redundant tool calls
+* inefficient planning loops
+* incorrect reasoning steps
+* premature task termination
+
+Decision trees reveal **patterns in agent behavior** that may not be obvious from logs.
+
+---
+
+# Observability Platforms
+
+Several platforms provide tools for monitoring agent systems.
+
+These tools integrate tracing, evaluation, and visualization features.
+
+Examples include:
+
+| Platform            | Purpose                     |
+| ------------------- | --------------------------- |
+| LangSmith           | agent debugging and tracing |
+| OpenTelemetry       | distributed system tracing  |
+| internal dashboards | custom monitoring tools     |
+
+These systems help teams operate agent systems in production.
+
+---
+
+# LangSmith
+
+LangSmith is a platform designed for **observing and debugging agent workflows**.
+
+Key capabilities include:
+
+* trace visualization
+* prompt debugging
+* evaluation integration
+* dataset management
+
+Example trace view:
+
+```text
+User Query
+   ↓
+LLM Thought
+   ↓
+Tool Call
+   ↓
+Observation
+   ↓
+Final Output
+```
+
+Developers can inspect each step of the execution.
+
+---
+
+# OpenTelemetry
+
+OpenTelemetry is an industry standard for **observability in distributed systems**.
+
+It provides tools for collecting:
+
+* traces
+* metrics
+* logs
+
+Agent systems can integrate OpenTelemetry to monitor:
+
+* request latency
+* tool execution time
+* error rates
+
+Example architecture:
+
+```text
+Agent Service
+      ↓
+OpenTelemetry Collector
+      ↓
+Monitoring Dashboard
+```
+
+This provides real-time visibility into system performance.
+
+---
+
+# Observability Metrics
+
+Production systems often track several key metrics.
+
+| Metric          | Meaning                   |
+| --------------- | ------------------------- |
+| latency         | time to complete task     |
+| tool calls      | number of tools used      |
+| success rate    | tasks completed correctly |
+| reasoning steps | trajectory length         |
+
+These metrics help teams monitor system health.
+
+---
+
+# Example Observability Pipeline
+
+```text
+Agent execution
+      ↓
+Trace collection
+      ↓
+Metrics aggregation
+      ↓
+Visualization dashboard
+```
+
+This pipeline provides both **low-level traces** and **high-level system metrics**.
+
+---
+
+# Debugging Agent Failures
+
+When an agent fails, observability tools allow developers to investigate.
+
+Typical debugging steps:
+
+1. inspect execution trace
+2. analyze tool calls
+3. review reasoning steps
+4. evaluate final output
+
+This process resembles debugging traditional software, but with **additional reasoning analysis**.
+
+---
+
+# Observability as the Nervous System
+
+Observability acts as the **nervous system of agent infrastructure**.
+
+It provides real-time insight into:
+
+* system behavior
+* agent decisions
+* performance bottlenecks
+
+Without observability, managing complex agent systems becomes extremely difficult.
+
+---
+
+# Summary of Module 10
+
+In this module we explored **production engineering techniques for AI agents**.
+
+| Topic                | Concept                             |
+| -------------------- | ----------------------------------- |
+| Small Model Strategy | model routing and cost optimization |
+| Rust Infrastructure  | high-performance orchestration      |
+| Observability        | monitoring and debugging agents     |
+
+These techniques enable organizations to deploy **scalable, reliable agent systems in production environments**.
+
+---
+
+# Looking Ahead
+
+In the next module we will build a **Minimal Agent Runtime from scratch**.
+
+Topics include:
+
+* implementing the agent loop
+* designing agent state machines
+* tool calling infrastructure
+* debugging agent execution
+
+→ Continue to **11.1 — Why Build Your Own Agent Runtime**

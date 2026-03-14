@@ -1,0 +1,439 @@
+---
+
+title: The Computer-Use Researcher
+description: Building an AI research agent that searches the web, extracts visual data, and synthesizes structured reports
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Capstone Project">
+This article begins **Module 12 — Capstone Projects**.
+
+In previous modules we explored the foundations of agent systems:
+
+• planning architectures
+• tool usage
+• memory systems
+• computer-use capabilities
+• safety and evaluation
+• agent runtime implementation
+
+In this module we will build **complete agent systems** that combine these components into real applications.
+
+The first project is **The Computer-Use Researcher**.
+
+</Aside>
+
+# The Computer-Use Researcher
+
+Many real-world research tasks involve gathering information from multiple sources.
+
+A typical workflow might involve:
+
+1. searching for relevant sources
+2. reading articles and documents
+3. extracting key insights
+4. summarizing findings into a report
+
+This process can be time-consuming.
+
+The **Computer-Use Researcher** is an AI agent designed to automate this workflow.
+
+The agent can:
+
+* search the web for information
+* capture screenshots and visual data
+* extract insights from charts and documents
+* synthesize structured research reports
+
+Conceptually:
+
+```text
+Research Question
+        ↓
+Web Search
+        ↓
+Document Retrieval
+        ↓
+Visual Data Extraction
+        ↓
+Analysis
+        ↓
+Structured Report
+```
+
+This project demonstrates how multiple agent capabilities can be combined into a **practical research assistant**.
+
+---
+
+# System Architecture
+
+The research agent integrates several subsystems.
+
+```text
+User Query
+     ↓
+Planning Agent
+     ↓
+Search Tool
+     ↓
+Document Analyzer
+     ↓
+Vision Module
+     ↓
+Report Generator
+```
+
+Each component handles a specific stage of the workflow.
+
+---
+
+# Core Capabilities
+
+The Computer-Use Researcher combines capabilities from earlier modules.
+
+| Capability              | Module   |
+| ----------------------- | -------- |
+| planning systems        | Module 3 |
+| tool usage              | Module 4 |
+| RAG retrieval           | Module 5 |
+| computer-use automation | Module 7 |
+| evaluation systems      | Module 9 |
+
+This makes the project a **comprehensive agent application**.
+
+---
+
+# Step 1 — Web Search
+
+The agent begins by searching the web for relevant sources.
+
+Example query:
+
+```text
+Research question:
+What are the latest AI chip architectures?
+```
+
+The agent calls a search tool.
+
+Example tool call:
+
+```json
+{
+  "tool": "web_search",
+  "args": {
+    "query": "latest AI chip architectures 2026"
+  }
+}
+```
+
+The results provide initial sources for analysis.
+
+---
+
+# Example Search Tool
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def web_search(query):
+
+    results = search_api(query)
+
+    return results
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn web_search(query: &str) -> Vec<String> {
+
+    search_api(query)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The agent collects URLs and document summaries.
+
+---
+
+# Step 2 — Document Retrieval
+
+After identifying sources, the agent retrieves the content.
+
+Example workflow:
+
+```text
+Search results
+      ↓
+Select relevant sources
+      ↓
+Download article
+```
+
+Example document extraction:
+
+```python
+article = fetch_article(url)
+```
+
+This text becomes part of the **research context**.
+
+---
+
+# Step 3 — Capturing Visual Data
+
+Many research sources contain important visual information such as:
+
+* charts
+* diagrams
+* tables
+* screenshots
+
+The agent can capture visual data.
+
+Example workflow:
+
+```text
+Open webpage
+      ↓
+Capture screenshot
+      ↓
+Detect charts
+```
+
+This step uses **visual grounding techniques** from earlier modules.
+
+---
+
+# Example Screenshot Tool
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import pyautogui
+
+def capture_screen():
+
+    screenshot = pyautogui.screenshot()
+
+    return screenshot
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn capture_screen() -> Image {
+
+    screenshot::capture()
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The screenshot can then be analyzed by a vision model.
+
+---
+
+# Step 4 — Extracting Insights
+
+The agent analyzes both text and visual data.
+
+Example analysis tasks:
+
+* summarizing articles
+* extracting key statistics
+* interpreting charts
+
+Example prompt:
+
+```text
+Summarize the key findings from the following article.
+```
+
+Example chart analysis:
+
+```text
+Chart shows GPU market share:
+NVIDIA 80%
+AMD 15%
+Intel 5%
+```
+
+These insights become part of the final report.
+
+---
+
+# Step 5 — Synthesizing the Report
+
+After gathering information, the agent synthesizes a research report.
+
+Example structure:
+
+```text
+Research Report
+
+1. Overview of the topic
+2. Key technologies
+3. Market trends
+4. Visual data analysis
+5. Conclusions
+```
+
+The final output provides a **structured summary of the research findings**.
+
+---
+
+# Example Report Generation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def generate_report(context, llm):
+
+    prompt = f"""
+    Generate a research report based on:
+    {context}
+    """
+
+    return llm.generate(prompt)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn generate_report(context: &str, llm: &LLM) -> String {
+
+    let prompt = format!(
+        "Generate a research report based on:\n{}",
+        context
+    );
+
+    llm.generate(&prompt)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The report combines information from multiple sources.
+
+---
+
+# Example End-to-End Workflow
+
+Example execution:
+
+```text
+User Question:
+What are the latest AI GPU architectures?
+
+Agent Workflow:
+Search web
+↓
+Retrieve documents
+↓
+Capture charts
+↓
+Extract insights
+↓
+Generate research report
+```
+
+Final output:
+
+```text
+Structured research report on AI GPU architectures.
+```
+
+---
+
+# Improving the Research Agent
+
+Several enhancements can improve the system.
+
+Examples include:
+
+* multi-hop retrieval across sources
+* automated citation generation
+* fact verification using multiple sources
+* chart-to-data extraction
+
+These capabilities can transform the agent into a powerful **AI research assistant**.
+
+---
+
+# Real-World Applications
+
+Research agents can be useful in many domains.
+
+| Domain            | Example Use            |
+| ----------------- | ---------------------- |
+| academic research | literature review      |
+| finance           | market analysis        |
+| technology        | industry trend reports |
+| journalism        | investigative research |
+
+These systems can dramatically accelerate information gathering.
+
+---
+
+# The Role of Human Oversight
+
+Despite their capabilities, research agents should still include **human oversight**.
+
+Example workflow:
+
+```text
+Agent generates report
+      ↓
+Human reviewer validates findings
+      ↓
+Final publication
+```
+
+Human review ensures reliability.
+
+---
+
+# What This Project Demonstrates
+
+The Computer-Use Researcher demonstrates how agent capabilities combine into a real system.
+
+The project integrates:
+
+* planning systems
+* tool usage
+* RAG retrieval
+* computer-use automation
+* reasoning models
+
+This architecture represents a **practical application of agentic AI**.
+
+---
+
+# Looking Ahead
+
+In the next capstone project we will build **a multi-agent coding pipeline**, where specialized agents collaborate to design, implement, and review software.
+
+→ Continue to **12.2 — The Multi-Agent Coding Pipeline**

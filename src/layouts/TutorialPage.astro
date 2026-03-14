@@ -1,0 +1,52 @@
+---
+import type { MarkdownLayoutProps } from "astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Layout from "./Layout.astro";
+import { SITE } from "@/config";
+
+// DELETE THE STARLIGHT CSS IMPORTS FROM HERE
+// They are not exposed by the package exports
+
+type Props = MarkdownLayoutProps<{ title: string }>;
+const { frontmatter } = Astro.props;
+---
+
+<Layout title={`${frontmatter.title} | ${SITE.title}`}>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css"
+  />
+
+  <Header />
+  <Breadcrumb />
+  <main id="main-content" class="app-layout">
+    <section id="about" class="app-prose mb-28 max-w-app prose-img:border-0">
+      <h1 class="text-2xl tracking-wider sm:text-3xl">{frontmatter.title}</h1>
+      <slot />
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style is:global>
+  /* 2. Manually provide the variables Starlight components look for */
+  :root {
+    --sl-color-accent: var(--color-accent, #007acc);
+    --sl-color-bg-inline-code: var(--color-fill, #f4f4f4);
+  }
+
+  /* Style the Tabs so they don't look like plain bullet points */
+  starlight-tabs {
+    display: block;
+    margin: 1.5rem 0;
+  }
+  
+  .starlight-aside {
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border-left: 0.25rem solid var(--sl-color-accent);
+    background-color: rgba(0, 122, 204, 0.1);
+  }
+</style>

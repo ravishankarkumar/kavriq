@@ -1,0 +1,347 @@
+---
+
+title: Why Agent Evaluation Is Hard
+description: Understanding why evaluating AI agents is more complex than evaluating traditional software systems
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 9 — Evaluation & Trajectory Metrics**.
+
+In previous modules we explored how to build agent systems with planning, memory, tools, and safety mechanisms.
+
+However, building agents raises an important question:
+
+> **How do we know if an agent is actually performing well?**
+
+Evaluating agent systems is significantly more difficult than evaluating traditional software.
+
+</Aside>
+
+# Why Agent Evaluation Is Hard
+
+Traditional software systems are usually **deterministic**.
+
+Given the same input, the system produces the same output every time.
+
+Example:
+
+```text
+Input: 2 + 2
+Output: 4
+```
+
+Testing deterministic software is straightforward.
+
+Developers can write unit tests such as:
+
+```text
+assert(add(2,2) == 4)
+```
+
+Agent systems behave very differently.
+
+Most agents rely on **language models**, which produce **probabilistic outputs**.
+
+The same prompt may produce different responses each time.
+
+This makes evaluation much more challenging.
+
+---
+
+# Non-Deterministic Systems
+
+Language models generate responses by sampling from probability distributions.
+
+Conceptually:
+
+```text
+Prompt
+   ↓
+Probability distribution over tokens
+   ↓
+Sampled output
+```
+
+This means that the exact output may vary across runs.
+
+Example:
+
+```text
+Prompt:
+Explain how GPUs accelerate deep learning.
+```
+
+Possible responses:
+
+```text
+Run 1:
+GPUs accelerate deep learning through parallel computation.
+
+Run 2:
+Deep learning workloads benefit from GPU parallelism.
+
+Run 3:
+GPUs speed up neural networks by performing matrix operations efficiently.
+```
+
+All responses are correct, but they are **different**.
+
+This variability makes strict output comparison difficult.
+
+---
+
+# The Limits of Traditional Testing
+
+Traditional testing approaches assume **exact output matching**.
+
+Example:
+
+```text
+Expected output:
+"GPUs accelerate deep learning through parallel computation."
+```
+
+But an agent may produce:
+
+```text
+"Deep learning models run faster on GPUs due to parallel processing."
+```
+
+Even though the answer is correct, the test may fail.
+
+Therefore, evaluating agents requires **more flexible evaluation strategies**.
+
+---
+
+# Agents as Decision Processes
+
+Agents also behave differently because they perform **multi-step reasoning**.
+
+Example agent workflow:
+
+```text
+User Question
+      ↓
+Search tool
+      ↓
+Analyze results
+      ↓
+Retrieve additional documents
+      ↓
+Generate answer
+```
+
+Each step introduces variability.
+
+Small differences early in the process may lead to different final outputs.
+
+---
+
+# Path vs Outcome
+
+This leads to an important distinction when evaluating agents:
+
+| Evaluation Type       | Description          |
+| --------------------- | -------------------- |
+| Outcome evaluation    | judge final answer   |
+| Trajectory evaluation | judge reasoning path |
+
+Example:
+
+Agent A:
+
+```text
+Search → Retrieve correct documents → Generate correct answer
+```
+
+Agent B:
+
+```text
+Search wrong source → hallucinate → accidentally produce correct answer
+```
+
+Both agents produce the same final answer.
+
+However, their **reasoning paths are very different**.
+
+---
+
+# Why Trajectories Matter
+
+Evaluating only the final answer can hide serious problems.
+
+Example:
+
+```text
+Agent reasoning:
+1. Incorrect assumption
+2. Incorrect tool usage
+3. Random guess
+4. Correct answer
+```
+
+Outcome:
+
+```text
+Correct answer
+```
+
+Despite the correct result, the reasoning process is unreliable.
+
+Trajectory evaluation helps identify such issues.
+
+---
+
+# What Is an Agent Trajectory?
+
+An **agent trajectory** is the sequence of steps the agent takes while solving a task.
+
+Example trajectory:
+
+```text
+User question
+   ↓
+Thought: search for benchmarks
+   ↓
+Action: web_search("H100 vs RTX 4090")
+   ↓
+Observation: benchmark results
+   ↓
+Thought: compare training throughput
+   ↓
+Final answer
+```
+
+Each step forms part of the trajectory.
+
+Evaluating trajectories allows us to assess:
+
+* reasoning quality
+* tool usage
+* planning effectiveness
+
+---
+
+# Variability in Agent Behavior
+
+Agents often exhibit variability across runs.
+
+Example:
+
+Run 1:
+
+```text
+Search → analyze → answer
+```
+
+Run 2:
+
+```text
+Search → search again → analyze → answer
+```
+
+Run 3:
+
+```text
+Analyze from memory → answer
+```
+
+All runs may produce valid answers, but the **paths differ**.
+
+This makes evaluation challenging.
+
+---
+
+# The Complexity of Agent Environments
+
+Agent environments introduce additional complexity.
+
+Agents may interact with:
+
+* external APIs
+* web search engines
+* databases
+* software systems
+
+These environments can change over time.
+
+Example:
+
+```text
+Search results today ≠ search results tomorrow
+```
+
+This means that agent behavior may vary even when prompts remain unchanged.
+
+---
+
+# Evaluating Agent Performance
+
+Because of these challenges, evaluating agents typically involves multiple metrics.
+
+Example evaluation dimensions:
+
+| Metric            | Purpose                         |
+| ----------------- | ------------------------------- |
+| task success      | did the agent solve the problem |
+| reasoning quality | did the reasoning make sense    |
+| tool usage        | were tools used correctly       |
+| efficiency        | how many steps were required    |
+
+Together, these metrics provide a **more complete picture of agent performance**.
+
+---
+
+# Evaluation as an Engineering Discipline
+
+As agent systems become more complex, evaluation is becoming a dedicated field of engineering.
+
+Teams now build:
+
+* automated evaluation pipelines
+* benchmark datasets
+* trajectory analysis tools
+* monitoring dashboards
+
+These systems allow developers to measure agent performance at scale.
+
+---
+
+# Why Evaluation Is Critical
+
+Without proper evaluation, agent systems may exhibit hidden problems such as:
+
+* unreliable reasoning
+* inefficient workflows
+* unnecessary tool usage
+* hallucinated outputs
+
+Evaluation allows developers to **identify and correct these issues**.
+
+---
+
+# The Evolution of AI Evaluation
+
+Evaluation techniques have evolved alongside AI systems.
+
+```text
+Rule-based systems → deterministic tests
+ML models → statistical metrics
+LLMs → human evaluation
+Agents → trajectory evaluation
+```
+
+Agent evaluation must consider **both outcomes and decision processes**.
+
+---
+
+# Looking Ahead
+
+In this article we explored why evaluating AI agents is difficult, focusing on **non-deterministic outputs and the distinction between outcomes and trajectories**.
+
+In the next article we will explore **LLM-as-a-Judge**, a technique where language models themselves are used to evaluate agent outputs.
+
+→ Continue to **9.2 — LLM-as-a-Judge**

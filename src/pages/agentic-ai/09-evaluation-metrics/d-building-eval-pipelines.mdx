@@ -1,0 +1,405 @@
+---
+
+title: Building Evaluation Pipelines
+description: How golden datasets and regression testing enable continuous evaluation of AI agents
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 9 — Evaluation & Trajectory Metrics**.
+
+In previous articles we explored:
+
+• why evaluating agents is difficult
+• using **LLM-as-a-Judge** systems
+• measuring **trajectory metrics**
+
+In this article we examine how organizations build **automated evaluation pipelines** that continuously test agent performance.
+
+</Aside>
+
+# Building Evaluation Pipelines
+
+Modern AI systems evolve rapidly.
+
+Agents are constantly updated with:
+
+* new prompts
+* improved reasoning strategies
+* updated tools
+* new model versions
+
+Every change introduces the risk of **breaking existing behavior**.
+
+To detect these issues early, teams build **evaluation pipelines**.
+
+An evaluation pipeline automatically runs a large set of tests to measure agent performance.
+
+Conceptually:
+
+```text
+Agent update
+     ↓
+Evaluation pipeline runs
+     ↓
+Performance metrics generated
+     ↓
+Regression detection
+```
+
+These pipelines function like **unit tests for AI systems**.
+
+---
+
+# Why Evaluation Pipelines Are Necessary
+
+Without automated evaluation, improvements can unintentionally introduce new failures.
+
+Example scenario:
+
+```text
+Agent version 1:
+Correctly answers research questions.
+
+Agent version 2:
+Better reasoning but slower tool usage.
+
+Agent version 3:
+Faster execution but incorrect answers.
+```
+
+Evaluation pipelines detect these issues before deployment.
+
+---
+
+# Golden Datasets
+
+A core component of evaluation pipelines is the **golden dataset**.
+
+A golden dataset is a collection of tasks with **known correct outcomes**.
+
+Example dataset entry:
+
+```json
+{
+  "question": "Why do GPUs accelerate deep learning?",
+  "expected_answer": "GPUs accelerate deep learning because they perform parallel matrix operations."
+}
+```
+
+These datasets act as **reference benchmarks**.
+
+---
+
+# Characteristics of Good Golden Datasets
+
+High-quality golden datasets have several properties.
+
+| Property       | Description                  |
+| -------------- | ---------------------------- |
+| representative | covers real-world tasks      |
+| diverse        | includes many task types     |
+| verified       | answers validated by experts |
+| stable         | remains consistent over time |
+
+These properties ensure that evaluation results are meaningful.
+
+---
+
+# Example Golden Dataset Categories
+
+Agent evaluation datasets often include multiple task categories.
+
+Example categories:
+
+| Category      | Example Task                     |
+| ------------- | -------------------------------- |
+| reasoning     | explain transformer architecture |
+| retrieval     | find GPU benchmarks              |
+| planning      | design a workflow                |
+| tool usage    | query database                   |
+| summarization | summarize research paper         |
+
+This diversity ensures that agents are evaluated across **different capabilities**.
+
+---
+
+# Running Evaluation Tests
+
+Evaluation pipelines run agents against the golden dataset.
+
+Example workflow:
+
+```text
+Golden dataset
+      ↓
+Agent executes tasks
+      ↓
+Outputs recorded
+      ↓
+Evaluation metrics computed
+```
+
+Example result:
+
+```text
+Tasks evaluated: 500
+Correct answers: 430
+Success rate: 86%
+```
+
+This provides a quantitative measure of performance.
+
+---
+
+# Using LLM Judges in Pipelines
+
+Many pipelines integrate **LLM-as-a-Judge** evaluation.
+
+Example evaluation process:
+
+```text
+Agent generates answer
+      ↓
+Judge model evaluates answer
+      ↓
+Score recorded
+```
+
+Example judge output:
+
+```json
+{
+  "score": 4,
+  "reason": "Correct explanation but lacks detail."
+}
+```
+
+These scores can be aggregated into performance metrics.
+
+---
+
+# Regression Testing for Agents
+
+Regression testing ensures that new system updates do not break existing capabilities.
+
+Conceptually:
+
+```text
+Previous agent version
+      ↓
+Evaluation baseline
+
+New agent version
+      ↓
+Evaluation comparison
+```
+
+If the new version performs worse on certain tasks, a **regression is detected**.
+
+---
+
+# Example Regression Detection
+
+Example evaluation comparison:
+
+| Metric            | Old Version | New Version |
+| ----------------- | ----------- | ----------- |
+| task success      | 90%         | 85%         |
+| reasoning quality | 4.2         | 4.1         |
+| tool efficiency   | 3.9         | 4.3         |
+
+Although tool efficiency improved, task success dropped.
+
+This indicates a **potential regression**.
+
+---
+
+# Automated Evaluation Pipelines
+
+A typical evaluation pipeline includes several stages.
+
+```text
+Dataset preparation
+      ↓
+Agent execution
+      ↓
+Metric computation
+      ↓
+Regression analysis
+      ↓
+Performance dashboard
+```
+
+This pipeline can run automatically after every system update.
+
+---
+
+# Continuous Integration for Agents
+
+Many organizations integrate evaluation pipelines into **continuous integration (CI)** systems.
+
+Example workflow:
+
+```text
+Developer updates agent code
+      ↓
+CI pipeline triggers evaluation
+      ↓
+Tests run on golden dataset
+      ↓
+Results reported
+```
+
+If performance drops below a threshold, deployment may be blocked.
+
+---
+
+# Example Evaluation Script
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def run_evaluation(dataset, agent):
+
+    results = []
+
+    for task in dataset:
+
+        answer = agent.solve(task["question"])
+
+        results.append({
+            "question": task["question"],
+            "answer": answer
+        })
+
+    return results
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn run_evaluation(dataset: &Vec<Task>, agent: &Agent) -> Vec<Result> {
+
+    dataset.iter().map(|task| {
+
+        let answer = agent.solve(&task.question);
+
+        Result {
+            question: task.question.clone(),
+            answer
+        }
+
+    }).collect()
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+These results are later analyzed by evaluation tools.
+
+---
+
+# Evaluation Dashboards
+
+Large systems often visualize evaluation results using dashboards.
+
+Example dashboard metrics:
+
+```text
+Task success rate
+Trajectory efficiency
+Tool usage accuracy
+Reasoning quality score
+```
+
+These dashboards help teams monitor agent performance over time.
+
+---
+
+# Continuous Improvement Loop
+
+Evaluation pipelines create a feedback loop for improving agents.
+
+Conceptually:
+
+```text
+Agent system
+      ↓
+Evaluation pipeline
+      ↓
+Performance metrics
+      ↓
+Model improvements
+```
+
+This cycle allows teams to iteratively refine agent behavior.
+
+---
+
+# Evaluation at Scale
+
+Large AI systems may evaluate thousands of tasks daily.
+
+Example evaluation scale:
+
+```text
+Tasks per day: 10,000
+Agent versions tested: 5
+Metrics tracked: 12
+```
+
+Automated pipelines make this scale possible.
+
+---
+
+# The Future of Agent Evaluation
+
+As AI systems become more autonomous, evaluation will become increasingly important.
+
+Future evaluation systems may include:
+
+* simulation environments
+* adversarial test cases
+* automated reasoning benchmarks
+* real-world task evaluation
+
+These methods will help ensure that agents remain **reliable and trustworthy**.
+
+---
+
+# Summary of Module 9
+
+In this module we explored how to evaluate AI agent systems.
+
+| Topic                        | Concept                      |
+| ---------------------------- | ---------------------------- |
+| Why Agent Evaluation Is Hard | non-deterministic systems    |
+| LLM-as-a-Judge               | automated grading            |
+| Trajectory Evaluation        | analyzing reasoning paths    |
+| Evaluation Pipelines         | automated testing frameworks |
+
+Together, these techniques enable developers to **measure and improve agent performance**.
+
+---
+
+# Looking Ahead
+
+In the next module we will explore **Production & High-Performance Engineering**, which focuses on building scalable, efficient agent infrastructure.
+
+Topics include:
+
+* model routing strategies
+* cost optimization
+* Rust-based orchestration
+* observability systems for agents
+
+→ Continue to **10.1 — The Small Model Strategy**

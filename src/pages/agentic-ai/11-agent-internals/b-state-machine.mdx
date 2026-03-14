@@ -1,0 +1,400 @@
+---
+
+title: Designing a Simple Agent State Machine
+description: Implementing the core agent loop and managing state in a minimal agent runtime
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 11 — Building a Minimal Agent Runtime**.
+
+In the previous article we explored why developers sometimes build their own agent runtimes.
+
+In this article we begin implementing the runtime by designing a **simple agent state machine**, which forms the execution core of most agent systems.
+
+</Aside>
+
+# Designing a Simple Agent State Machine
+
+Most agent systems operate as **state machines**.
+
+A state machine is a system that moves through a sequence of states based on events and decisions.
+
+Example:
+
+```text
+Start → Reason → Act → Observe → Reason → ... → Finish
+```
+
+This loop continues until the task is complete.
+
+In agent systems, the state machine controls:
+
+* reasoning steps
+* tool execution
+* observation handling
+* termination conditions
+
+---
+
+# The Agent Loop
+
+The core of an agent runtime is the **agent loop**.
+
+Conceptually:
+
+```text
+Goal
+ ↓
+Reason
+ ↓
+Act
+ ↓
+Observe
+ ↓
+Update State
+ ↓
+Repeat
+```
+
+This process repeats until the agent decides the task is finished.
+
+This pattern appears in many architectures including:
+
+* ReAct agents
+* planning agents
+* tool-using agents
+
+---
+
+# The Observe → Reason → Act Cycle
+
+A common agent execution cycle looks like this:
+
+```text
+Observation → Reasoning → Action → New Observation
+```
+
+Example workflow:
+
+```text
+User Question:
+What GPU is used in the Frontier supercomputer?
+
+Observation:
+User question received
+
+Reason:
+Search for Frontier supercomputer GPU
+
+Action:
+web_search("Frontier supercomputer GPU")
+
+Observation:
+AMD Instinct MI250X
+```
+
+The cycle continues until the agent generates the final answer.
+
+---
+
+# Representing Agent State
+
+The agent needs a way to **store information across steps**.
+
+This is handled using an **agent state object**.
+
+Typical state fields include:
+
+| Field        | Purpose            |
+| ------------ | ------------------ |
+| goal         | user request       |
+| history      | reasoning steps    |
+| observations | tool outputs       |
+| actions      | executed tools     |
+| step count   | iteration tracking |
+
+Example state structure:
+
+```text
+AgentState
+ ├─ goal
+ ├─ history
+ ├─ observations
+ └─ step_count
+```
+
+The runtime updates this state after each iteration.
+
+---
+
+# Example Agent State
+
+Example state after two iterations:
+
+```json
+{
+  "goal": "Explain GPU acceleration",
+  "history": [
+    "Search for GPU parallelism",
+    "Analyze results"
+  ],
+  "observations": [
+    "GPUs perform parallel matrix operations"
+  ],
+  "step_count": 2
+}
+```
+
+This state allows the agent to maintain context across multiple steps.
+
+---
+
+# Implementing the Agent Loop
+
+The runtime repeatedly executes the agent loop.
+
+Pseudo workflow:
+
+```text
+Initialize state
+↓
+Loop:
+  Generate reasoning
+  Select action
+  Execute tool
+  Update state
+↓
+Stop when task complete
+```
+
+This loop forms the foundation of the runtime.
+
+---
+
+# Example Python Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def agent_loop(goal, tools, llm):
+
+    state = {
+        "goal": goal,
+        "history": [],
+        "observations": [],
+        "step": 0
+    }
+
+    while True:
+
+        thought = llm.generate(str(state))
+
+        action = parse_action(thought)
+
+        observation = tools[action["name"]](**action["args"])
+
+        state["history"].append(thought)
+        state["observations"].append(observation)
+
+        state["step"] += 1
+
+        if action["name"] == "finish":
+            return observation
+```
+
+</TabItem>
+
+</Tabs>
+
+This loop performs reasoning, tool execution, and state updates.
+
+---
+
+# Example Rust Implementation
+
+<Tabs>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+struct AgentState {
+    goal: String,
+    history: Vec<String>,
+    observations: Vec<String>,
+    step: u32,
+}
+
+fn agent_loop(goal: &str, tools: &Tools, llm: &LLM) -> String {
+
+    let mut state = AgentState {
+        goal: goal.to_string(),
+        history: vec![],
+        observations: vec![],
+        step: 0,
+    };
+
+    loop {
+
+        let thought = llm.generate(&format!("{:?}", state));
+
+        let action = parse_action(&thought);
+
+        let observation = tools.execute(action);
+
+        state.history.push(thought);
+        state.observations.push(observation.clone());
+
+        state.step += 1;
+
+        if action.name == "finish" {
+            return observation;
+        }
+    }
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+Rust’s strong typing helps ensure state consistency.
+
+---
+
+# State Transitions
+
+The state machine moves through different phases during execution.
+
+Example transitions:
+
+```text
+Idle → Reasoning → Tool Execution → Observation Processing → Reasoning
+```
+
+Each transition represents a **stage in the agent workflow**.
+
+Visualized:
+
+```text
+Reason
+  ↓
+Act
+  ↓
+Observe
+  ↓
+Update State
+  ↓
+Repeat
+```
+
+---
+
+# Termination Conditions
+
+The runtime must also determine when the agent should stop.
+
+Common termination conditions include:
+
+* the agent produces a final answer
+* a maximum step limit is reached
+* an error occurs
+* a timeout expires
+
+Example safeguard:
+
+```text
+max_steps = 10
+```
+
+This prevents infinite loops.
+
+---
+
+# Preventing Infinite Loops
+
+Agents may sometimes get stuck in loops.
+
+Example:
+
+```text
+Search → Search again → Search again → ...
+```
+
+To prevent this, the runtime often enforces limits.
+
+Example:
+
+```python
+if state["step"] > 10:
+    return "Task terminated"
+```
+
+This protects the system from runaway execution.
+
+---
+
+# Logging Agent Execution
+
+The runtime should record each step for debugging.
+
+Example execution log:
+
+```text
+Step 1:
+Thought: search for benchmarks
+
+Step 2:
+Action: web_search
+
+Step 3:
+Observation: benchmark results
+```
+
+These logs help developers understand agent behavior.
+
+---
+
+# State Machines in Agent Frameworks
+
+Many modern frameworks use state-machine architectures.
+
+Examples include:
+
+| Framework    | Execution Model                  |
+| ------------ | -------------------------------- |
+| LangGraph    | graph-based state machine        |
+| AutoGen      | conversational state transitions |
+| ReAct agents | reasoning loops                  |
+
+Understanding state machines helps developers understand **how these frameworks operate internally**.
+
+---
+
+# The Core Runtime Structure
+
+After implementing the state machine, the minimal runtime now contains:
+
+```text
+Agent Runtime
+ ├─ State Object
+ ├─ Agent Loop
+ ├─ Tool Execution
+ └─ Termination Logic
+```
+
+This structure forms the **foundation of a functional agent system**.
+
+---
+
+# Looking Ahead
+
+In this article we designed a **simple agent state machine** and implemented the core **agent loop**.
+
+In the next article we will extend the runtime by adding **tool calling infrastructure**, allowing the agent to dynamically invoke external tools.
+
+→ Continue to **11.3 — Implementing Tool Calling**

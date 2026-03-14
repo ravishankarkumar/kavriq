@@ -1,0 +1,485 @@
+---
+
+title: The Execution Engine
+description: How AI agents safely execute tools, APIs, and code
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 2 — Internal Agent Architecture**.
+
+In the previous article we explored the **Tool Manager**, which is responsible for discovering tools, validating schemas, and selecting the correct tool for a task.
+
+Now we examine the **Execution Engine**, the component that actually **runs those tools and interacts with the outside world**.
+
+</Aside>
+
+# The Execution Engine
+
+An agent can plan tasks and select tools.
+
+But none of that matters unless the agent can **execute actions reliably**.
+
+The component responsible for performing these actions is the **Execution Engine**.
+
+Conceptually:
+
+```text
+Planner → Tool Manager → Execution Engine → Environment
+```
+
+The execution engine is responsible for running:
+
+* APIs
+* database queries
+* filesystem operations
+* shell commands
+* code execution environments
+
+It is the **bridge between reasoning and real-world effects**.
+
+---
+
+# Why Deterministic Execution Matters
+
+Language models are **probabilistic systems**.
+
+The same prompt may produce different outputs.
+
+However, software infrastructure must behave **deterministically**.
+
+Example:
+
+```text
+weather_api("Tokyo") → should always call the same API
+```
+
+The execution engine ensures that once a tool call is decided:
+
+* the correct function is executed
+* arguments are preserved
+* results are returned in a predictable format
+
+Without deterministic execution, agents would behave **unreliably**.
+
+---
+
+# The Execution Pipeline
+
+Most agent runtimes implement execution using a structured pipeline.
+
+```text
+Tool Request
+      ↓
+Argument Validation
+      ↓
+Execution Engine
+      ↓
+External System
+      ↓
+Result
+```
+
+Example tool call:
+
+```json
+{
+  "tool": "database_query",
+  "arguments": {
+    "sql": "SELECT * FROM users LIMIT 10"
+  }
+}
+```
+
+The execution engine interprets this request and performs the operation.
+
+---
+
+# Execution Types
+
+Agents commonly execute three categories of actions.
+
+| Execution Type | Examples                     |
+| -------------- | ---------------------------- |
+| APIs           | web search, weather services |
+| Databases      | SQL queries, vector search   |
+| Filesystems    | read/write files             |
+
+Each category requires **different safety and reliability strategies**.
+
+---
+
+# Executing APIs
+
+APIs are the most common external tools used by agents.
+
+Example API request:
+
+```text
+GET https://api.weather.com/current?city=Tokyo
+```
+
+The execution engine handles:
+
+* request formatting
+* authentication
+* timeouts
+* retries
+* response parsing
+
+---
+
+## API Example
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import requests
+
+def weather_api(city):
+
+    url = f"https://api.weather.com/current?city={city}"
+
+    response = requests.get(url, timeout=5)
+
+    return response.json()
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use reqwest::blocking::Client;
+
+fn weather_api(city: &str) -> String {
+
+    let url = format!(
+        "https://api.weather.com/current?city={}",
+        city
+    );
+
+    let response = Client::new()
+        .get(url)
+        .send()
+        .unwrap();
+
+    response.text().unwrap()
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The response is then returned to the **agent runtime**.
+
+---
+
+# Executing Database Queries
+
+Agents frequently interact with databases.
+
+Examples:
+
+* retrieving records
+* analytics queries
+* vector similarity search
+
+Example SQL request:
+
+```sql
+SELECT revenue FROM companies WHERE year = 2024;
+```
+
+The execution engine must ensure:
+
+* safe queries
+* proper permissions
+* query time limits
+
+---
+
+## Database Example
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import sqlite3
+
+def query_database(sql):
+
+    conn = sqlite3.connect("data.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute(sql)
+
+    return cursor.fetchall()
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use rusqlite::{Connection, Result};
+
+fn query_database(sql: &str) -> Result<Vec<String>> {
+
+    let conn = Connection::open("data.db")?;
+
+    let mut stmt = conn.prepare(sql)?;
+
+    let rows = stmt.query_map([], |row| row.get(0))?;
+
+    Ok(rows.filter_map(Result::ok).collect())
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+# Filesystem Operations
+
+Agents may need to read or write files.
+
+Examples:
+
+* reading documents
+* saving generated reports
+* processing datasets
+
+Example:
+
+```text
+read_file("report.pdf")
+```
+
+However, filesystem access introduces **security risks**.
+
+Therefore execution engines often enforce:
+
+* directory restrictions
+* file type restrictions
+* size limits
+
+---
+
+# Code Execution
+
+One of the most powerful agent capabilities is **running code dynamically**.
+
+Example request:
+
+```text
+Execute Python code to plot GDP growth
+```
+
+This allows agents to:
+
+* analyze data
+* perform complex calculations
+* generate visualizations
+* automate tasks
+
+However, running arbitrary code can be extremely dangerous.
+
+---
+
+# The Danger of Unsafe Code Execution
+
+Consider the following malicious code:
+
+```python
+import os
+os.system("rm -rf /")
+```
+
+If executed without safeguards, this could **destroy the system**.
+
+Therefore agent systems must isolate code execution.
+
+---
+
+# Safe Code Execution Strategies
+
+Several strategies exist to safely run code.
+
+### Sandboxing
+
+Code runs in an isolated environment.
+
+Examples:
+
+* Docker containers
+* WebAssembly runtimes
+* restricted virtual machines
+
+---
+
+### Resource Limits
+
+Execution engines limit:
+
+* CPU time
+* memory usage
+* network access
+
+Example policy:
+
+```text
+Max runtime: 10 seconds
+Max memory: 512 MB
+Network: disabled
+```
+
+---
+
+### Restricted Libraries
+
+Only safe libraries are allowed.
+
+Example allowlist:
+
+```text
+numpy
+pandas
+matplotlib
+```
+
+Dangerous modules such as `os` or `subprocess` may be blocked.
+
+---
+
+# Example Sandboxed Code Execution
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+import subprocess
+
+def run_python(code):
+
+    result = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        timeout=5
+    )
+
+    return result.stdout.decode()
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+use std::process::Command;
+
+fn run_python(code: &str) -> String {
+
+    let output = Command::new("python3")
+        .arg("-c")
+        .arg(code)
+        .output()
+        .unwrap();
+
+    String::from_utf8_lossy(&output.stdout).to_string()
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+In production systems this would run inside **containers or sandboxes**.
+
+---
+
+# Deterministic Results
+
+After execution, the engine returns results to the runtime.
+
+Example response:
+
+```json
+{
+  "tool": "web_search",
+  "result": "Solar installations increased by 24%"
+}
+```
+
+The result becomes an **observation** in the agent loop.
+
+```text
+observe → reason → plan → act → observe
+```
+
+---
+
+# Observability and Logging
+
+Execution engines should record every action.
+
+Example log entry:
+
+```json
+{
+  "tool": "database_query",
+  "arguments": "SELECT * FROM users",
+  "duration_ms": 210,
+  "success": true
+}
+```
+
+Logs are essential for:
+
+* debugging
+* performance optimization
+* auditing agent behavior
+
+---
+
+# The Execution Engine as the Agent's Action Layer
+
+If we compare the architecture to a computer system:
+
+| Component        | Analogy                |
+| ---------------- | ---------------------- |
+| LLM              | CPU                    |
+| Agent Runtime    | Operating System       |
+| Planner          | Scheduler              |
+| Tool Manager     | System Call Interface  |
+| Execution Engine | Kernel Execution Layer |
+
+The execution engine is where **abstract plans become real actions**.
+
+---
+
+# Looking Ahead
+
+In this article we explored the **Execution Engine**, which performs the real-world actions of an agent.
+
+We examined:
+
+* deterministic execution
+* API interaction
+* database queries
+* filesystem operations
+* safe code execution
+
+In the next article we will explore the **Observation Processor**, which transforms raw tool outputs into structured observations that the agent can reason about.
+
+→ Continue to **2.7 — The Observation Processor**

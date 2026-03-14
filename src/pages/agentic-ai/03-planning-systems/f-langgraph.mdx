@@ -1,0 +1,403 @@
+---
+
+title: Building Agents with LangGraph
+description: Implementing graph-based agent architectures with cycles, branches, and checkpoints
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article concludes **Module 3 — Planning Systems**.
+
+In the previous article we explored **Execution Graphs**, which model agent workflows as directed graphs rather than simple loops.
+
+In this article we examine **LangGraph**, a popular framework for implementing graph-based agent architectures in production systems.
+
+</Aside>
+
+# Building Agents with LangGraph
+
+As AI agents became more complex, developers began encountering limitations with traditional agent frameworks.
+
+Early frameworks often relied on **simple loops**:
+
+```text
+observe → reason → act → observe
+```
+
+While this pattern works for basic agents, it becomes difficult to manage when systems require:
+
+* multiple tools
+* conditional execution paths
+* long-running workflows
+* stateful reasoning
+
+To address these challenges, a new approach emerged:
+
+> **Graph-based agent architectures**
+
+LangGraph is one of the most influential frameworks implementing this idea.
+
+---
+
+# What Is LangGraph?
+
+LangGraph is a framework designed to build **stateful, graph-based AI agents**.
+
+Instead of describing an agent as a loop, LangGraph represents the system as a **directed graph of nodes**.
+
+Each node performs a specific task, such as:
+
+* reasoning with an LLM
+* executing a tool
+* updating agent state
+* generating output
+
+The runtime then moves through the graph according to **state transitions**.
+
+---
+
+# The Core LangGraph Concept
+
+A LangGraph workflow consists of three key components.
+
+| Component | Description                           |
+| --------- | ------------------------------------- |
+| Nodes     | individual computation steps          |
+| Edges     | transitions between nodes             |
+| State     | shared data flowing through the graph |
+
+Conceptually:
+
+```text
+Start
+  ↓
+Reasoning Node
+  ↓
+Tool Node
+  ↓
+Observation Node
+  ↓
+Reflection Node
+  ↓
+End
+```
+
+Each node modifies the **agent state**.
+
+---
+
+# Agent State
+
+In LangGraph, the entire system revolves around a shared **state object**.
+
+Example:
+
+```json
+{
+  "goal": "Compare RTX 4090 and H100",
+  "messages": [],
+  "tool_results": [],
+  "final_answer": null
+}
+```
+
+Each node reads and updates this state.
+
+This approach allows the agent to maintain **long-running context**.
+
+---
+
+# Graph-Based Agent Workflow
+
+A simple LangGraph-style workflow might look like this:
+
+```text
+User Input
+   ↓
+Planner
+   ↓
+Tool Selection
+   ↓
+Tool Execution
+   ↓
+Observation Processing
+   ↓
+Reflection
+   ↓
+Final Output
+```
+
+This workflow mirrors the **agent architecture we studied in Module 2**.
+
+However, the graph structure makes the workflow **explicit and controllable**.
+
+---
+
+# Example Graph Structure
+
+```text
+            Start
+              |
+          Reasoning
+           /     \
+          /       \
+    Tool Call   Final Answer
+          |
+      Observation
+          |
+       Reasoning
+```
+
+This graph includes:
+
+* **branches** (multiple possible paths)
+* **cycles** (repeated reasoning loops)
+
+Both are essential for realistic agent systems.
+
+---
+
+# Cycles in Agent Graphs
+
+Cycles allow agents to **repeat reasoning steps**.
+
+Example:
+
+```text
+Reason
+   ↓
+Use Tool
+   ↓
+Observe Result
+   ↓
+Reason Again
+```
+
+This creates a **reasoning loop inside the graph**.
+
+Without cycles, agents would only execute a fixed pipeline.
+
+---
+
+# Branching Logic
+
+Graphs also allow **conditional branching**.
+
+Example:
+
+```text
+If information is sufficient → generate answer
+Else → search for more data
+```
+
+Graph representation:
+
+```text
+           Analyze Data
+            /       \
+           /         \
+  Need More Data   Answer Ready
+```
+
+This makes agent behavior **adaptive and dynamic**.
+
+---
+
+# Checkpoints and State Persistence
+
+One of the most powerful features of LangGraph is **checkpointing**.
+
+Checkpointing allows the agent to **save its state during execution**.
+
+Example:
+
+```text
+Step 1 complete → save state
+Step 2 complete → save state
+```
+
+If the system crashes or restarts, the workflow can resume from the last checkpoint.
+
+This is critical for **long-running agents**.
+
+---
+
+# Why Checkpoints Matter
+
+Consider an agent performing a complex research task.
+
+Example workflow:
+
+```text
+Collect data
+Analyze results
+Write summary
+Generate report
+```
+
+If execution fails halfway through, restarting the entire workflow would be inefficient.
+
+Checkpointing allows the agent to **resume from the previous step**.
+
+---
+
+# Example LangGraph Node
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def reasoning_node(state, llm):
+
+    goal = state["goal"]
+
+    prompt = f"""
+    Given the goal:
+
+    {goal}
+
+    Decide the next step.
+    """
+
+    decision = llm.generate(prompt)
+
+    state["decision"] = decision
+
+    return state
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn reasoning_node(state: &mut State, llm: &LLMClient) {
+
+    let prompt = format!(
+        "Given the goal: {}\nDecide next step.",
+        state.goal
+    );
+
+    let decision = llm.generate(&prompt);
+
+    state.decision = decision;
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+Each node reads and modifies the **shared agent state**.
+
+---
+
+# Example Graph Definition (Conceptual)
+
+A simplified graph definition might look like this:
+
+```text
+nodes:
+  - planner
+  - tool_executor
+  - observation_processor
+  - reflection
+
+edges:
+  planner → tool_executor
+  tool_executor → observation_processor
+  observation_processor → reflection
+  reflection → planner
+```
+
+This cycle implements the **ReAct reasoning loop** using a graph.
+
+---
+
+# Advantages of Graph-Based Agents
+
+Graph architectures provide several advantages.
+
+### Explicit Workflow Structure
+
+Developers can clearly see how the agent operates.
+
+---
+
+### Better Debugging
+
+Each node can be inspected independently.
+
+---
+
+### Deterministic Control
+
+The system follows well-defined transitions.
+
+---
+
+### Scalable Architecture
+
+Complex workflows can be composed from smaller nodes.
+
+---
+
+# LangGraph vs Traditional Agent Frameworks
+
+| Approach     | Architecture           |
+| ------------ | ---------------------- |
+| Early agents | reasoning loops        |
+| ReAct agents | reasoning + tool loops |
+| LangGraph    | graph-based workflows  |
+
+LangGraph therefore represents a **shift from prompt engineering to workflow engineering**.
+
+---
+
+# LangGraph and the Future of Agents
+
+As AI systems become more complex, developers increasingly require:
+
+* structured workflows
+* state persistence
+* robust debugging tools
+* deterministic execution
+
+Graph-based frameworks like LangGraph provide the infrastructure necessary for **production-grade agent systems**.
+
+---
+
+# Summary of Module 3
+
+In this module we explored the **planning systems that power modern AI agents**.
+
+| Topic                | Concept                            |
+| -------------------- | ---------------------------------- |
+| Why Planning Matters | limitations of simple loops        |
+| ReAct                | reasoning + tool interaction       |
+| Chain-of-Thought     | linear reasoning                   |
+| Tree-of-Thought      | exploring multiple reasoning paths |
+| Execution Graphs     | modeling workflows as graphs       |
+| LangGraph            | production implementation          |
+
+Together, these techniques form the **planning layer of modern agent architectures**.
+
+---
+
+# Looking Ahead
+
+In the next module we will explore **Tool Use & Protocols**, which define how agents interact with external systems.
+
+Topics include:
+
+* designing reliable tools
+* tool schemas
+* error handling
+* the **Model Context Protocol (MCP)**
+
+These concepts are essential for building agents that can interact safely with real-world software systems.
+
+→ Continue to **4.1 — Why Tools Make Agents Powerful**

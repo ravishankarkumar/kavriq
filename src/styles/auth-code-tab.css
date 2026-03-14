@@ -1,0 +1,51 @@
+/* 1. Tighten the Tab List Spacing */
+starlight-tabs ul[role="tablist"] {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-left: 0 !important;
+  border-bottom: 1px solid var(--color-border); /* Optional: adds a clean separator */
+}
+
+/* 2. Style the Active Tab Indicator */
+starlight-tabs ul[role="tablist"] li a[aria-selected="true"] {
+  color: var(--color-accent) !important;
+  border-bottom: 2px solid var(--color-accent) !important;
+  opacity: 1 !important;
+}
+
+/* 3. Style the Inactive Tabs */
+starlight-tabs ul[role="tablist"] li a {
+  text-decoration: none !important;
+  padding: 0.5rem 1rem !important;
+  display: inline-block;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+starlight-tabs ul[role="tablist"] li a:hover {
+  opacity: 1;
+  color: var(--color-accent);
+}
+
+/* 4. Eliminate padding above the code block panel */
+starlight-tabs [role="tabpanel"] {
+  padding-top: 0.5rem !important;
+}
+
+/* 1. Target the content panel directly by its role */
+starlight-tabs div[role="tabpanel"] {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* 2. Remove top margin from the first element inside the panel (usually your code block) */
+starlight-tabs div[role="tabpanel"] > *:first-child {
+  margin-top: 0 !important;
+}
+
+/* 3. Refined Tab Selection (ensuring the highlight is visible) */
+starlight-tabs ul[role="tablist"] li a[aria-selected="true"] {
+  color: var(--color-accent) !important;
+  border-bottom: 2px solid var(--color-accent) !important;
+  background-color: transparent !important; /* Prevents gray backgrounds */
+}

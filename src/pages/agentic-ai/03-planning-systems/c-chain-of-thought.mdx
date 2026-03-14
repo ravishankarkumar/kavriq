@@ -1,0 +1,389 @@
+---
+
+title: Chain-of-Thought Planning
+description: How linear reasoning strategies improve problem solving in AI agents
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 3 — Planning Systems**.
+
+In the previous article we explored **ReAct (Reason + Act)**, a framework that integrates reasoning and tool use.
+
+In this article we examine **Chain-of-Thought Planning**, a reasoning technique that allows language models to break complex problems into intermediate steps.
+
+</Aside>
+
+# Chain-of-Thought Planning
+
+One of the most surprising discoveries in modern AI research is that **large language models reason better when they write down their reasoning process**.
+
+Instead of producing an answer immediately, the model first generates a sequence of intermediate steps.
+
+This method is called **Chain-of-Thought (CoT) reasoning**.
+
+Example:
+
+```text
+Question: If a train travels 60 km in 1 hour, how far will it travel in 3 hours?
+
+Chain-of-Thought:
+Speed = 60 km/hour
+Time = 3 hours
+Distance = speed × time
+Distance = 60 × 3 = 180 km
+
+Answer: 180 km
+```
+
+The intermediate reasoning improves the model's ability to solve problems.
+
+---
+
+# The Chain-of-Thought Discovery
+
+Chain-of-Thought prompting was introduced in the paper:
+
+> **"Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"**
+> Wei et al., 2022
+
+The researchers discovered something remarkable:
+
+> Simply asking the model to **"think step by step"** dramatically improves reasoning accuracy.
+
+This technique works particularly well for problems involving:
+
+* mathematics
+* logical reasoning
+* multi-step inference
+* planning tasks
+
+---
+
+# Linear Reasoning
+
+Chain-of-Thought reasoning produces a **linear sequence of reasoning steps**.
+
+Conceptually:
+
+```text
+Problem
+  ↓
+Step 1
+  ↓
+Step 2
+  ↓
+Step 3
+  ↓
+Answer
+```
+
+Each step builds on the previous one.
+
+This structure mirrors how humans often solve problems using **scratch work**.
+
+---
+
+# Example: Reasoning Without Chain-of-Thought
+
+Consider the question:
+
+> “If a store sells 4 apples for $2, how much do 10 apples cost?”
+
+Without Chain-of-Thought reasoning, the model may produce incorrect answers.
+
+Example:
+
+```text
+Answer: $4
+```
+
+The model guesses without explicitly reasoning through the problem.
+
+---
+
+# Example: Chain-of-Thought Reasoning
+
+With Chain-of-Thought:
+
+```text
+4 apples cost $2
+
+So 1 apple costs $0.50
+
+10 apples cost 10 × $0.50 = $5
+
+Answer: $5
+```
+
+The reasoning steps make the computation more reliable.
+
+---
+
+# Chain-of-Thought in Agent Systems
+
+In agent architectures, Chain-of-Thought often appears inside the **reasoning stage**.
+
+Example reasoning trace:
+
+```text
+Goal: Compare RTX 4090 and H100 GPUs
+
+Thought 1: I should collect benchmark data.
+
+Thought 2: I should compare training performance.
+
+Thought 3: I should summarize the results.
+```
+
+This sequence effectively becomes a **mini-plan**.
+
+---
+
+# Chain-of-Thought as Planning
+
+Although originally introduced as a reasoning method, Chain-of-Thought can also function as a **simple planning strategy**.
+
+Example:
+
+```text
+Goal: Write a report about AI chips
+
+Chain-of-Thought Plan:
+
+1. Identify major AI chip companies
+2. Gather benchmark data
+3. Compare architectures
+4. Summarize trends
+```
+
+This structure helps the agent approach complex tasks **systematically**.
+
+---
+
+# Implementing Chain-of-Thought
+
+Chain-of-Thought prompting is surprisingly simple.
+
+Often the prompt only needs to include a short instruction.
+
+Example prompt:
+
+```text
+Solve the following problem step by step.
+```
+
+or
+
+```text
+Let's think step by step.
+```
+
+These phrases encourage the model to produce **intermediate reasoning steps**.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def chain_of_thought(question, llm):
+
+    prompt = f"""
+    Answer the question step by step.
+
+    Question: {question}
+    """
+
+    return llm.generate(prompt)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn chain_of_thought(question: &str, llm: &LLMClient) -> String {
+
+    let prompt = format!(
+        "Answer step by step:\nQuestion: {}",
+        question
+    );
+
+    llm.generate(&prompt)
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This simple modification often produces **dramatically better reasoning**.
+
+---
+
+# Why Chain-of-Thought Works
+
+Chain-of-Thought improves performance for several reasons.
+
+### Reduced Cognitive Load
+
+Breaking a problem into steps simplifies reasoning.
+
+---
+
+### Explicit Intermediate State
+
+Each reasoning step becomes part of the **working memory**.
+
+---
+
+### Error Detection
+
+Mistakes become easier to identify and correct.
+
+Example:
+
+```text
+Step 2 calculation looks wrong → fix before final answer
+```
+
+---
+
+# When Chain-of-Thought Works Well
+
+Chain-of-Thought performs best for tasks that require **structured reasoning**.
+
+Examples include:
+
+| Task Type             | Example              |
+| --------------------- | -------------------- |
+| Math problems         | arithmetic, algebra  |
+| Logical puzzles       | deduction problems   |
+| Data analysis         | interpreting numbers |
+| Step-by-step planning | structured tasks     |
+
+In these situations, reasoning chains help the model **organize its thinking**.
+
+---
+
+# When Chain-of-Thought Fails
+
+Chain-of-Thought is not a universal solution.
+
+It struggles with several types of tasks.
+
+### Tasks Requiring Exploration
+
+Some problems require exploring **multiple possibilities** rather than a single reasoning path.
+
+Example:
+
+* puzzle solving
+* complex strategy problems
+
+Chain-of-Thought only explores **one path**.
+
+---
+
+### Very Long Tasks
+
+For large problems, the reasoning chain can become extremely long.
+
+This may:
+
+* exceed context limits
+* introduce compounding errors
+
+---
+
+### Incorrect Early Steps
+
+If an early step in the reasoning chain is wrong, the rest of the reasoning may fail.
+
+Example:
+
+```text
+Step 1 incorrect → all later steps incorrect
+```
+
+This is sometimes called **error propagation**.
+
+---
+
+# Chain-of-Thought vs ReAct
+
+Chain-of-Thought and ReAct solve different problems.
+
+| Technique        | Focus               |
+| ---------------- | ------------------- |
+| Chain-of-Thought | reasoning structure |
+| ReAct            | reasoning + actions |
+
+Example:
+
+### Chain-of-Thought
+
+```text
+Thought 1 → Thought 2 → Thought 3
+```
+
+### ReAct
+
+```text
+Thought → Action → Observation
+```
+
+In practice, modern agents often **combine both approaches**.
+
+---
+
+# The Evolution of Planning Strategies
+
+Chain-of-Thought was the **first major breakthrough in LLM reasoning**.
+
+However, researchers soon realized that linear reasoning has limitations.
+
+This led to more advanced planning strategies such as:
+
+* **Tree-of-Thought** reasoning
+* **Algorithm-of-Thought**
+* **execution graphs**
+
+These approaches allow agents to explore **multiple reasoning paths**.
+
+---
+
+# Why Chain-of-Thought Still Matters
+
+Despite newer techniques, Chain-of-Thought remains a foundational method in modern AI systems.
+
+It is used in:
+
+* reasoning models
+* agent planning
+* automated problem solving
+* tool-augmented workflows
+
+Even advanced agent architectures often start with **Chain-of-Thought reasoning as a base layer**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **Chain-of-Thought planning**, a technique that improves reasoning by generating intermediate steps.
+
+We examined:
+
+* linear reasoning strategies
+* how Chain-of-Thought improves problem solving
+* when it works well and when it fails
+
+In the next article we will explore **Tree-of-Thought and Algorithm-of-Thought**, which extend Chain-of-Thought reasoning to explore **multiple reasoning paths instead of a single linear chain**.
+
+→ Continue to **3.4 — Tree-of-Thought and Algorithm-of-Thought**

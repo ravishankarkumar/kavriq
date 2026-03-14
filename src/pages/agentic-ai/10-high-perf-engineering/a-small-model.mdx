@@ -1,0 +1,442 @@
+---
+
+title: The Small Model Strategy
+description: How model routing and hybrid architectures reduce cost while maintaining performance in production agent systems
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 10 — Production & High-Performance Engineering**.
+
+In previous modules we explored how to design agent architectures, ensure safety, and evaluate system performance.
+
+However, deploying agents in real-world production systems introduces new challenges:
+
+• latency
+• infrastructure cost
+• scalability
+
+This module explores engineering techniques used to run agent systems efficiently at scale.
+
+The first technique is the **Small Model Strategy**.
+
+</Aside>
+
+# The Small Model Strategy
+
+Many early AI systems relied on a single powerful model for every task.
+
+Example architecture:
+
+```text
+User request
+     ↓
+Large LLM
+     ↓
+Response
+```
+
+While this approach is simple, it can be extremely expensive.
+
+Large models are typically:
+
+* slow
+* computationally expensive
+* costly at scale
+
+Production systems therefore adopt a different strategy.
+
+Instead of relying on one large model, they combine **multiple models of different sizes**.
+
+Conceptually:
+
+```text
+User Request
+      ↓
+Model Router
+      ↓
+Small Model → simple tasks
+Large Model → complex tasks
+```
+
+This approach significantly reduces **cost and latency**.
+
+---
+
+# Why Large Models Are Expensive
+
+Large models require substantial computational resources.
+
+Costs arise from:
+
+* GPU inference time
+* memory requirements
+* token processing
+
+Example comparison:
+
+| Model Type           | Relative Cost |
+| -------------------- | ------------- |
+| small model          | low           |
+| medium model         | moderate      |
+| large frontier model | very high     |
+
+If every request uses the largest model, operational costs can grow rapidly.
+
+---
+
+# Observing Real Workloads
+
+In production systems, most requests are **relatively simple**.
+
+Examples include:
+
+* summarizing text
+* extracting information
+* answering factual questions
+
+These tasks do not always require the most powerful models.
+
+Example:
+
+```text
+Task:
+Summarize a paragraph
+```
+
+A small model may perform this task nearly as well as a large model.
+
+This insight motivates the **small model strategy**.
+
+---
+
+# Model Routing
+
+Model routing determines **which model should handle each request**.
+
+Conceptually:
+
+```text
+Incoming request
+       ↓
+Routing logic
+       ↓
+Select appropriate model
+```
+
+Example routing system:
+
+```text
+Simple query → small model
+Moderate reasoning → medium model
+Complex planning → large model
+```
+
+This allows systems to balance **performance and cost**.
+
+---
+
+# Example Routing Pipeline
+
+```text
+User Request
+      ↓
+Task Classification
+      ↓
+Routing Decision
+      ↓
+Selected Model
+      ↓
+Response
+```
+
+The routing system analyzes the task before selecting the model.
+
+---
+
+# Example Routing Logic
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def route_request(task):
+
+    if task["complexity"] == "low":
+        return small_model
+
+    if task["complexity"] == "medium":
+        return medium_model
+
+    return large_model
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+fn route_request(task: &Task) -> Model {
+
+    match task.complexity {
+
+        Complexity::Low => Model::Small,
+        Complexity::Medium => Model::Medium,
+        Complexity::High => Model::Large
+    }
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+The router determines which model should process the request.
+
+---
+
+# Cost Optimization
+
+The primary motivation for model routing is **cost optimization**.
+
+Consider an example workload:
+
+```text
+Requests per day: 100,000
+```
+
+If every request uses a large model:
+
+```text
+Cost per request: high
+Total cost: very high
+```
+
+If the system routes tasks intelligently:
+
+```text
+70% → small model
+20% → medium model
+10% → large model
+```
+
+Total cost can drop dramatically.
+
+---
+
+# Latency Benefits
+
+Smaller models also provide **faster response times**.
+
+Example comparison:
+
+| Model Size | Latency  |
+| ---------- | -------- |
+| small      | fast     |
+| medium     | moderate |
+| large      | slower   |
+
+Routing simple tasks to smaller models improves **system responsiveness**.
+
+---
+
+# Hybrid Model Architectures
+
+The small model strategy often results in **hybrid architectures**.
+
+Hybrid systems combine multiple models with different capabilities.
+
+Example architecture:
+
+```text
+User Request
+      ↓
+Intent Detection Model
+      ↓
+Task Router
+      ↓
+Specialized Models
+```
+
+Possible specialized models:
+
+* summarization model
+* coding model
+* reasoning model
+* retrieval model
+
+Each model handles tasks it performs best.
+
+---
+
+# Example Hybrid Agent System
+
+```text
+User Question
+      ↓
+Router
+      ↓
+┌─────────────┬─────────────┬─────────────┐
+│             │             │
+Small LLM     Coding Model  Large LLM
+```
+
+The router selects the best model for the task.
+
+---
+
+# Escalation Strategies
+
+Many systems implement **escalation mechanisms**.
+
+Example:
+
+```text
+Small model attempts task
+      ↓
+Confidence check
+      ↓
+Low confidence → escalate to larger model
+```
+
+This approach allows the system to try cheaper models first.
+
+---
+
+# Example Escalation Workflow
+
+```text
+User request
+      ↓
+Small model
+      ↓
+Confidence evaluation
+      ↓
+If low confidence → large model
+```
+
+This ensures that difficult problems still receive **high-quality answers**.
+
+---
+
+# Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+answer = small_model.generate(prompt)
+
+if confidence(answer) < 0.6:
+    answer = large_model.generate(prompt)
+```
+
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+let mut answer = small_model.generate(prompt);
+
+if confidence(&answer) < 0.6 {
+    answer = large_model.generate(prompt);
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+This pattern is commonly used in production systems.
+
+---
+
+# Specialized Small Models
+
+Small models are often trained for **specific tasks**.
+
+Examples include:
+
+| Model Type           | Task              |
+| -------------------- | ----------------- |
+| embedding model      | vector search     |
+| classification model | intent detection  |
+| summarization model  | text compression  |
+| code model           | programming tasks |
+
+These specialized models are faster and cheaper than general-purpose LLMs.
+
+---
+
+# Model Routing in Real Systems
+
+Many modern AI platforms use model routing internally.
+
+Examples include:
+
+| System                | Strategy                            |
+| --------------------- | ----------------------------------- |
+| search assistants     | small model for query understanding |
+| coding copilots       | specialized code model              |
+| customer support bots | intent classification models        |
+| enterprise agents     | hierarchical routing systems        |
+
+These systems optimize for **cost, latency, and performance**.
+
+---
+
+# Tradeoffs of the Small Model Strategy
+
+While powerful, this strategy introduces additional complexity.
+
+Challenges include:
+
+### Routing Accuracy
+
+Incorrect routing may send complex tasks to weak models.
+
+---
+
+### System Complexity
+
+Hybrid architectures require more infrastructure.
+
+---
+
+### Model Coordination
+
+Different models may produce inconsistent outputs.
+
+Despite these challenges, model routing is essential for **scalable AI systems**.
+
+---
+
+# The Future of Production AI Systems
+
+As AI systems grow more complex, production architectures are likely to evolve into **model ecosystems**.
+
+Example architecture:
+
+```text
+User Request
+      ↓
+Router
+      ↓
+Network of Specialized Models
+```
+
+Instead of relying on a single large model, systems will coordinate many models optimized for different tasks.
+
+---
+
+# Looking Ahead
+
+In this article we explored the **Small Model Strategy**, including model routing, cost optimization, and hybrid model architectures.
+
+In the next article we will examine **Using Rust for Agent Infrastructure**, which focuses on building high-performance orchestration systems.
+
+→ Continue to **10.2 — Using Rust for Agent Infrastructure**

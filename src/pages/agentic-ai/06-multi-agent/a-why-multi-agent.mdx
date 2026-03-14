@@ -1,0 +1,332 @@
+---
+
+title: Why Multi-Agent Systems Exist
+description: Understanding why modern AI systems increasingly rely on multiple specialized agents instead of a single general agent
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 6 — Multi-Agent Orchestration**.
+
+In previous modules we explored how a single agent can reason, plan, use tools, and retrieve knowledge.
+
+However, many complex tasks exceed the capabilities of a single agent.
+To address this limitation, modern AI systems increasingly rely on **multiple specialized agents working together**.
+
+</Aside>
+
+# Why Multi-Agent Systems Exist
+
+Early AI agent systems were designed around a simple idea:
+
+> **One intelligent agent can solve a task.**
+
+This approach works well for simple workflows.
+
+Example:
+
+```text
+User request
+   ↓
+Single agent
+   ↓
+Tool calls
+   ↓
+Answer
+```
+
+However, as tasks become more complex, this architecture begins to struggle.
+
+Large problems often require:
+
+* different types of expertise
+* multiple reasoning strategies
+* coordination across subtasks
+
+To solve this problem, researchers began exploring **multi-agent systems**.
+
+---
+
+# The Limits of a Single Agent
+
+Consider a complex task such as:
+
+> “Build a web application that analyzes stock market data.”
+
+A single agent would need to:
+
+1. design the system architecture
+2. write backend code
+3. build the frontend
+4. test the system
+5. deploy the application
+
+This requires **multiple specialized skills**.
+
+A single agent may struggle to handle all of these responsibilities effectively.
+
+---
+
+# Dividing Intelligence
+
+Instead of relying on one agent to do everything, we can divide the work across **multiple agents with specialized roles**.
+
+Example architecture:
+
+```text
+User Request
+      ↓
+Project Manager Agent
+      ↓
+ ┌───────────────┬───────────────┐
+ │               │               │
+Developer Agent  Research Agent  Testing Agent
+```
+
+Each agent focuses on a specific responsibility.
+
+This mirrors how **human teams collaborate**.
+
+---
+
+# Scaling Agent Intelligence
+
+Multi-agent systems allow us to scale intelligence by distributing work.
+
+Conceptually:
+
+```text
+Single Agent → Limited capability
+
+Multiple Agents → Distributed intelligence
+```
+
+Instead of one large reasoning system, we create **cooperating agents**.
+
+Benefits include:
+
+* parallel problem solving
+* specialized expertise
+* modular system design
+
+---
+
+# Specialization vs General Intelligence
+
+This approach introduces an important design trade-off.
+
+Should we build:
+
+* one **general-purpose agent**, or
+* many **specialized agents**?
+
+---
+
+# General-Purpose Agents
+
+A general-purpose agent attempts to handle many tasks.
+
+Example:
+
+```text
+General Agent
+   ↓
+Handles research, coding, writing, analysis
+```
+
+Advantages:
+
+* simpler architecture
+* fewer components
+* easier deployment
+
+However, general agents may struggle with **highly specialized tasks**.
+
+---
+
+# Specialized Agents
+
+In contrast, specialized agents focus on a narrow domain.
+
+Examples:
+
+| Agent Type          | Role                |
+| ------------------- | ------------------- |
+| Research agent      | gathers information |
+| Coding agent        | writes software     |
+| Data analysis agent | analyzes datasets   |
+| QA agent            | verifies results    |
+
+Each agent can be optimized for its specific role.
+
+---
+
+# The Human Analogy
+
+Human organizations rarely rely on a single individual to perform every task.
+
+Instead, teams include specialists.
+
+Example software team:
+
+| Role              | Responsibility       |
+| ----------------- | -------------------- |
+| Product manager   | define requirements  |
+| Software engineer | write code           |
+| Designer          | build user interface |
+| QA engineer       | test system          |
+
+Multi-agent systems mirror this structure.
+
+---
+
+# Example Multi-Agent Workflow
+
+Consider a research task:
+
+> “Write a report about the AI chip industry.”
+
+A multi-agent system might operate as follows:
+
+```text
+User Request
+      ↓
+Coordinator Agent
+      ↓
+Research Agent → gather sources
+      ↓
+Analysis Agent → extract insights
+      ↓
+Writer Agent → generate report
+```
+
+Each agent performs **one stage of the workflow**.
+
+---
+
+# Benefits of Multi-Agent Systems
+
+Multi-agent architectures provide several advantages.
+
+### Specialization
+
+Agents can focus on specific tasks.
+
+---
+
+### Parallel Execution
+
+Multiple agents can work simultaneously.
+
+---
+
+### Modularity
+
+Agents can be added, replaced, or upgraded independently.
+
+---
+
+### Improved Reasoning
+
+Different agents can propose competing ideas and evaluate each other.
+
+---
+
+# Communication Between Agents
+
+For multi-agent systems to work effectively, agents must **communicate**.
+
+Example communication flow:
+
+```text
+Research Agent → sends findings
+        ↓
+Analysis Agent → processes information
+        ↓
+Writer Agent → produces report
+```
+
+Agents exchange structured messages such as:
+
+* task instructions
+* intermediate results
+* feedback
+
+This communication enables **collaborative problem solving**.
+
+---
+
+# Coordination Challenges
+
+Multi-agent systems also introduce new challenges.
+
+### Coordination
+
+Agents must agree on:
+
+* task assignments
+* execution order
+* shared goals
+
+---
+
+### Communication Overhead
+
+Excessive messaging between agents can increase latency.
+
+---
+
+### Conflict Resolution
+
+Different agents may produce conflicting results.
+
+Systems must include mechanisms to **resolve disagreements**.
+
+---
+
+# Multi-Agent Systems in Modern AI
+
+Many modern AI systems now use multi-agent architectures.
+
+Examples include:
+
+| Application                 | Multi-Agent Usage                      |
+| --------------------------- | -------------------------------------- |
+| software development agents | specialized coding roles               |
+| research assistants         | research + analysis + writing agents   |
+| enterprise automation       | multiple workflow agents               |
+| robotics systems            | perception + planning + control agents |
+
+These systems demonstrate the power of **collaborative AI architectures**.
+
+---
+
+# From Single Agents to Agent Societies
+
+As agent ecosystems evolve, systems are beginning to resemble **societies of cooperating agents**.
+
+Example architecture:
+
+```text
+User
+ ↓
+Coordinator Agent
+ ↓
+Network of Specialized Agents
+ ↓
+Final Output
+```
+
+This structure allows AI systems to handle tasks that would be **too complex for a single agent**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **why multi-agent systems exist**, including the limitations of single agents and the benefits of specialization.
+
+In the next article we will explore the **Manager–Worker Pattern**, one of the most common architectures used in multi-agent systems.
+
+→ Continue to **6.2 — Manager–Worker Pattern**

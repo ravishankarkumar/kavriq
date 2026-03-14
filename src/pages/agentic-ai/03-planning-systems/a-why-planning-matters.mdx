@@ -1,0 +1,373 @@
+---
+title: "Why Planning Matters"
+---
+
+# Why Planning Matters
+
+(Placeholder)
+---
+
+title: Why Planning Matters
+description: Why simple agent loops fail and why planning systems are essential
+layout: ../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article begins **Module 3 — Planning Systems**.
+
+In Module 2 we explored the **internal architecture of agents**, including perception, working memory, tool management, execution, and reflection.
+
+However, even with all these components, many agent systems still fail at complex tasks.
+
+The missing ingredient is **planning**.
+
+</Aside>
+
+# Why Planning Matters
+
+Modern AI agents are often implemented using a simple control loop:
+
+```text
+observe → reason → act
+```
+
+Or in the expanded version we studied earlier:
+
+```text
+observe → reason → plan → act → reflect
+```
+
+At first glance, this architecture appears powerful.
+
+However, when agents are asked to solve **complex multi-step problems**, simple loops begin to fail.
+
+Understanding why this happens is essential for building reliable autonomous systems.
+
+---
+
+# The Limits of Simple Agent Loops
+
+Consider a task such as:
+
+> “Research the economic impact of electric vehicles and write a short report.”
+
+A naive agent loop might behave like this:
+
+```text
+Thought: Search for EV market data
+Action: web_search("electric vehicle market size")
+
+Observation: Market expected to grow 30%
+
+Thought: Search for EV job creation
+Action: web_search("electric vehicle job growth")
+
+Observation: EV industry creating new manufacturing jobs
+
+Thought: Search for EV environmental impact
+Action: web_search("EV environmental benefits")
+```
+
+This process may continue for many steps without a **clear structure**.
+
+The agent is essentially **reacting to each observation**, rather than following a deliberate strategy.
+
+---
+
+# Reactive Behavior vs Strategic Planning
+
+This behavior resembles **trial-and-error exploration**.
+
+```text
+observe → react → observe → react
+```
+
+While this can work for simple tasks, it becomes inefficient when:
+
+* tasks require multiple coordinated steps
+* intermediate results must be remembered
+* different tools must be used in sequence
+
+Without planning, the agent may:
+
+* repeat the same search queries
+* gather redundant information
+* miss important steps
+
+This leads to **unreliable task completion**.
+
+---
+
+# Example of a Failing Agent Loop
+
+Consider the following goal:
+
+> “Compare the performance of RTX 4090 and H100 GPUs for machine learning.”
+
+A poorly designed agent loop might behave like this:
+
+```text
+Thought: Search for GPU benchmarks
+Action: web_search("GPU benchmarks")
+
+Observation: Various benchmark results
+
+Thought: Search for RTX 4090 benchmarks
+Action: web_search("RTX 4090 benchmark")
+
+Observation: RTX 4090 results
+
+Thought: Search for GPU benchmarks
+Action: web_search("GPU benchmarks")
+```
+
+The agent becomes stuck in **repetitive actions**.
+
+The problem is not the LLM — it is the **lack of planning**.
+
+---
+
+# What Planning Provides
+
+Planning introduces **structure** into the agent’s reasoning process.
+
+Instead of reacting step-by-step, the agent constructs a **strategy**.
+
+Conceptually:
+
+```text
+Goal
+ ↓
+Plan
+ ↓
+Execution
+```
+
+Example:
+
+```text
+Goal: Compare RTX 4090 and H100
+
+Plan:
+1. Collect benchmark data for RTX 4090
+2. Collect benchmark data for H100
+3. Compare training performance
+4. Summarize results
+```
+
+Now each step has a **clear purpose**.
+
+---
+
+# Planning Reduces Cognitive Load
+
+Planning also helps reduce the cognitive burden on the model.
+
+Without planning:
+
+```text
+LLM must decide everything at every step
+```
+
+With planning:
+
+```text
+LLM focuses on executing a predefined structure
+```
+
+This improves:
+
+* reasoning reliability
+* task completion rates
+* cost efficiency
+
+---
+
+# Reasoning vs Planning
+
+To understand planning more clearly, it helps to distinguish it from reasoning.
+
+| Concept   | Role                       |
+| --------- | -------------------------- |
+| Reasoning | thinking about the problem |
+| Planning  | structuring the solution   |
+
+Example:
+
+```text
+Reasoning:
+"I need benchmark data to compare GPUs."
+
+Planning:
+1. Search benchmark data
+2. Extract performance metrics
+3. Compare results
+```
+
+Reasoning generates **ideas**.
+
+Planning organizes those ideas into **actionable steps**.
+
+---
+
+# Why Reasoning Alone Is Not Enough
+
+Large language models excel at **local reasoning**.
+
+They can:
+
+* interpret instructions
+* analyze information
+* generate explanations
+
+However, they struggle with **long-horizon decision making**.
+
+Tasks that require:
+
+* many sequential actions
+* coordinated tool usage
+* structured workflows
+
+often fail without explicit planning.
+
+---
+
+# Long-Horizon Tasks
+
+Consider the following request:
+
+> “Write a research summary of the top 10 AI chip companies.”
+
+This requires multiple stages:
+
+```text
+1. Identify AI chip companies
+2. Gather financial data
+3. Collect product information
+4. Compare architectures
+5. Write a report
+```
+
+Without planning, the agent might jump between tasks unpredictably.
+
+Planning provides **direction and order**.
+
+---
+
+# Planning Improves Tool Usage
+
+Many agent tasks involve **external tools**.
+
+Examples:
+
+* search APIs
+* databases
+* code execution environments
+
+Planning helps determine:
+
+```text
+which tools to use
+when to use them
+in what order
+```
+
+Example:
+
+```text
+Plan:
+1. Use web_search to find benchmark results
+2. Use python tool to analyze data
+3. Generate summary
+```
+
+This creates a **coherent workflow**.
+
+---
+
+# Planning Enables Complex Reasoning Strategies
+
+Planning systems unlock powerful reasoning techniques.
+
+Examples include:
+
+* Chain-of-Thought reasoning
+* ReAct (Reason + Act)
+* Tree-of-Thought search
+* Execution graphs
+
+These techniques allow agents to explore **multiple reasoning paths**.
+
+We will explore them in the upcoming articles.
+
+---
+
+# Planning as a Control Layer
+
+If we extend our earlier architecture analogy:
+
+| Component     | Analogy          |
+| ------------- | ---------------- |
+| LLM           | CPU              |
+| Agent Runtime | Operating System |
+| Planner       | Task Scheduler   |
+
+The planner determines **how the system should approach a problem**.
+
+Without it, the agent behaves like a program with **no control flow**.
+
+---
+
+# A Planned Agent Loop
+
+With planning, the agent loop becomes more structured.
+
+```text
+Goal
+ ↓
+Plan
+ ↓
+Execute Step
+ ↓
+Observe Result
+ ↓
+Continue Plan
+```
+
+This produces **goal-directed behavior** rather than random exploration.
+
+---
+
+# Why Planning Is the Heart of Agent Intelligence
+
+Most breakthroughs in modern agent systems have come from **better planning strategies**.
+
+These strategies allow agents to:
+
+* solve complex problems
+* coordinate multiple tools
+* reason across many steps
+
+Planning is therefore the **core capability that distinguishes powerful agents from simple chatbots**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **why planning is essential for agent systems**.
+
+We examined:
+
+* why simple agent loops fail
+* the difference between reasoning and planning
+* how planning structures complex tasks
+
+In the next article we will explore one of the most influential planning techniques in modern AI agents:
+
+**ReAct — Reason + Act**
+
+This method integrates reasoning and tool usage into a unified decision loop.
+
+→ Continue to **3.2 — ReAct: Reason + Act**
