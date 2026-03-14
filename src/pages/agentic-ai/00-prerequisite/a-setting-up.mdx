@@ -9,54 +9,51 @@ layout: ../../../layouts/TutorialPage.astro
 import { Tabs, TabItem, Steps, Aside, LinkButton } from '@astrojs/starlight/components';
 import { YouTube } from 'astro-embed';
 
-To follow this series on Agentic AI, you’ll need a solid foundation. In this tutorial series, **Python and Rust are first-class citizens.** No matter which language you choose, you will find full implementation support and native patterns for every agentic concept we cover.
 
-This guide covers the two pillars of our environment: **The Programming Stack** and **The LLM Reasoning Engine.**
+In this tutorial series, every example will be presented in both **Python** and **Rust**. No matter which language you choose, you will find full implementation support and native patterns for every agentic concept we cover.
+
+This post will help you set up two aspects of AI development: **the programming language and environment** and **the LLM API setup**.
 
 ---
 
 ## 1. Programming Language Setup
 
-We have designed these tutorials so that you can follow along entirely in one language or switch between them to see how different ecosystems handle autonomous loops.
+You can follow along entirely in one language or switch between them later. For now, however, I recommend choosing one path.
 
-### Choose Your Path
-- **Python Path:** Ideal for rapid prototyping and accessing the vast library of AI research tools.
-- **Rust Path:** Ideal for building production-grade, memory-safe agents with high-concurrency needs.
+- **Python Path:** Best for rapid prototyping, access to a vast library ecosystem, and strong community support.
+- **Rust Path:** Best for building production-grade, memory-safe, and memory-efficient agents, especially when high concurrency is important. The community is very passionate, although the ecosystem is still smaller overall.
 
-**Setup Links:**
-- **Python:** [Official Python Installation Guide](https://www.python.org/downloads/) (Version 3.10+ recommended)
+>If you're unsure, choose Python.
+
+**Official language setup links:**
+- **Python:** [Official Python Installation Guide](https://www.python.org/downloads/) (version 3.10+ recommended)
 - **Rust:** [Rust Toolchain Setup (rustup)](https://rustup.rs/)
 
 <Aside type="note" title="Hardware Support">
-The code provided in these tutorials is tested and optimized for **macOS (Apple Silicon)**. While the logic is cross-platform, Mac users will enjoy the best experience with our local benchmarking and performance tracking.
+The code in these tutorials has been tested and optimized for **macOS (Apple Silicon)**.
 </Aside>
 
 ---
 
-## 2. LLM Configuration (The "Brain")
+## 2. API key Setup for AI (LLMs)
 
-In these tutorials, we use **Google Gemini** as our primary reasoning engine. 
+Although our example code is designed to be **OpenAI-compatible**—so you can swap in GPT models or local models through Ollama—we use **Gemini** in this tutorial series because Google offers a **generous free tier** for developers.
 
-### Why Gemini?
-While our code is designed to be **OpenAI-compatible** (allowing you to swap in GPT-4 or local models via Ollama), we use Gemini because Google provides a **generous free tier** for developers. I want to ensure my readers can keep learning with free resources and only move to paid services when they are ready for production.
+### Obtaining Your API Key
 
-### Obtaining your API Key
-
-You can generate your key via Google AI Studio.
+You can generate your API key through Google AI Studio.
 
 <LinkButton 
   href="https://aistudio.google.com/" 
   variant="primary"
   target="_blank"
-  >
+>
   Get your Gemini API Key →
 </LinkButton>
 
-<Steps>
-1. Log in to **Google AI Studio** using the link above.
-2. Click on **"Get API key"** in the left-hand sidebar.
-3. Select **"Create API key in new project."**
-</Steps>
+- Log in to **Google AI Studio** using the link above.
+- Click **"Get API key"** in the left-hand sidebar.
+- Select **"Create API key in new project."**
 
 <YouTube id="https://www.youtube.com/watch?v=BYBeQm_AsCI" />
 
@@ -64,9 +61,7 @@ You can generate your key via Google AI Studio.
 
 ## 3. Tool Setup & SDK Integration
 
-To interact with Gemini, we utilize official and community-supported SDKs. Given the rapid evolution of the "Agentic AI" space, we prioritize libraries that offer the most stable support for generative features.
-
-### Supported SDKs
+### SDKs used in tutorials
 
 | Language | SDK Package | Source |
 | --- | --- | --- |
@@ -77,8 +72,6 @@ To interact with Gemini, we utilize official and community-supported SDKs. Given
 
 #### **Python**
 
-We use the modern `google-genai` SDK. This replaces the legacy `google-generativeai` package and provides a more streamlined interface for Gemini 2.0+ models.
-
 ```bash
 pip install google-genai
 
@@ -86,7 +79,7 @@ pip install google-genai
 
 #### **Rust**
 
-As there is currently no "official" Google-maintained crate for Rust, we have adopted `gemini-client-api`. It provides the most robust asynchronous implementation for community-driven projects.
+As there is currently no "official" Google-maintained crate for Rust, we have adopted `gemini-client-api`.
 
 ```toml
 # Add to your Cargo.toml
