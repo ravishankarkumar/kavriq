@@ -6,6 +6,8 @@ description: A complete introduction to agents in AI — from intuition and evol
 layout: ../../../layouts/TutorialPage.astro
 ---
 
+>Updated on 15th March 2026
+
 import { Tabs, TabItem, Steps, Aside } from '@astrojs/starlight/components';
 
 An **agent** is an autonomous system that uses an LLM as a decision-making and reasoning engine to pursue a goal through an iterative loop of observing, planning, acting, and adjusting based on results.
@@ -236,90 +238,68 @@ If your environemntis not yet setup already, please follow the [instructions her
 
 Let’s now look at the simplest possible implementation. The point here is not production robustness — it is to show the structural idea clearly.
 
+>Problem statement: Count the number of files in the current directory, and tell an interesting fact about that number.
+
 <Tabs >
   <TabItem label="Python" icon="seti:python">
 
 ```python
-# minimal_agent.py
-import json
-from openai import OpenAI
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
-client = OpenAI()
+# -----------------------------
+# Load environment variables
+# -----------------------------
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
-def search(query: str) -> str:
-    # stub — replace with a real search API in production
-    return f"Results for '{query}': [result1, result2, result3]"
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError("GEMINI_API_KEY not found in environment variables.")
 
-def calculator(expression: str) -> str:
-    return str(eval(expression))
+client = genai.Client(api_key=api_key)
 
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "search",
-            "description": "Search the web for information",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string"}
-                },
-                "required": ["query"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "calculator",
-            "description": "Evaluate a math expression",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "expression": {"type": "string"}
-                },
-                "required": ["expression"],
-            },
-        },
-    },
-]
+# -----------------------------
+# Tool: Count regular files
+# -----------------------------
+def count_files(directory: str = ".") -> str:
+    try:
+        path = Path(directory)
+        if not path.exists():
+            return f"Error: directory '{directory}' does not exist."
+        if not path.is_dir():
+            return f"Error: '{directory}' is not a directory."
+        count = sum(1 for item in path.iterdir() if item.is_file() and not item.name.startswith("."))
+        return str(count)
+    except Exception as e:
+        return f"Error counting files: {e}"
 
-TOOL_MAP = {
-    "search": search,
-    "calculator": calculator,
-}
 
-def run_agent(user_query: str) -> str:
-    messages = [{"role": "user", "content": user_query}]
-
-    while True:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            tools=TOOLS,
+def run_agent(user_query: str):
+    chat = client.chats.create(
+        model="gemini-2.5-flash",
+        config=types.GenerateContentConfig(
+            tools=[count_files], # Just pass the function itself!
+            temperature=0.1,
+            system_instruction=(
+              "You are a helpful assistant. "
+              "When the user asks about the number of files in a folder, "
+              "use the count_files tool instead of guessing."
+            ),
         )
+    )
+    response = chat.send_message(user_query)
+    return response.text
 
-        msg = response.choices[0].message
-
-        # No tool call means the model is done
-        if not msg.tool_calls:
-            return msg.content
-
-        messages.append(msg)
-
-        for tool_call in msg.tool_calls:
-            fn_name = tool_call.function.name
-            fn_args = json.loads(tool_call.function.arguments)
-            result = TOOL_MAP[fn_name](**fn_args)
-
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": result,
-            })
 
 if __name__ == "__main__":
-    answer = run_agent("What is the population of Tokyo divided by 1000?")
+    query = "Count the number of files in the current folder, and tell me one interesting mathematical fact about that number."
+    answer = run_agent(query)
+
+    print("\nFinal answer:\n")
     print(answer)
 ```
 
@@ -328,77 +308,161 @@ if __name__ == "__main__":
   <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-// main.rs — minimal agent loop
-use serde_json::{json, Value};
+use dotenvy::from_path;
+use gemini_client_api::gemini::types::request::Tool;
+use std::env;
+use std::fs;
+use std::path::Path;
 
-// Stub tool implementations
-fn search(query: &str) -> String {
-    format!("Results for '{}': [result1, result2, result3]", query)
-}
+use gemini_client_api::gemini::utils::execute_function_calls;
+use gemini_client_api::gemini::ask::Gemini;
+use gemini_client_api::gemini::types::sessions::Session;
+use gemini_client_api::serde_json::{json, Value};
 
-fn calculator(expression: &str) -> String {
-    // In production, use a safe evaluator crate
-    format!("Evaluated: {}", expression)
-}
+#[allow(non_camel_case_types)]
+pub struct count_files;
 
-fn dispatch_tool(name: &str, args: &Value) -> String {
-    match name {
-        "search" => {
-            let query = args["query"].as_str().unwrap_or("");
-            search(query)
+impl count_files {
+    // Change the return type to Result<Value, String>
+    pub async fn execute(directory: Value) -> Result<Value, String> {
+        // Extract the string, default to current directory if not provided
+        let directory_str = directory.as_str().unwrap_or(".");
+
+        let path = Path::new(directory_str);
+
+        if !path.exists() {
+            // We return Ok here so the AI receives the message about the missing folder
+            return Ok(json!({
+                "error": format!("directory '{}' does not exist", directory_str)
+            }));
         }
-        "calculator" => {
-            let expr = args["expression"].as_str().unwrap_or("");
-            calculator(expr)
-        }
-        _ => format!("Unknown tool: {}", name),
+
+        let count = match fs::read_dir(path) {
+            Ok(entries) => entries
+                .filter_map(|entry| entry.ok())
+                .filter(|entry| {
+                    let name = entry.file_name();
+                    let name = name.to_string_lossy();
+                    entry.path().is_file() && !name.starts_with('.')
+                })
+                .count(),
+            Err(e) => {
+                return Ok(json!({
+                    "error": format!("failed to read directory: {}", e)
+                }));
+            }
+        };
+
+        // Wrap the final JSON in Ok()
+        Ok(json!({
+            "directory": directory_str,
+            "count": count
+        }))
     }
 }
 
-// In real code, this would call the OpenAI API through reqwest or an SDK.
-// The point here is to show the loop structure.
-fn run_agent(user_query: &str) {
-    let mut messages: Vec<Value> = vec![
-        json!({"role": "user", "content": user_query})
-    ];
+fn get_count_files_schema() -> Value {
+    json!({
+        "name": "count_files",
+        "description": "Count the number of regular non-hidden files in a directory.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "directory": {
+                    "type": "STRING",
+                    "description": "Directory path. Use '.' for the current folder."
+                }
+            },
+            "required": ["directory"]
+        }
+    })
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    from_path("../.env").ok();
+
+    let api_key = env::var("GEMINI_API_KEY")
+        .expect("GEMINI_API_KEY must be set in the workspace root .env");
+
+    let mut session = Session::new(10);
+
+    let ai = Gemini::new(
+        api_key,
+        "gemini-2.5-flash", 
+        Some("You are a helpful assistant. Use tools when asked about files.".into()),
+    )
+    .set_tools(vec![Tool::FunctionDeclarations(vec![get_count_files_schema()])]);
+
+    let prompt = "Count the number of files in the current folder, and tell me one interesting mathematical fact about that number.";
+    println!("User: {}\n", prompt);
+
+    let mut response = ai.ask(session.ask(prompt)).await?;
 
     loop {
-        // 1. Call model
-        // let response = call_openai(&messages, &tools).await;
+        if response.get_chat().has_function_call() {
+            println!("Gemini requested a function call...");
 
-        // Stubbed for illustration:
-        let has_tool_call = false;
+            // The macro now finds count_files::execute()
+            let results = execute_function_calls!(session, count_files);
 
-        // 2. If no tool call, agent is done
-        if !has_tool_call {
-            println!("Agent finished.");
+            for (idx, res) in results.iter().enumerate() {
+                if let Some(r) = res {
+                    println!("  Call #{} result: {:?}", idx + 1, r);
+                }
+            }
+
+            response = ai.ask(&mut session).await?;
+        } else {
+            println!("\nGemini: {}", response.get_chat().get_text_no_think("\n"));
             break;
         }
-
-        // 3. Otherwise execute requested tools and feed results back
-        // for tool_call in response.tool_calls {
-        //     let result = dispatch_tool(&tool_call.name, &tool_call.arguments);
-        //     messages.push(json!({
-        //         "role": "tool",
-        //         "tool_call_id": tool_call.id,
-        //         "content": result,
-        //     }));
-        // }
     }
-}
 
-fn main() {
-    run_agent("What is the population of Tokyo divided by 1000?");
+    Ok(())
 }
 ```
 
   </TabItem>
 </Tabs>
 
+>This may look scary, as a lot of concepts were covered here. But, we will cover each one of them one by one in the upcoming posts.
+
 This pattern is the foundation under most agent frameworks. LangGraph, AutoGen, CrewAI, and similar systems all build abstractions around this basic idea.
 
 ---
 
+## Explanation of the Code Example
+
+This example shows the **smallest useful form of an agent**.
+
+The model is given a tool called `count_files`, and the user asks a question that requires real information from the environment. Instead of guessing, the model decides to call the tool, reads the result, and then produces the final answer.
+
+So the flow is:
+
+```text
+User request → model decides to use tool → tool returns result → model answers
+```
+
+The important idea is that the model is not doing the file counting itself. The **tool** does the real-world operation, while the **model** decides **when** to use it and **how** to respond.
+
+The Python version hides much of the internal complexity, so it feels simpler. The Rust version makes the loop more explicit by showing the function schema, tool execution, and repeated checking for tool calls. Even though the syntax differs, both examples demonstrate the same agent pattern.
+
+---
+
+## Concepts Covered
+
+This example introduces a few core ideas:
+
+* **Tool use** — the model can call external functions instead of relying only on text generation.
+* **Grounding** — the answer is based on real data from the environment, not a guess.
+* **Function calling** — the model uses a structured interface to request tool execution.
+* **Agent loop** — the system observes the task, takes an action, gets a result, and then responds.
+* **Separation of roles** — the tool performs the operation, while the model handles reasoning and communication.
+
+Even though this is a very small example, it already captures the basic structure behind many real agent systems.
+
+---
 ## Real-World Examples of Agents
 
 The easiest way to make this concrete is to look at real systems.
@@ -414,6 +478,8 @@ It was important historically because it showed people what agent loops looked l
 Devin is a coding-focused agent designed to operate more like an autonomous software engineer. It can inspect codebases, write code, run tests, debug issues, and propose changes over multiple steps.
 
 This is a genuinely agentic setting because the exact path cannot be known in advance. Debugging is inherently iterative. The system must inspect failures, revise its plan, try again, and stop only when the task is complete or blocked.
+
+---
 
 ## Multi-Agent Systems
 
