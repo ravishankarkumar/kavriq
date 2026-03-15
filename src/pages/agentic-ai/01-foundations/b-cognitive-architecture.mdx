@@ -1,25 +1,22 @@
 ---
 title: The Cognitive Architecture of Agents
 description: A complete guide to the principles and internal architecture of autonomous agents — including world models, goals, loops, state, tools, memory, environment interaction, and the full observe → reason → plan → act → reflect cycle.
-topic: Agentic AI
 layout: ../../../layouts/TutorialPage.astro
 ---
 
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-# The Cognitive Architecture of Agents
-
 Once you understand what an agent is and how LLMs power its behavior, the next question is more interesting: **what is happening inside the agent itself?**
 
 Why does an autonomous system feel different from a chatbot? Why can some systems pursue goals, use tools, adapt to changing situations, and recover from failure while others just respond one turn at a time?
 
-The answer lies in the agent’s **cognitive architecture**: the internal structure that allows it to observe the world, maintain state, choose actions, interact with tools and environments, remember what matters, and improve through feedback.
+The answer lies in the agent's **cognitive architecture**: the internal structure that allows it to observe the world, maintain state, choose actions, interact with tools and environments, remember what matters, and improve through feedback.
 
 This article merges the conceptual and technical views of agent architecture into one unified mental model. We will cover the core principles that make agents autonomous and show how they fit into the full:
 
-```text id="x2szwi"
+```text
 observe → reason → plan → act → reflect
-````
+```
 
 loop used by real systems.
 
@@ -47,7 +44,7 @@ A helpful way to think about this is:
 
 ## The Five Core Agentic Principles
 
-Before we go into the full architecture, let’s establish the conceptual backbone. Across frameworks and implementations, five principles appear again and again:
+Before we go into the full architecture, let's establish the conceptual backbone. Across frameworks and implementations, five principles appear again and again:
 
 1. **Decision-making loops**
 2. **State awareness**
@@ -113,7 +110,7 @@ This internal tracking is called **state awareness**.
 
 State includes things like:
 
-* the user’s goal
+* the user's goal
 * what has already been tried
 * what information has been collected
 * current task progress
@@ -253,7 +250,7 @@ That environment may be:
 * a desktop app
 * a workflow engine
 * IoT devices
-* a robot’s physical surroundings
+* a robot's physical surroundings
 
 Environment interaction has two sides:
 
@@ -283,13 +280,13 @@ The harder the environment, the more important safety and guardrails become. Age
 
 ---
 
-## The World Model: The Agent’s Internal Map of Reality
+## The World Model: The Agent's Internal Map of Reality
 
 Now we can connect these principles to the internal architecture.
 
 Every intelligent agent needs some internal representation of the world it is operating in. This is often called the **world model**.
 
-A world model is the agent’s current map of:
+A world model is the agent's current map of:
 
 * what exists
 * what matters
@@ -302,7 +299,7 @@ For an LLM-based agent, the active world model usually lives inside the current 
 
 That may include:
 
-```text id="0mscaq"
+```text
 System prompt:  "You are a research agent."
 Goal:           "Find Q3 revenue for AAPL."
 Observations:   [source_1, source_2, tool_result_1]
@@ -365,13 +362,13 @@ That is why loops, state, memory, and reflection all matter. Goal pursuit is not
 
 The high-level principles now collapse neatly into the full internal loop:
 
-```text id="3d85j7"
+```text
 observe → reason → plan → act → reflect
 ```
 
 A minimal agent may compress some of these stages together. A more advanced agent separates them clearly.
 
-Let’s break them down.
+Let's break them down.
 
 ---
 
@@ -415,7 +412,7 @@ This is the phase where it effectively asks:
 * What are my options?
 * What risks or constraints apply?
 
-In some systems, this is an explicit reasoning step. In others, it is implicit inside the model’s response generation.
+In some systems, this is an explicit reasoning step. In others, it is implicit inside the model's response generation.
 
 Either way, this is where the current world model gets turned into understanding.
 
@@ -823,7 +820,7 @@ The internal architecture of an agent is built from a small set of powerful idea
 
 All of these come together inside the full cognitive loop:
 
-```text id="vy9jo8"
+```text
 observe → reason → plan → act → reflect
 ```
 
