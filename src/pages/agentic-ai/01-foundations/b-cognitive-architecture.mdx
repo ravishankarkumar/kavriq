@@ -6,670 +6,339 @@ layout: ../../../layouts/TutorialPage.astro
 
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-Once you understand what an agent is and how LLMs power its behavior, the next question is more interesting: **what is happening inside the agent itself?**
+Once you understand what an agent is, the next question becomes more interesting: **what is happening inside the agent itself?**
 
-Why does an autonomous system feel different from a chatbot? Why can some systems pursue goals, use tools, adapt to changing situations, and recover from failure while others just respond one turn at a time?
+Why does an autonomous system feel different from a chatbot? Why can some systems pursue goals, use tools, adapt to changing situations, and recover from failure while others simply respond one turn at a time?
 
-The answer lies in the agent's **cognitive architecture**: the internal structure that allows it to observe the world, maintain state, choose actions, interact with tools and environments, remember what matters, and improve through feedback.
+The answer lies in the agent’s **cognitive architecture**: the internal structure that helps it keep track of the situation, decide what to do next, use tools, and improve based on feedback.
 
-This article merges the conceptual and technical views of agent architecture into one unified mental model. We will cover the core principles that make agents autonomous and show how they fit into the full:
-
-```text
-observe → reason → plan → act → reflect
-```
-
-loop used by real systems.
+In this article, we will build a compact mental model for that architecture and then make it concrete with a small working example.
 
 ---
 
-## Why Agentic Systems Need an Internal Architecture
+## What Makes an Agent Cognitive?
 
-A normal software pipeline executes a predefined sequence of steps. An autonomous agent cannot rely entirely on that. It must handle uncertainty.
+An agent is not just a model that replies to a prompt once. It is a system that can **work toward a goal over multiple steps**.
 
-That means it needs an internal structure for:
+What makes that possible is its internal structure.
 
-* representing the current situation
-* tracking progress toward a goal
-* deciding what to do next
-* using tools and external systems
-* remembering useful information
-* responding to changes in the environment
-* evaluating whether its actions worked
+A useful way to think about it is this: a cognitive agent maintains a **working view of the world**. That includes things like:
 
-These are not optional extras. They are the core ingredients that turn a model into an agent.
-
-A helpful way to think about this is:
-
----
-
-## The Five Core Agentic Principles
-
-Before we go into the full architecture, let's establish the conceptual backbone. Across frameworks and implementations, five principles appear again and again:
-
-1. **Decision-making loops**
-2. **State awareness**
-3. **Tool integration**
-4. **Memory**
-5. **Environment interaction**
-
-These principles are not separate modules floating independently. In practice, they all plug into the same cognitive loop.
-
----
-
-## 1. Decision-Making Loops: The Heartbeat of Autonomy
-
-The most basic difference between an agent and a single-turn system is that an agent operates in a loop.
-
-A simple model receives input and produces output once.
-
-An agent does something more like this:
-
-* observe the current situation
-* reason about what it means
-* choose the next action
-* execute that action
-* evaluate the result
-* repeat until done
-
-This loop is what lets the agent handle uncertainty, recover from errors, and pursue goals over multiple steps.
-
-You can think of it as the heartbeat of autonomy.
-
-A debugging agent is a classic example:
-
-* run a test
-* inspect the failure
-* hypothesize a fix
-* modify the code
-* rerun the test
-* stop only when the issue is solved or a limit is reached
-
-Without a loop, the system gets one chance. With a loop, it can adapt.
-
-### Termination matters
-
-A loop must not run forever.
-
-Every good agent loop needs a stopping rule such as:
-
-* the goal was reached
-* confidence is high enough
-* a failure condition occurred
-* maximum iterations were hit
-* escalation to a human is required
-
-This is one of the most underrated parts of agent design. Autonomy without termination is just expensive spinning.
-
----
-
-## 2. State Awareness: The Agent Must Know Where It Stands
-
-An agent cannot act intelligently if it does not track what is happening.
-
-This internal tracking is called **state awareness**.
-
-State includes things like:
-
-* the user's goal
-* what has already been tried
-* what information has been collected
-* current task progress
-* unresolved uncertainties
-* constraints and guardrails
-* external conditions that may have changed
-
-Without state awareness, an agent becomes forgetful and repetitive. It may retry the same failed action, ask for already known information, or lose track of the goal.
-
-A content assistant, for example, may need to remember:
-
-* previous article themes
-* tone and audience
-* current draft stage
-* research already gathered
-* what gaps remain
-
-In implementation terms, state might live in:
-
-* an in-memory object
-* a task graph
-* a database row
-* a serialized JSON state snapshot
-* the context window itself
-
-State is the difference between “responding” and “making progress.”
-
----
-
-## 3. Tool Integration: Extending the Agent Beyond Language
-
-Language alone is not enough for real work.
-
-LLMs are powerful reasoning and generation engines, but agents become useful when they can use **tools**.
-
-A tool may be:
-
-* a search API
-* a calculator
-* a code execution runtime
-* a database query
-* a file reader/writer
-* a browser
-* an internal service
-* a calendar or email API
-
-Tool integration is what turns the model from a talker into a doer.
-
-In practice, tool use involves three things:
-
-### Tool definition
-
-You must define what tools exist, what they do, and what arguments they accept.
-
-### Tool selection
-
-The agent must decide which tool is appropriate for the current step.
-
-### Tool execution and feedback
-
-Your application executes the selected tool, captures the result, and feeds it back into the loop as a new observation.
-
-This is where function calling lives. The model proposes the call; your system performs it.
-
----
-
-## 4. Memory: Remembering the Right Things
-
-Agents need memory, but memory is not one single bucket.
-
-Different kinds of memory solve different problems.
-
-### Short-term memory
-
-This is the active information in the current prompt or working state.
-
-Examples:
-
-* recent conversation turns
-* latest tool results
-* current plan
-* current task variables
-
-This is essential for immediate reasoning but limited by the context window.
-
-### Long-term memory
-
-This is information stored outside the active prompt and retrieved when needed.
-
-Examples:
-
-* user preferences
-* documentation
-* prior sessions
-* knowledge base entries
-* prior task outputs
-
-### Episodic memory
-
-This stores experiences or past runs.
-
-Examples:
-
-* what actions succeeded before
-* previous errors and recoveries
-* historical traces of task execution
-
-This helps with reflection and improvement.
-
-### Semantic memory
-
-This refers to factual or conceptual knowledge.
-
-Examples:
-
-* product knowledge
-* organizational documentation
-* domain knowledge
-* technical references
-
-A strong agent architecture uses the right memory for the right purpose rather than dumping everything into one giant prompt.
-
----
-
-## 5. Environment Interaction: Acting in the World
-
-An agent is not autonomous if it lives in a sealed box.
-
-It must be able to sense and affect an environment.
-
-That environment may be:
-
-* the web
-* a filesystem
-* an API ecosystem
-* a database
-* a desktop app
-* a workflow engine
-* IoT devices
-* a robot's physical surroundings
-
-Environment interaction has two sides:
-
-### Perception
-
-The agent gathers signals from the outside world:
-
-* API responses
-* sensor data
-* file contents
-* system events
-* browser state
-* user messages
-
-### Action
-
-The agent changes something in the world:
-
-* sends a request
-* edits a file
-* books a calendar event
-* updates a database
-* runs a command
-* triggers a downstream workflow
-
-The harder the environment, the more important safety and guardrails become. Agents that can take real actions need strong constraints.
-
----
-
-## The World Model: The Agent's Internal Map of Reality
-
-Now we can connect these principles to the internal architecture.
-
-Every intelligent agent needs some internal representation of the world it is operating in. This is often called the **world model**.
-
-A world model is the agent's current map of:
-
-* what exists
-* what matters
-* what state things are in
-* what has already happened
+* the current goal
+* what it has already observed
+* what actions it has already taken
 * what remains uncertain
-* how actions may change the situation
+* what constraints or stopping conditions apply
 
-For an LLM-based agent, the active world model usually lives inside the current context window.
+This active working view is often called the agent’s **world model**. In LLM-based systems, part of it may live directly in the current context window, while other useful information may be retrieved from memory or external tools.
 
-That may include:
+This is what makes an agent feel different from a chatbot. A chatbot mostly reacts to the current message. An agent, by contrast, can **track progress**, **adjust its behavior**, and **continue working until the task is complete**.
 
-```text
-System prompt:  "You are a research agent."
-Goal:           "Find Q3 revenue for AAPL."
-Observations:   [source_1, source_2, tool_result_1]
-Current state:  "Need one more confirming source."
-Constraints:    "Use only verified public sources."
-```
+To do that, an agent usually needs a few core ingredients:
 
-This is one of the deepest truths in agent design:
+* a **loop** so it can operate over multiple steps
+* **state** so it knows where it stands
+* **tools** so it can act beyond pure text generation
+* **memory** so it can retain or retrieve useful information
+* **feedback** so it can learn from what just happened
 
-If the world model is missing crucial information, stale, noisy, or poorly structured, the agent will reason on top of a broken map.
+Not every agent needs a heavy implementation of all of these, but some version of them is what gives agentic systems their sense of autonomy.
 
----
-
-## World Model vs Memory
-
-These two are related, but they are not the same.
-
-* **World model** = what the agent is actively reasoning over right now
-* **Memory** = what the agent can retrieve from outside the current reasoning context
-
-So:
-
-* the current prompt is active world model
-* the vector store or episodic log is external memory
-* retrieval moves information from memory into the active world model
-
-That distinction is huge. Good memory systems do not just store information — they help build a better world model at the right moment.
+One more detail matters: a loop must eventually stop. A good agent does not spin forever. It stops when the goal is reached, when a limit is hit, or when it decides that it needs escalation or human help.
 
 ---
 
-## Goal-Driven Behavior: The Engine of Agentic Action
+## The Cognitive Loop
 
-Traditional software is instruction-driven. You tell it exactly what to do.
-
-Agents are **goal-driven**. You specify the desired outcome, and the system figures out the sequence of actions required to get there.
-
-|                           | Instruction-Driven      | Goal-Driven Agent                                  |
-| ------------------------- | ----------------------- | -------------------------------------------------- |
-| **You specify**           | Exact steps             | Desired outcome                                    |
-| **Behavior**              | Fixed                   | Adaptive                                           |
-| **Unexpected situations** | Often fails             | Can re-plan                                        |
-| **Cost**                  | Predictable             | Variable                                           |
-| **Example**               | `summarize(fetch(url))` | “Find the most relevant article and summarize it.” |
-
-This changes everything.
-
-When an agent is goal-driven, it has to:
-
-* interpret the goal
-* measure progress toward the goal
-* decide whether the current path is working
-* adjust when the environment changes
-* stop when the goal is sufficiently complete
-
-That is why loops, state, memory, and reflection all matter. Goal pursuit is not a single operation.
-
----
-
-## The Full Cognitive Loop
-
-The high-level principles now collapse neatly into the full internal loop:
+These ideas come together inside a repeating loop:
 
 ```text
 observe → reason → plan → act → reflect
-```
+````
 
-A minimal agent may compress some of these stages together. A more advanced agent separates them clearly.
+This loop is the core pattern behind many real agent systems.
 
-Let's break them down.
+### Observe
 
----
+The agent gathers the current state of the task. That may include the user’s request, previous observations, recent tool outputs, retrieved memory, or information from the environment.
 
-## Phase 1: Observe
+### Reason
 
-The agent gathers and formats the relevant state of the world.
+The agent interprets what it currently knows. It asks: What is already clear? What is missing? What matters most right now?
 
-This may include:
+### Plan
 
-* the current user request
-* recent conversation history
-* latest tool outputs
-* retrieved memory snippets
-* current plan state
-* environment status
-* constraints, time, or system metadata
+Based on that reasoning, the agent chooses the next step. It may decide to call a tool, gather more evidence, make a guess, or stop and return a final answer.
 
-Observation is not just passive collection. It is also selection.
+### Act
 
-A good agent does not include everything. It includes what is relevant for this step.
+The agent executes the chosen step. This is the point where it interacts with the outside world by calling a tool, querying a system, or producing a response.
 
-This phase directly reflects:
+### Reflect
 
-* state awareness
-* memory retrieval
-* environment perception
+After acting, the agent looks at the result and updates its working view of the task. Did the action help? Is the goal now complete? Should it continue, revise its approach, or stop?
 
-Bad observation leads to bad reasoning.
+Reflection is what turns a loop into an adaptive process rather than blind repetition.
+
+To make this pattern visible, it helps to place the agent in a tiny environment where it cannot solve the task in one shot. That is exactly what the following example does.
 
 ---
 
-## Phase 2: Reason
+## Implementing the Loop in Code
 
-The model interprets the observation.
+In the code example below, we place the agent inside a small game world with a **hidden secret number**.
 
-This is the phase where it effectively asks:
+The agent does **not** know the answer directly. Instead, it has access to a few tools that reveal partial clues, such as whether the number is greater than some value, whether it is divisible by another value, and whether a final guess is correct.
 
-* What do I know?
-* What is still missing?
-* What matters most?
-* What are my options?
-* What risks or constraints apply?
-
-In some systems, this is an explicit reasoning step. In others, it is implicit inside the model's response generation.
-
-Either way, this is where the current world model gets turned into understanding.
-
----
-
-## Phase 3: Plan
-
-Reasoning alone is not enough. The agent must choose a next step.
-
-Planning may be:
-
-* implicit, where the model directly chooses a tool call or response
-* explicit, where the model returns a structured plan
-
-A plan might answer questions like:
-
-* Should I search again?
-* Should I use a different tool?
-* Do I already have enough evidence?
-* Should I ask the user for clarification?
-* Should I stop and return a final answer?
-
-For complex tasks, explicit planning can improve coordination and transparency.
-
-Example structured plan:
-
-```json
-{
-  "goal_status": "incomplete",
-  "known_facts": ["Have 2 revenue sources"],
-  "gap": "Need independent confirmation",
-  "next_action": "call_tool",
-  "tool": "search",
-  "args": {
-    "query": "Apple Q3 revenue official filing"
-  }
-}
-```
-
----
-
-## Phase 4: Act
-
-This is where the agent does something that changes state.
-
-Examples:
-
-* call a search tool
-* query a database
-* execute code
-* retrieve a file
-* write to a system
-* return a final answer
-* trigger a downstream action
-
-Action is where side effects happen.
-
-Everything before this phase is internal cognition. This phase touches the outside world.
-
-This is why tool schemas, permissions, and safety constraints matter so much.
-
----
-
-## Phase 5: Reflect
-
-After acting, the agent must decide whether the action actually helped.
-
-Reflection can include:
-
-* checking whether the result answered the right question
-* evaluating whether a source is trustworthy
-* deciding whether a failed attempt should be retried
-* comparing outcomes to the original goal
-* deciding whether to continue, revise, or stop
-
-Reflection is what turns repetition into adaptation.
-
-A basic agent may do this implicitly by rereading the updated context.
-
-A more advanced agent may perform explicit self-evaluation, scoring, critique, or revision.
-
-Reflection is where many powerful behaviors emerge:
-
-* self-correction
-* retry logic
-* plan revision
-* quality control
-* failure recovery
-
----
-
-## How the Five Principles Map to the Loop
-
-This is the unifying view:
-
-| Principle                   | Where It Appears in the Loop |
-| --------------------------- | ---------------------------- |
-| **Decision-making loops**   | The loop as a whole          |
-| **State awareness**         | Observe, plan, reflect       |
-| **Tool integration**        | Plan and act                 |
-| **Memory**                  | Observe and reflect          |
-| **Environment interaction** | Observe and act              |
-
-This is why the two original articles really belonged together. The principles are the architecture seen from above. The cognitive loop is the architecture seen from inside.
-
----
-
-## Implementing the Full Loop
-
-Here is the full five-phase structure in code.
+This creates a simple but useful environment for demonstrating agent behavior.
 
 <Tabs syncKey="programming-language">
-  <TabItem label="Python" icon="python">
+  <TabItem label="Python" icon="seti:python">
 
-```python id="5cjlwm"
-import json
-from dataclasses import dataclass, field
-from typing import Any
-from openai import OpenAI
+```python
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
-client = OpenAI()
+# -----------------------------
+# Load environment variables
+# -----------------------------
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
-@dataclass
-class AgentState:
-    """The agent's active world model."""
-    goal: str
-    observations: list[str] = field(default_factory=list)
-    iteration: int = 0
-    max_iterations: int = 10
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError("GEMINI_API_KEY not found in environment variables.")
 
-def observe(state: AgentState, new_observation: str | None = None) -> list[dict]:
-    """
-    Phase 1 — OBSERVE
-    Build the current world model from state.
-    """
-    if new_observation:
-        state.observations.append(new_observation)
+client = genai.Client(api_key=api_key)
 
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                f"You are a goal-driven agent.\n"
-                f"Goal: {state.goal}\n"
-                f"Iteration: {state.iteration}/{state.max_iterations}\n"
-                "Think carefully about what you know, what is missing, "
-                "and what action should happen next. "
-                "Call tools if needed. If the goal is achieved, answer directly."
+# -----------------------------
+# Hidden game world
+# -----------------------------
+SECRET_NUMBER = 12
+
+
+# -----------------------------
+# Tools
+# -----------------------------
+def greater_than(n: int) -> str:
+    """Return whether the secret number is greater than n."""
+    return f"Is the secret number greater than {n}? {'yes' if SECRET_NUMBER > n else 'no'}"
+
+
+def is_divisible_by(n: int) -> str:
+    """Return whether the secret number is divisible by n."""
+    if n == 0:
+        return "Error: division by zero is not allowed."
+    return f"Is the secret number divisible by {n}? {'yes' if SECRET_NUMBER % n == 0 else 'no'}"
+
+
+def guess_number(n: int) -> str:
+    """Make a final guess for the secret number."""
+    if SECRET_NUMBER == n:
+        return f"Correct! The secret number is {n}."
+    return f"Incorrect guess: {n} is not the secret number."
+
+
+# -----------------------------
+# Agent loop
+# -----------------------------
+def run_hidden_number_agent(goal: str, max_iterations: int = 8) -> str:
+    chat = client.chats.create(
+        model="gemini-2.5-flash",
+        config=types.GenerateContentConfig(
+            tools=[greater_than, is_divisible_by, guess_number],
+            temperature=0.1,
+            system_instruction=(
+                "You are an autonomous puzzle-solving agent.\n"
+                "A secret integer exists between 1 and 20.\n"
+                "Your job is to discover it by calling tools strategically.\n"
+                "Do not guess too early.\n"
+                "Use previous observations to narrow the possibilities.\n"
+                "When you are confident, call guess_number.\n"
+                "Think step by step and solve the task carefully."
             ),
-        }
-    ]
-
-    for obs in state.observations:
-        messages.append({
-            "role": "assistant",
-            "content": f"[Observation] {obs}"
-        })
-
-    return messages
-
-def reason_and_plan(messages: list[dict], tools: list[dict]) -> Any:
-    """
-    Phases 2 + 3 — REASON + PLAN
-    Let the model interpret the world model and choose the next action.
-    """
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        tools=tools,
+        ),
     )
-    return response.choices[0].message
 
-def act(tool_calls: list, tool_map: dict) -> list[str]:
-    """
-    Phase 4 — ACT
-    Execute planned tool calls and capture their results.
-    """
-    results = []
-    for tool_call in tool_calls:
-        fn_name = tool_call.function.name
-        fn_args = json.loads(tool_call.function.arguments)
-        result = tool_map[fn_name](**fn_args)
-        results.append(f"{fn_name}({fn_args}) -> {result}")
-    return results
+    history = []
+    current_prompt = (
+        f"Goal: {goal}\n"
+        f"The secret number is between 1 and 20.\n"
+        "Start by choosing the best first tool call."
+    )
 
-def reflect(state: AgentState, action_results: list[str]) -> str:
-    """
-    Phase 5 — REFLECT
-    Convert action results into a new observation for the next iteration.
-    """
-    summary = " | ".join(action_results)
-    print(f"[Reflect] Iteration {state.iteration}: {summary}")
-    return summary
+    for iteration in range(1, max_iterations + 1):
+        print(f"\n=== Iteration {iteration} ===")
+        print("Prompt to agent:")
+        print(current_prompt)
 
-# Stub tool
-def search(query: str) -> str:
-    return f"Top result for '{query}': [stub data]"
+        response = chat.send_message(current_prompt)
 
-TOOL_MAP = {"search": search}
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "search",
-            "description": "Search the web for relevant information",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string"}
-                },
-                "required": ["query"],
-            },
-        },
-    }
-]
+        text = response.text if response.text else ""
+        print("\nAgent response:")
+        print(text)
 
-def run_cognitive_agent(goal: str) -> str:
-    state = AgentState(goal=goal)
+        history.append(f"Iteration {iteration}: {text}")
 
-    while state.iteration < state.max_iterations:
-        state.iteration += 1
-        print(f"\n--- Iteration {state.iteration} ---")
+        # Stop if the model clearly found the answer
+        if "Correct! The secret number is" in text:
+            return text
 
-        # Phase 1
-        messages = observe(state)
+        # Build the next prompt using accumulated observations
+        observation_block = "\n".join(history)
+        current_prompt = (
+            f"Goal: {goal}\n"
+            f"Iteration: {iteration}/{max_iterations}\n"
+            "Here are the observations so far:\n"
+            f"{observation_block}\n\n"
+            "Based on these observations, choose the single best next step.\n"
+            "If you are confident, use guess_number.\n"
+            "Otherwise, call one of the clue tools."
+        )
 
-        # Phases 2 + 3
-        decision = reason_and_plan(messages, TOOLS)
+    return "Maximum iterations reached before the agent found the secret number."
 
-        # Stop if the model decides it is done
-        if not decision.tool_calls:
-            print(f"[Done] {decision.content}")
-            return decision.content
-
-        # Phase 4
-        results = act(decision.tool_calls, TOOL_MAP)
-
-        # Phase 5
-        observation = reflect(state, results)
-        state.observations.append(observation)
-
-    return "Max iterations reached without completing goal."
 
 if __name__ == "__main__":
-    answer = run_cognitive_agent(
-        "Find the current CEO of OpenAI and summarize their background."
-    )
-    print("\nFinal answer:")
+    goal = "Find the secret number."
+    answer = run_hidden_number_agent(goal)
+
+    print("\nFinal answer:\n")
     print(answer)
 ```
 
   </TabItem>
 
-  <TabItem label="Rust" icon="rust">
+  <TabItem label="Rust" icon="seti:rust">
 
-```rust id="u3qn02"
-use serde_json::{json, Value};
+```rust
+use dotenvy::from_path;
+use gemini_client_api::gemini::ask::Gemini;
+use gemini_client_api::gemini::types::request::Tool;
+use gemini_client_api::gemini::types::sessions::Session;
+use gemini_client_api::gemini::utils::execute_function_calls;
+use gemini_client_api::serde_json::{json, Value};
+
+use std::env;
+
+const SECRET_NUMBER: i32 = 12;
+
+#[allow(non_camel_case_types)]
+pub struct greater_than;
+
+impl greater_than {
+    pub async fn execute(input: Value) -> Result<Value, String> {
+        let n = input
+            .get("n")
+            .and_then(|v| v.as_i64())
+            .ok_or("Missing or invalid 'n'")? as i32;
+
+        Ok(json!({
+            "tool": "greater_than",
+            "input": n,
+            "result": SECRET_NUMBER > n
+        }))
+    }
+}
+
+#[allow(non_camel_case_types)]
+pub struct is_divisible_by;
+
+impl is_divisible_by {
+    pub async fn execute(input: Value) -> Result<Value, String> {
+        let n = input
+            .get("n")
+            .and_then(|v| v.as_i64())
+            .ok_or("Missing or invalid 'n'")? as i32;
+
+        if n == 0 {
+            return Ok(json!({
+                "tool": "is_divisible_by",
+                "input": n,
+                "error": "Division by zero is not allowed"
+            }));
+        }
+
+        Ok(json!({
+            "tool": "is_divisible_by",
+            "input": n,
+            "result": SECRET_NUMBER % n == 0
+        }))
+    }
+}
+
+#[allow(non_camel_case_types)]
+pub struct guess_number;
+
+impl guess_number {
+    pub async fn execute(input: Value) -> Result<Value, String> {
+        let n = input
+            .get("n")
+            .and_then(|v| v.as_i64())
+            .ok_or("Missing or invalid 'n'")? as i32;
+
+        Ok(json!({
+            "tool": "guess_number",
+            "input": n,
+            "correct": SECRET_NUMBER == n,
+            "message": if SECRET_NUMBER == n {
+                "Correct! You found the secret number."
+            } else {
+                "Incorrect guess."
+            }
+        }))
+    }
+}
+
+fn get_tool_schemas() -> Vec<Value> {
+    vec![
+        json!({
+            "name": "greater_than",
+            "description": "Check whether the secret number is greater than n.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "n": {
+                        "type": "NUMBER",
+                        "description": "A number to compare against the secret number."
+                    }
+                },
+                "required": ["n"]
+            }
+        }),
+        json!({
+            "name": "is_divisible_by",
+            "description": "Check whether the secret number is divisible by n.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "n": {
+                        "type": "NUMBER",
+                        "description": "A divisor to test against the secret number."
+                    }
+                },
+                "required": ["n"]
+            }
+        }),
+        json!({
+            "name": "guess_number",
+            "description": "Make a final guess for the secret number.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "n": {
+                        "type": "NUMBER",
+                        "description": "Your guess for the secret number."
+                    }
+                },
+                "required": ["n"]
+            }
+        }),
+    ]
+}
 
 struct AgentState {
     goal: String,
@@ -679,92 +348,130 @@ struct AgentState {
 }
 
 impl AgentState {
-    fn new(goal: &str) -> Self {
+    fn new(goal: &str, max_iterations: usize) -> Self {
         Self {
             goal: goal.to_string(),
             observations: Vec::new(),
             iteration: 0,
-            max_iterations: 10,
+            max_iterations,
         }
     }
-}
 
-fn observe(state: &AgentState) -> Vec<Value> {
-    let mut messages = vec![json!({
-        "role": "system",
-        "content": format!(
-            "You are a goal-driven agent.\nGoal: {}\nIteration: {}/{}\n\
-             Think carefully about what you know, what is missing, and what action \
-             should happen next. Call tools if needed. If the goal is complete, answer directly.",
-            state.goal, state.iteration, state.max_iterations
-        )
-    })];
+    fn build_prompt(&self) -> String {
+        let mut prompt = format!(
+            "You are a careful puzzle-solving agent.\n\
+             Goal: {}\n\
+             Iteration: {}/{}\n\
+             The secret number is an integer between 1 and 20.\n\
+             You must discover it by using tools strategically.\n\
+             Do not guess too early.\n\
+             Use the observations you already have to narrow the possibilities.\n\
+             When you are confident enough, call guess_number.\n\n",
+            self.goal, self.iteration, self.max_iterations
+        );
 
-    for obs in &state.observations {
-        messages.push(json!({
-            "role": "assistant",
-            "content": format!("[Observation] {}", obs)
-        }));
-    }
-
-    messages
-}
-
-fn act(tool_name: &str, args: &Value) -> String {
-    match tool_name {
-        "search" => {
-            let query = args["query"].as_str().unwrap_or("");
-            format!("Top result for '{}': [stub data]", query)
+        if self.observations.is_empty() {
+            prompt.push_str("Observations so far: none.\n");
+        } else {
+            prompt.push_str("Observations so far:\n");
+            for (i, obs) in self.observations.iter().enumerate() {
+                prompt.push_str(&format!("{}. {}\n", i + 1, obs));
+            }
         }
-        _ => format!("Unknown tool: {}", tool_name),
+
+        prompt.push_str(
+            "\nThink step by step.\n\
+             Choose the single best next tool call.\n\
+             If you already have enough evidence, use guess_number.\n",
+        );
+
+        prompt
     }
 }
 
-fn reflect(state: &AgentState, results: &[String]) {
-    println!(
-        "[Reflect] Iteration {}: {}",
-        state.iteration,
-        results.join(" | ")
-    );
-}
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    from_path("../.env").ok();
 
-fn run_cognitive_agent(goal: &str) -> String {
-    let mut state = AgentState::new(goal);
+    let api_key = env::var("GEMINI_API_KEY")
+        .expect("GEMINI_API_KEY must be set in the workspace root .env");
 
-    while state.iteration < state.max_iterations {
+    let ai = Gemini::new(
+        api_key,
+        "gemini-2.5-flash",
+        Some(
+            "You are an autonomous puzzle-solving agent. \
+             Solve the hidden number game by calling tools one step at a time. \
+             Be systematic, avoid random guessing, and stop once the number is found."
+                .into(),
+        ),
+    )
+    .set_tools(vec![Tool::FunctionDeclarations(get_tool_schemas())]);
+
+    let mut session = Session::new(30);
+    let mut state = AgentState::new("Find the secret number between 1 and 20.", 8);
+
+    loop {
+        if state.iteration >= state.max_iterations {
+            println!("\nStopped: maximum iterations reached.");
+            println!("Observations collected:");
+            for obs in &state.observations {
+                println!("- {}", obs);
+            }
+            break;
+        }
+
         state.iteration += 1;
-        println!("\n--- Iteration {} ---", state.iteration);
+        println!("\n=== Iteration {} ===", state.iteration);
 
-        // Phase 1 — Observe
-        let _messages = observe(&state);
+        let prompt = state.build_prompt();
+        println!("Agent prompt:\n{}\n", prompt);
 
-        // Phases 2 + 3 — Reason + Plan
-        // In production, call the LLM here.
-        let has_tool_call = state.iteration < 2;
+        let mut response = ai.ask(session.ask(prompt)).await?;
 
-        if !has_tool_call {
-            let answer = "Final answer from LLM (stub).".to_string();
-            println!("[Done] {}", answer);
-            return answer;
+        let mut made_tool_call = false;
+
+        loop {
+            if response.get_chat().has_function_call() {
+                made_tool_call = true;
+                println!("Gemini requested a function call...");
+
+                let results = execute_function_calls!(
+                    session,
+                    greater_than,
+                    is_divisible_by,
+                    guess_number
+                );
+
+                for (idx, res) in results.iter().enumerate() {
+                    if let Some(r) = res {
+                        let observation = format!("Tool result {}: {:?}", idx + 1, r);
+                        println!("{}", observation);
+                        state.observations.push(observation.clone());
+
+                        if observation.contains("\"correct\":true") {
+                            println!("\nAgent solved the game!");
+                            println!("Final observation: {}", observation);
+                            return Ok(());
+                        }
+                    }
+                }
+
+                response = ai.ask(&mut session).await?;
+            } else {
+                let text = response.get_chat().get_text_no_think("\n");
+                println!("Agent says:\n{}", text);
+                break;
+            }
         }
 
-        // Phase 4 — Act
-        let tool_result = act("search", &json!({"query": goal}));
-        let results = vec![tool_result.clone()];
-
-        // Phase 5 — Reflect
-        reflect(&state, &results);
-        state.observations.push(tool_result);
+        if !made_tool_call {
+            println!("No tool was called in this iteration. Stopping.");
+            break;
+        }
     }
 
-    "Max iterations reached without completing goal.".to_string()
-}
-
-fn main() {
-    let answer = run_cognitive_agent(
-        "Find the current CEO of OpenAI and summarize their background."
-    );
-    println!("\nFinal answer:\n{}", answer);
+    Ok(())
 }
 ```
 
@@ -773,58 +480,57 @@ fn main() {
 
 ---
 
-## From Chatbots to Cognitive Agents
+## What the Code Is Actually Doing
 
-It helps to see the progression clearly:
+This example turns the cognitive loop into something visible.
 
-| System Type            |  Loop?  | World Model? | Goal-Driven? |           Plans?          | Reflects? |
-| ---------------------- | :-----: | :----------: | :----------: | :-----------------------: | :-------: |
-| **Rule-based chatbot** |    ❌    |       ❌      |       ❌      |             ❌             |     ❌     |
-| **Single-turn LLM**    |    ❌    |    Partial   |       ❌      |             ❌             |     ❌     |
-| **Conversational LLM** | Partial |       ✅      |       ❌      |             ❌             |     ❌     |
-| **Basic agent**        |    ✅    |       ✅      |       ✅      |          Implicit         |  Limited  |
-| **Cognitive agent**    |    ✅    |       ✅      |       ✅      | Explicit or semi-explicit |     ✅     |
+The agent starts with a goal: find the secret number. But it cannot access that answer directly. It can only interact with the environment through tools.
 
-This progression explains why agent systems feel qualitatively different. Each added capability increases power, but also cost and complexity.
+Each tool reveals only a **partial clue**:
 
----
+* `greater_than(n)` narrows the range
+* `is_divisible_by(n)` tests a mathematical property
+* `guess_number(n)` attempts a final answer
 
-## Design Principle: Add Complexity Only When Needed
+That means the agent cannot solve the task in one shot. It has to gather evidence over multiple iterations.
 
-Not every agent needs a heavy cognitive architecture.
+At a high level, the loop looks like this:
 
-Sometimes:
+1. the agent begins with the current goal and the observations collected so far
+2. the model decides what tool to call next
+3. the tool returns a result from the environment
+4. that result is added back into the agent’s observations
+5. the next iteration starts with a richer view of the world
 
-* a simple observe → act loop is enough
-* explicit planning is unnecessary
-* reflection is overkill
-* long-term memory is not worth the complexity
-* a pipeline is still the right answer
+In other words, the code is implementing the cognitive loop directly:
 
-That is the real engineering mindset.
+* **observe** by reading the current goal and prior observations
+* **reason and plan** inside the model call
+* **act** by executing the chosen tool
+* **reflect** by feeding the tool result back into the running state
+* **repeat** until the goal is achieved or the iteration limit is reached
+
+The Python version keeps this compact and easy to read. The Rust version makes the moving parts more explicit by showing the tool schemas, session handling, state updates, and repeated loop structure more directly.
+
+This is still a minimal teaching example, not a production-grade agent. Real systems may add richer memory, stronger planning, retries, safety controls, and more structured state management. But the underlying pattern is already here.
+
+That is the main takeaway: many modern agent systems are, underneath the abstractions, variations of this same loop.
 
 ---
 
 ## Wrapping Up
 
-The internal architecture of an agent is built from a small set of powerful ideas:
+A cognitive agent is not defined by a fancy prompt. It is defined by its internal loop.
 
-* **decision-making loops** give it iterative autonomy
-* **state awareness** lets it track progress
-* **tool integration** lets it do real work
-* **memory** lets it retain and retrieve useful information
-* **environment interaction** lets it sense and affect the world
-* **the world model** gives it an internal map of the current situation
-* **goal-driven behavior** gives it direction
-* **reflection** gives it adaptation
+It maintains a working model of the task, updates that model through observations, chooses actions, uses tools, and keeps going until it reaches a stopping condition.
 
-All of these come together inside the full cognitive loop:
+That is what gives agents their sense of autonomy.
+
+Once you understand that loop, the rest of agent engineering starts to make more sense. Different frameworks may package it in different ways, but the core idea remains remarkably similar:
 
 ```text
 observe → reason → plan → act → reflect
 ```
-
-Once you understand that loop, the rest of agent engineering starts to click. Frameworks may differ in syntax, but most serious agents are just different ways of implementing this same underlying architecture.
 
 → **Next up**: [The Inference-Time Compute Revolution](/agentic-ai/01-foundations/c-inference-time-compute)
 

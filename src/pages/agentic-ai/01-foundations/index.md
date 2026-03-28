@@ -12,10 +12,10 @@ Building a reliable agent requires more than just a prompt; it requires a deep u
 
 ## 🏛️ Theoretical Frameworks
 
-- [What is an Agent?](/agentic-ai/02-foundations/a-what-is-an-agent)
+- [What is an Agent?](/agentic-ai/01-foundations/a-what-is-an-agent)
   *Exploring the spectrum of agency—from simple scripts to fully autonomous entities.*
 
-- [Cognitive Architecture](/agentic-ai/02-foundations/b-cognitive-architecture)
+- [Cognitive Architecture](/agentic-ai/01-foundations/b-cognitive-architecture)
   *How to structure the 'brain' of an agent using memory, planning, and sensory modules.*
 
 
@@ -24,10 +24,10 @@ Building a reliable agent requires more than just a prompt; it requires a deep u
 
 ## ⚙️ Modern Primitives
 
-- [Inference-Time Compute](/agentic-ai/02-foundations/c-inference-time-compute)
+- [Inference-Time Compute](/agentic-ai/01-foundations/c-inference-time-compute)
   *Understanding why "thinking longer" (Search, Verifiers, and Rollouts) leads to better agentic performance.*
 
-- [Modern LLM Primitives](/agentic-ai/02-foundations/d-modern-llm-primitives)
+- [Modern LLM Primitives](/agentic-ai/01-foundations/d-modern-llm-primitives)
   *A look at function calling, structured output (JSON mode), and token-level control.*
 
 
