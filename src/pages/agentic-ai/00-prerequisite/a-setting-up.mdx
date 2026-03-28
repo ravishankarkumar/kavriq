@@ -196,5 +196,84 @@ async fn main() {
 </TabItem>
 </Tabs>
 
+
+---
+
+
+
+
+## 5 (Optional): Local LLM Setup with Ollama (Qwen 3.5)
+
+All examples in this series are OpenAI-compatible, which means you can also run them using **local models via Ollama** instead of cloud APIs.
+
+This is especially useful if you want:
+- offline development
+- zero API cost
+- full control over your models
+
+### Install Ollama
+
+Follow the official installation guide:
+
+- https://ollama.com/download
+
+After installation, start the Ollama server:
+
+```bash
+ollama serve
+````
+
+---
+
+### Pull Qwen 3.5 (9B)
+
+We will use the `qwen3.5:9b` model for local inference:
+
+```bash
+ollama pull qwen3.5:9b
+```
+
+>We can also use brew to install and run ollama
+---
+
+### Quick Test
+
+Run:
+
+```bash
+ollama run qwen3.5:9b
+```
+
+Then try:
+
+```text
+Explain async programming in Rust.
+```
+
+---
+
+### Notes
+
+* Unlike cloud APIs (OpenAI, Gemini), local models:
+
+  * do not require API keys
+  * do not expose explicit reasoning controls (like `reasoning_effort`)
+* Reasoning quality depends on:
+
+  * prompt design
+  * model size
+
+---
+
+### When to use this
+
+| Use case               | Recommended setup  |
+| ---------------------- | ------------------ |
+| Learning / prototyping | Gemini (free tier) |
+| Production APIs        | OpenAI / Gemini    |
+| Local agents / offline | Ollama + Qwen      |
+
+
+
 → **Next up**: [What is an agent?](/agentic-ai/01-foundations/a-what-is-an-agent)
 

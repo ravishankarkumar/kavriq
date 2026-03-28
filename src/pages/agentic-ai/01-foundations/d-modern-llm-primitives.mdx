@@ -6,11 +6,17 @@ layout: ../../../layouts/TutorialPage.astro
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Before you can build a strong agent, you need to understand the engine inside it: the large language model. But for agent builders, it is not enough to know that an LLM “generates text.” You need a practical mental model of how it represents language, how it handles context, how you steer its behavior, and what low-level primitives let you build reliable systems around it.
+Most agents don't fail because the model is weak.
+They fail because the builder doesn't understand how the model actually works.
 
-This article combines both the conceptual foundations and the production primitives of modern LLM-based agents. We will move from the basics — tokenization, embeddings, context, and prompting — into the actual control surfaces used in real agent systems: system prompting, structured outputs, function calling, context management, and working memory.
+To build reliable agents, you need more than “LLMs generate text.”
+You need a mental model of how they represent information, handle context, and expose control surfaces.
 
-By the end, you should be able to look at an agent and understand what the LLM is doing, what your application is doing, and where the real engineering decisions live.
+
+In the previous article, we saw how reasoning models shift intelligence into inference-time compute.
+
+This article focuses on the other side of that equation:
+the primitives you use to control, constrain, and integrate that intelligence into real systems.
 
 ---
 
@@ -319,17 +325,24 @@ This structure is simple, but it captures the three things that matter most:
 * boundaries
 
 <Tabs syncKey="programming-language">
-  <TabItem label="Python" icon="python">
+  <TabItem label="Python" icon="seti:python">
 
 ```python
-from openai import OpenAI
+import requests
 
-client = OpenAI()
+# -----------------------------
+# Ollama endpoint
+# -----------------------------
+OLLAMA_URL = "http://localhost:11434/api/chat"
+MODEL = "qwen3.5:9b"
 
+# -----------------------------
+# System Persona & Guardrails
+# -----------------------------
 SYSTEM_PROMPT = """
 ## Persona
-You are Ferris, an expert AI assistant specializing in Rust programming and
-systems engineering. You are precise, concise, and prefer working examples
+You are Ferris, an expert AI assistant specializing in Rust programming and 
+systems engineering. You are precise, concise, and prefer working examples 
 over abstract explanations.
 
 ## Action
@@ -346,29 +359,54 @@ You may search documentation and run code examples to verify answers.
 - Do not execute code that modifies the filesystem.
 """
 
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": "What's the best crate for async HTTP in Rust?"},
-    ],
-)
+def run_rust_expert(user_query: str):
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_query}
+        ],
+        "options": {
+            "temperature": 0.2
+        },
+        "stream": False  # 🔥 important
+    }
 
-print(response.choices[0].message.content)
+    response = requests.post(OLLAMA_URL, json=payload)
+    response.raise_for_status()
+
+    data = response.json()
+    return data["message"]["content"]
+
+if __name__ == "__main__":
+    query = "What's the best crate for async HTTP in Rust?"
+    
+    print("Querying Ferris...\n")
+    answer = run_rust_expert(query)
+
+    print("-" * 30)
+    print("Ferris's Response:")
+    print(answer)
 ```
 
   </TabItem>
 
-  <TabItem label="Rust" icon="rust">
+  <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-use serde_json::json;
-use reqwest::Client;
+use ollama_rs::{
+    generation::chat::{ChatMessage},
+    Ollama,
+};
+use ollama_rs::generation::chat::request::ChatMessageRequest;
 
+// -----------------------------
+// System Persona & Guardrails
+// -----------------------------
 const SYSTEM_PROMPT: &str = r#"
 ## Persona
-You are Ferris, an expert AI assistant specializing in Rust programming and
-systems engineering. You are precise, concise, and prefer working examples
+You are Ferris, an expert AI assistant specializing in Rust programming and 
+systems engineering. You are precise, concise, and prefer working examples 
 over abstract explanations.
 
 ## Action
@@ -379,33 +417,30 @@ You help developers with:
 
 ## Guardrail
 - Do not answer questions outside Rust and systems programming.
-- Never fabricate crate names or API signatures.
 - If unsure, say so explicitly.
+- Never fabricate crate names or API signatures.
 - Do not execute code that modifies the filesystem.
 "#;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new();
+pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let ollama = Ollama::default();
 
-    let body = json!({
-        "model": "gpt-4o",
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": "What's the best crate for async HTTP in Rust?"}
-        ]
-    });
+    let prompt = "What's the best crate for async HTTP in Rust?";
+    println!("User: {}\n", prompt);
 
-    let response = client
-        .post("https://api.openai.com/v1/chat/completions")
-        .header("Authorization", format!("Bearer {}", std::env::var("OPENAI_API_KEY")?))
-        .json(&body)
-        .send()
-        .await?
-        .json::<serde_json::Value>()
-        .await?;
+    // 👇 roles are plain strings
+    let messages = vec![
+        ChatMessage::system(SYSTEM_PROMPT.to_string()),
+        ChatMessage::user(prompt.to_string()),
+    ];
 
-    println!("{}", response["choices"][0]["message"]["content"].as_str().unwrap_or(""));
+    // 👇 build request object
+    let request = ChatMessageRequest::new("qwen3.5:9b".to_string(), messages);
+
+    let response = ollama.send_chat_messages(request).await?;
+
+    println!("Ferris: {}", response.message.content);
+
     Ok(())
 }
 ```
@@ -805,7 +840,8 @@ That is why agent design is mostly about getting the interfaces between these pi
 
 ## The Practical Capability Stack for LLM-Based Agents
 
-At this point, the core stack should look like this:
+At this point, you can see that LLMs are not standalone systems.
+They are components inside a larger control loop.
 
 ```text
 1. Text enters the system
@@ -848,6 +884,15 @@ You need to understand:
 * **function calling and tool schemas**, because agents act through tools, not just text
 
 That is the foundation of modern LLM-based agent engineering.
+
+LLMs are not magic.
+
+They are constrained systems with:
+- limited context
+- probabilistic behavior
+- structured interfaces
+
+The difference between a demo and a production agent is how well you design around those constraints.
 
 In the next article, you can go one step deeper into how these primitives combine inside a full agent runtime — planner, executor, memory, state, and feedback loop.
 
