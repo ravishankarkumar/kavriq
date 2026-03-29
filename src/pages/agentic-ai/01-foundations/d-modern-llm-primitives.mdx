@@ -472,14 +472,17 @@ This is why **schema-enforced structured output** is such a foundational primiti
 Instead of hoping the model returns the right JSON shape, you define the shape explicitly and enforce it.
 
 <Tabs syncKey="programming-language">
-  <TabItem label="Python" icon="python">
+  <TabItem label="Python" icon="seti:python">
 
 ```python
-from openai import OpenAI
+from ollama import chat
 from pydantic import BaseModel
 
-client = OpenAI()
+MODEL = "qwen3.5:9b"
 
+# -----------------------------
+# Schema
+# -----------------------------
 class ResearchResult(BaseModel):
     topic: str
     summary: str
@@ -487,18 +490,26 @@ class ResearchResult(BaseModel):
     confidence: float
     needs_more_research: bool
 
-response = client.beta.chat.completions.parse(
-    model="gpt-4o",
+# -----------------------------
+# Run query
+# -----------------------------
+response = chat(
+    model=MODEL,
     messages=[
         {"role": "system", "content": "You are a research assistant."},
         {"role": "user", "content": "Research the current state of MCP (Model Context Protocol)."},
     ],
-    response_format=ResearchResult,
+    format=ResearchResult.model_json_schema(),
+    options={"temperature": 0.2},
 )
 
-result: ResearchResult = response.choices[0].message.parsed
+# -----------------------------
+# Parse response
+# -----------------------------
+result = ResearchResult.model_validate_json(response.message.content)
 
 print(f"Topic: {result.topic}")
+print(f"Summary: {result.summary}")
 print(f"Confidence: {result.confidence:.0%}")
 print(f"Needs more research: {result.needs_more_research}")
 print(f"Sources: {result.sources}")
@@ -506,12 +517,14 @@ print(f"Sources: {result.sources}")
 
   </TabItem>
 
-  <TabItem label="Rust" icon="rust">
+  <TabItem label="Rust" icon="seti:rust">
 
 ```rust
+use ollama_rs::{
+    generation::chat::{ChatMessage, request::ChatMessageRequest},
+    Ollama,
+};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use reqwest::Client;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct ResearchResult {
@@ -522,54 +535,49 @@ struct ResearchResult {
     needs_more_research: bool,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new();
+// -----------------------------
+// System Prompt (force JSON)
+// -----------------------------
+const SYSTEM_PROMPT: &str = r#"
+You are a research assistant.
 
-    let schema = json!({
-        "type": "object",
-        "properties": {
-            "topic": {"type": "string"},
-            "summary": {"type": "string"},
-            "sources": {"type": "array", "items": {"type": "string"}},
-            "confidence": {"type": "number"},
-            "needs_more_research": {"type": "boolean"}
-        },
-        "required": ["topic", "summary", "sources", "confidence", "needs_more_research"],
-        "additionalProperties": false
-    });
+Return ONLY valid JSON matching this schema:
 
-    let body = json!({
-        "model": "gpt-4o",
-        "messages": [
-            {"role": "system", "content": "You are a research assistant."},
-            {"role": "user", "content": "Research the current state of MCP (Model Context Protocol)."}
-        ],
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "ResearchResult",
-                "schema": schema,
-                "strict": true
-            }
-        }
-    });
+{
+  "topic": string,
+  "summary": string,
+  "sources": string[],
+  "confidence": number (0 to 1),
+  "needs_more_research": boolean
+}
 
-    let response = client
-        .post("https://api.openai.com/v1/chat/completions")
-        .header("Authorization", format!("Bearer {}", std::env::var("OPENAI_API_KEY")?))
-        .json(&body)
-        .send()
-        .await?
-        .json::<serde_json::Value>()
-        .await?;
+Do not include any explanation or extra text.
+"#;
 
-    let content = response["choices"][0]["message"]["content"].as_str().unwrap();
-    let result: ResearchResult = serde_json::from_str(content)?;
+pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let ollama = Ollama::default();
+
+    let messages = vec![
+        ChatMessage::system(SYSTEM_PROMPT.to_string()),
+        ChatMessage::user("Research the current state of MCP (Model Context Protocol).".to_string()),
+    ];
+
+    let request = ChatMessageRequest::new("qwen3.5:9b".to_string(), messages);
+
+    let response = ollama.send_chat_messages(request).await?;
+
+    let content = response.message.content;
+
+    // -----------------------------
+    // Parse JSON → serde
+    // -----------------------------
+    let result: ResearchResult = serde_json::from_str(&content)?;
 
     println!("Topic: {}", result.topic);
+    println!("Summary: {}", result.summary);
     println!("Confidence: {:.0}%", result.confidence * 100.0);
     println!("Needs more research: {}", result.needs_more_research);
+    println!("Sources: {:?}", result.sources);
 
     Ok(())
 }
@@ -627,191 +635,11 @@ The model needs to know:
 
 That information is defined in the tool schema.
 
-<Tabs syncKey="programming-language">
-  <TabItem label="Python" icon="python">
+We have already seen tool calling in our previous examples. Let's take a look at them again.
 
-```python
-import json
-from openai import OpenAI
+[Python Example](https://github.com/ravishankarkumar/aiunderthehood-sample-code/blob/main/python/agentic-ai/01-b-cognitive-architecture.py)
 
-client = OpenAI()
-
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_stock_price",
-            "description": "Get the current stock price for a ticker symbol",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "ticker": {
-                        "type": "string",
-                        "description": "Stock ticker symbol, e.g. AAPL, MSFT"
-                    },
-                    "currency": {
-                        "type": "string",
-                        "enum": ["USD", "EUR", "GBP"],
-                        "description": "Currency for the price"
-                    }
-                },
-                "required": ["ticker"],
-                "additionalProperties": False
-            },
-            "strict": True
-        }
-    }
-]
-
-def get_stock_price(ticker: str, currency: str = "USD") -> dict:
-    return {"ticker": ticker, "price": 189.50, "currency": currency}
-
-TOOL_MAP = {"get_stock_price": get_stock_price}
-
-messages = [{"role": "user", "content": "What is Apple's current stock price in USD?"}]
-
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=messages,
-    tools=TOOLS
-)
-
-msg = response.choices[0].message
-
-if msg.tool_calls:
-    messages.append(msg)
-
-    for tool_call in msg.tool_calls:
-        fn_name = tool_call.function.name
-        fn_args = json.loads(tool_call.function.arguments)
-        result = TOOL_MAP[fn_name](**fn_args)
-
-        messages.append({
-            "role": "tool",
-            "tool_call_id": tool_call.id,
-            "content": json.dumps(result),
-        })
-
-final = client.chat.completions.create(
-    model="gpt-4o",
-    messages=messages
-)
-
-print(final.choices[0].message.content)
-```
-
-  </TabItem>
-
-  <TabItem label="Rust" icon="rust">
-
-```rust
-use serde_json::{json, Value};
-use reqwest::Client;
-
-fn build_tools() -> Value {
-    json!([{
-        "type": "function",
-        "function": {
-            "name": "get_stock_price",
-            "description": "Get the current stock price for a ticker symbol",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "ticker": {
-                        "type": "string",
-                        "description": "Stock ticker symbol, e.g. AAPL, MSFT"
-                    },
-                    "currency": {
-                        "type": "string",
-                        "enum": ["USD", "EUR", "GBP"],
-                        "description": "Currency for the price"
-                    }
-                },
-                "required": ["ticker"],
-                "additionalProperties": false
-            },
-            "strict": true
-        }
-    }])
-}
-
-fn get_stock_price(ticker: &str, currency: &str) -> Value {
-    json!({"ticker": ticker, "price": 189.50, "currency": currency})
-}
-
-fn dispatch_tool(name: &str, args: &Value) -> Value {
-    match name {
-        "get_stock_price" => {
-            let ticker = args["ticker"].as_str().unwrap_or("");
-            let currency = args["currency"].as_str().unwrap_or("USD");
-            get_stock_price(ticker, currency)
-        }
-        _ => json!({"error": format!("Unknown tool: {}", name)}),
-    }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new();
-    let tools = build_tools();
-
-    let mut messages = vec![
-        json!({"role": "user", "content": "What is Apple's current stock price in USD?"})
-    ];
-
-    let response = client
-        .post("https://api.openai.com/v1/chat/completions")
-        .header("Authorization", format!("Bearer {}", std::env::var("OPENAI_API_KEY")?))
-        .json(&json!({
-            "model": "gpt-4o",
-            "messages": messages,
-            "tools": tools
-        }))
-        .send()
-        .await?
-        .json::<Value>()
-        .await?;
-
-    let msg = &response["choices"][0]["message"];
-    messages.push(msg.clone());
-
-    if let Some(tool_calls) = msg["tool_calls"].as_array() {
-        for tool_call in tool_calls {
-            let fn_name = tool_call["function"]["name"].as_str().unwrap();
-            let fn_args: Value = serde_json::from_str(
-                tool_call["function"]["arguments"].as_str().unwrap()
-            )?;
-
-            let result = dispatch_tool(fn_name, &fn_args);
-
-            messages.push(json!({
-                "role": "tool",
-                "tool_call_id": tool_call["id"],
-                "content": result.to_string()
-            }));
-        }
-
-        let final_resp = client
-            .post("https://api.openai.com/v1/chat/completions")
-            .header("Authorization", format!("Bearer {}", std::env::var("OPENAI_API_KEY")?))
-            .json(&json!({
-                "model": "gpt-4o",
-                "messages": messages
-            }))
-            .send()
-            .await?
-            .json::<Value>()
-            .await?;
-
-        println!("{}", final_resp["choices"][0]["message"]["content"].as_str().unwrap_or(""));
-    }
-
-    Ok(())
-}
-```
-
-  </TabItem>
-</Tabs>
+[Rust Example](https://github.com/ravishankarkumar/aiunderthehood-sample-code/blob/main/rust/agentic-ai/r-01-b-agent-cognitive-architecture/src/main.rs)
 
 ---
 
