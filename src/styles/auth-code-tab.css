@@ -7,22 +7,35 @@ starlight-tabs ul[role="tablist"] {
 }
 
 /* 2. Style the Active Tab Indicator */
-starlight-tabs ul[role="tablist"] li a[aria-selected="true"] {
+starlight-tabs ul[role="tablist"] li a[aria-selected="true"],
+starlight-tabs ul[role="tablist"] li [role="tab"][aria-selected="true"] {
   color: var(--color-accent) !important;
   border-bottom: 2px solid var(--color-accent) !important;
   opacity: 1 !important;
 }
 
 /* 3. Style the Inactive Tabs */
-starlight-tabs ul[role="tablist"] li a {
+starlight-tabs ul[role="tablist"] li a,
+starlight-tabs ul[role="tablist"] li [role="tab"] {
   text-decoration: none !important;
   padding: 0.5rem 1rem !important;
-  display: inline-block;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem;
   opacity: 0.7;
   transition: all 0.2s ease;
 }
 
-starlight-tabs ul[role="tablist"] li a:hover {
+/* Keep icon and label on the same row across Starlight versions */
+starlight-tabs ul[role="tablist"] li [role="tab"] svg,
+starlight-tabs ul[role="tablist"] li a svg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+starlight-tabs ul[role="tablist"] li a:hover,
+starlight-tabs ul[role="tablist"] li [role="tab"]:hover {
   opacity: 1;
   color: var(--color-accent);
 }
@@ -44,7 +57,8 @@ starlight-tabs div[role="tabpanel"] > *:first-child {
 }
 
 /* 3. Refined Tab Selection (ensuring the highlight is visible) */
-starlight-tabs ul[role="tablist"] li a[aria-selected="true"] {
+starlight-tabs ul[role="tablist"] li a[aria-selected="true"],
+starlight-tabs ul[role="tablist"] li [role="tab"][aria-selected="true"] {
   color: var(--color-accent) !important;
   border-bottom: 2px solid var(--color-accent) !important;
   background-color: transparent !important; /* Prevents gray backgrounds */
