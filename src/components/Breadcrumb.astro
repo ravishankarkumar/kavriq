@@ -9,109 +9,109 @@ const breadcrumbList = currentUrlPath.split("/").slice(1);
 // Custom mapping to clean up folder names (Optional but recommended)
 const labelMapping: Record<string, string> = {
   "agentic-ai": "Agentic AI",
-  "00-prerequisite": "Prerequisites",
-  "01-foundations": "Foundations",
-  "02-agent-architecture": "Agent Architecture",
-  "03-planning-systems": "Planning Systems",
-  "04-tool-use-protocols": "Tool Use Protocols",
-  "05-memory-systems-rag": "Memory Systems & RAG",
-  "06-multi-agent": "Multi-Agent Systems",
-  "07-computer-use-vision": "Computer Use & Vision",
-  "08-guardrails-safety": "Guardrails & Safety",
-  "09-evaluation-metrics": "Evaluation Metrics",
-  "10-high-perf-engineering": "High-Perf Engineering",
-  "11-agent-internals": "Agent Internals",
-  "12-capstone-projects": "Capstone Projects",
+  "prerequisite": "Prerequisites",
+  "foundations": "Foundations",
+  "agent-architecture": "Agent Architecture",
+  "planning-systems": "Planning Systems",
+  "tool-use-protocols": "Tool Use Protocols",
+  "memory-systems-rag": "Memory Systems & RAG",
+  "multi-agent": "Multi-Agent Systems",
+  "computer-use-vision": "Computer Use & Vision",
+  "guardrails-safety": "Guardrails & Safety",
+  "evaluation-metrics": "Evaluation Metrics",
+  "high-perf-engineering": "High-Perf Engineering",
+  "agent-internals": "Agent Internals",
+  "capstone-projects": "Capstone Projects",
 
   //
   "ml-essentials": "ML Essentials",
 
   // Module 0
-  "a-setting-up": "Setting Up Your Environment",
+  "setting-up": "Setting Up Your Environment",
 
   // Module 1 — Agentic AI Overview
-  "a-introduction-to-agents": "Introduction to Agents",
-  "b-llm-basics-for-agents": "LLM Basics for Agents",
-  "c-core-agentic-principles": "Core Agentic Principles",
+  "introduction-to-agents": "Introduction to Agents",
+  "llm-basics-for-agents": "LLM Basics for Agents",
+  "core-agentic-principles": "Core Agentic Principles",
 
   // Module 2 — Foundations
-  "a-what-is-an-agent": "What is an Agent?",
-  "b-cognitive-architecture": "Cognitive Architecture",
-  "c-inference-time-compute": "Inference-Time Compute",
-  "d-modern-llm-primitives": "Modern LLM Primitives",
+  "what-is-an-agent": "What is an Agent?",
+  "cognitive-architecture": "Cognitive Architecture",
+  "inference-time-compute": "Inference-Time Compute",
+  "modern-llm-primitives": "Modern LLM Primitives",
 
   // Module 3 — Agent Architecture
-  "a-the-anatomy-of-an-agent": "The Anatomy of an Agent",
-  "b-the-perception-layer": "The Perception Layer",
-  "c-working-memory-and-the-scratchpad": "Working Memory & Scratchpad",
-  "d-the-planner-reasoner": "The Planner / Reasoner",
-  "e-tool-manager": "The Tool Manager",
-  "f-execution-engine": "The Execution Engine",
-  "g-observation-processor": "The Observation Processor",
-  "h-reflection-and-termination": "Reflection & Termination",
+  "the-anatomy-of-an-agent": "The Anatomy of an Agent",
+  "the-perception-layer": "The Perception Layer",
+  "working-memory-and-the-scratchpad": "Working Memory & Scratchpad",
+  "the-planner-reasoner": "The Planner / Reasoner",
+  "tool-manager": "The Tool Manager",
+  "execution-engine": "The Execution Engine",
+  "observation-processor": "The Observation Processor",
+  "reflection-and-termination": "Reflection & Termination",
 
   // Module 4 — Planning Systems
-  "a-why-planning-matters": "Why Planning Matters",
-  "b-react": "ReAct: Reason + Act",
-  "c-chain-of-thought": "Chain-of-Thought Planning",
-  "d-tree-of-thought": "Tree-of-Thought Reasoning",
-  "e-execution-graphs": "Execution Graphs",
-  "f-langgraph": "Building Agents with LangGraph",
+  "why-planning-matters": "Why Planning Matters",
+  "react": "ReAct: Reason + Act",
+  "chain-of-thought": "Chain-of-Thought Planning",
+  "tree-of-thought": "Tree-of-Thought Reasoning",
+  "execution-graphs": "Execution Graphs",
+  "langgraph": "Building Agents with LangGraph",
 
   // Module 5 — Tool Use Protocols
-  "a-why-tools": "Why Tools Make Agents Powerful",
-  "b-designing-reliable-tools": "Designing Reliable Tools",
-  "c-mcp": "Model Context Protocol (MCP)",
-  "d-mcp-rust": "Building an MCP Server in Rust",
+  "why-tools": "Why Tools Make Agents Powerful",
+  "designing-reliable-tools": "Designing Reliable Tools",
+  "mcp": "Model Context Protocol (MCP)",
+  "mcp-rust": "Building an MCP Server in Rust",
 
   // Module 6 — Memory Systems
-  "a-memory-hierarchy": "Memory Hierarchy of Agents",
-  "b-episodic-memory": "Episodic Memory",
-  "c-semantic-memory": "Semantic Memory",
-  "d-procedural-memory": "Procedural Memory",
-  "e-agentic-rag": "Agentic RAG",
-  "f-multi-hop": "Multi-Hop Retrieval",
+  "memory-hierarchy": "Memory Hierarchy of Agents",
+  "episodic-memory": "Episodic Memory",
+  "semantic-memory": "Semantic Memory",
+  "procedural-memory": "Procedural Memory",
+  "agentic-rag": "Agentic RAG",
+  "multi-hop": "Multi-Hop Retrieval",
 
   // Module 7 — Multi-Agent
-  "a-why-multi-agent": "Why Multi-Agent Systems Exist",
-  "b-centralised-coordination": "Manager–Worker Coordination",
-  "c-handoff-swarm": "Handoff Pattern (Swarm)",
-  "d-debate-pattern": "Debate Pattern",
-  "e-a2a-agent-to-agent": "Agent-to-Agent Communication (A2A)",
+  "why-multi-agent": "Why Multi-Agent Systems Exist",
+  "centralised-coordination": "Manager–Worker Coordination",
+  "handoff-swarm": "Handoff Pattern (Swarm)",
+  "debate-pattern": "Debate Pattern",
+  "a2a-agent-to-agent": "Agent-to-Agent Communication (A2A)",
 
   // Module 8 — Computer Use
-  "a-computer-use-agents": "Computer Use Agents",
-  "b-gui-navigation": "GUI Navigation",
-  "c-visual-grounding": "Visual Grounding",
+  "computer-use-agents": "Computer Use Agents",
+  "gui-navigation": "GUI Navigation",
+  "visual-grounding": "Visual Grounding",
 
   // Module 9 — Guardrails & Safety
-  "a-prompt-injection": "Prompt Injection Attacks",
-  "b-tool-permissions": "Tool Permission Systems",
-  "c-human-in-the-loop": "Human-in-the-Loop",
-  "d-sandboxing": "Sandboxing Agent Execution",
+  "prompt-injection": "Prompt Injection Attacks",
+  "tool-permissions": "Tool Permission Systems",
+  "human-in-the-loop": "Human-in-the-Loop",
+  "sandboxing": "Sandboxing Agent Execution",
 
   // Module 10 — Evaluation Metrics
-  "a-why-evaluation-is-hard": "Why Agent Evaluation Is Hard",
-  "b-llm-judge": "LLM-as-a-Judge",
-  "c-trajectory-eval": "Trajectory Evaluation",
-  "d-building-eval-pipelines": "Building Evaluation Pipelines",
+  "why-evaluation-is-hard": "Why Agent Evaluation Is Hard",
+  "llm-judge": "LLM-as-a-Judge",
+  "trajectory-eval": "Trajectory Evaluation",
+  "building-eval-pipelines": "Building Evaluation Pipelines",
 
   // Module 11 — High Performance Engineering
-  "a-small-model": "The Small Model Strategy",
-  "b-small-model-using-rust": "Using Rust for Agent Infrastructure",
-  "c-observability": "Observability for Agents",
+  "small-model": "The Small Model Strategy",
+  "small-model-using-rust": "Using Rust for Agent Infrastructure",
+  "observability": "Observability for Agents",
 
   // Module 12 — Agent Internals
-  "a-why-build-agent-runtime": "Why Build Your Own Agent Runtime",
-  "b-state-machine": "Designing a Simple Agent State Machine",
-  "c-tool-calling": "Implementing Tool Calling",
-  "d-time-travel": "Adding Time-Travel Debugging",
-  "e-langgraph-alternative": "A 300-Line LangGraph Alternative",
+  "why-build-agent-runtime": "Why Build Your Own Agent Runtime",
+  "state-machine": "Designing a Simple Agent State Machine",
+  "tool-calling": "Implementing Tool Calling",
+  "time-travel": "Adding Time-Travel Debugging",
+  "langgraph-alternative": "A 300-Line LangGraph Alternative",
 
   // Module 13 — Capstone Projects
-  "a-computer-use-researcher": "The Computer-Use Researcher",
-  "b-multi-agent-coding": "The Multi-Agent Coding Pipeline",
-  "c-privacy-first-butler": "The Privacy-First Local Butler",
+  "computer-use-researcher": "The Computer-Use Researcher",
+  "multi-agent-coding": "The Multi-Agent Coding Pipeline",
+  "privacy-first-butler": "The Privacy-First Local Butler",
 };
 
 // if breadcrumb is Home > Posts > 1 <etc>
