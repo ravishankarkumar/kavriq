@@ -1,22 +1,11 @@
 ---
-
 title: The Perception Layer
 description: How AI agents convert raw inputs into machine-readable state
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 2 — Internal Agent Architecture**.
-
-In the previous article we studied the **core anatomy of an agent**, where the **LLM acts as the reasoning processor** and the **runtime behaves like an operating system**.
-
-Now we examine the first stage of the agent loop: **Perception**.
-
-</Aside>
-
-# The Perception Layer
 
 Before an agent can reason, plan, or act, it must first **understand the world around it**.
 
@@ -168,13 +157,13 @@ For example, a PDF parser may extract:
 from pypdf import PdfReader
 
 reader = PdfReader("report.pdf")
-
-text = ""
-
+chunks = []
 for page in reader.pages:
-    text += page.extract_text()
+    chunks.append(page.extract_text() or "")
 
-print(text[:500])
+text = "\n".join(chunks).strip()
+preview = text[:500]
+print(preview)
 ```
 
 </TabItem>
@@ -185,9 +174,9 @@ print(text[:500])
 use pdf_extract::extract_text;
 
 fn main() {
-    let text = extract_text("report.pdf").unwrap();
-
-    println!("{}", &text[..500]);
+    let text = extract_text("report.pdf").expect("failed to parse report.pdf");
+    let preview: String = text.chars().take(500).collect();
+    println!("{preview}");
 }
 ```
 
@@ -232,6 +221,8 @@ This extraction step is often performed by **LLMs themselves**.
 <TabItem label="Python" icon="seti:python">
 
 ```python
+import json
+
 prompt = """
 Extract structured information from this document.
 
@@ -242,6 +233,7 @@ Return JSON with:
 """
 
 response = llm.generate(prompt + document_text)
+data = json.loads(response)
 ```
 
 </TabItem>
@@ -250,11 +242,12 @@ response = llm.generate(prompt + document_text)
 
 ```rust
 let prompt = format!(
-    "Extract key findings and conclusion:\n{}",
+    "Return JSON with title, key_findings, and main_conclusion:\n{}",
     document_text
 );
 
 let response = llm.generate(prompt);
+let data: serde_json::Value = serde_json::from_str(&response)?;
 ```
 
 </TabItem>
@@ -327,11 +320,12 @@ This enables voice assistants and meeting summarization agents.
 ```python
 import base64
 
-image = base64.b64encode(open("chart.png","rb").read()).decode()
+with open("chart.png", "rb") as f:
+    image = base64.b64encode(f.read()).decode("utf-8")
 
 response = llm.generate({
     "image": image,
-    "prompt": "Describe the chart"
+    "prompt": "Describe the chart and list 3 key trends"
 })
 ```
 
@@ -340,7 +334,7 @@ response = llm.generate({
 <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-let image_bytes = std::fs::read("chart.png").unwrap();
+let image_bytes = std::fs::read("chart.png")?;
 
 let response = model.analyze_image(image_bytes);
 ```
@@ -402,10 +396,11 @@ client = OpenAI()
 
 embedding = client.embeddings.create(
     model="text-embedding-3-small",
-    input="Solar power adoption trends"
+    input="Solar power adoption trends".strip()
 )
 
 vector = embedding.data[0].embedding
+print(len(vector))  # quick sanity check
 ```
 
 </TabItem>
@@ -417,6 +412,9 @@ let embedding = client
     .embeddings()
     .create("text-embedding-3-small", "Solar adoption trends")
     .await?;
+
+let vector = &embedding.data[0].embedding;
+println!("embedding dims: {}", vector.len());
 ```
 
 </TabItem>
@@ -507,4 +505,4 @@ In the next article we will explore **Working Memory and the Scratchpad**.
 
 This component allows agents to maintain **short-term reasoning context**, track intermediate steps, and manage limited context windows.
 
-→ Continue to **2.3 — Working Memory and the Scratchpad**
+→ Continue to **2.3 — [Working Memory and the Scratchpad](/agentic-ai/agent-architecture/working-memory-and-the-scratchpad)**
