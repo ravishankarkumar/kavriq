@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { resolve } from "path";
+
 async function loadGoogleFont(
   font: string,
   text: string,
@@ -29,6 +32,17 @@ async function loadGoogleFont(
   return res.arrayBuffer();
 }
 
+function loadLocalFallbackFont(weight: 400 | 700): ArrayBuffer {
+  const filename =
+    weight === 700 ? "KaTeX_Main-Bold.ttf" : "KaTeX_Main-Regular.ttf";
+  const fontPath = resolve(`node_modules/katex/dist/fonts/${filename}`);
+  const buffer = readFileSync(fontPath);
+  return buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength
+  ) as ArrayBuffer;
+}
+
 async function loadGoogleFonts(
   text: string
 ): Promise<
@@ -51,12 +65,31 @@ async function loadGoogleFonts(
 
   const fonts = await Promise.all(
     fontsConfig.map(async ({ name, font, weight, style }) => {
-      const data = await loadGoogleFont(font, text, weight);
-      return { name, data, weight, style };
+      try {
+        const data = await loadGoogleFont(font, text, weight);
+        return { name, data, weight, style };
+      } catch {
+        return null;
+      }
     })
   );
 
-  return fonts;
+  const loaded = fonts.filter(Boolean) as Array<{
+    name: string;
+    data: ArrayBuffer;
+    weight: number;
+    style: string;
+  }>;
+
+  if (loaded.length === 0) {
+    // Fall back to local KaTeX fonts (TTF) so satori always has at least one font
+    return [
+      { name: "Fallback", data: loadLocalFallbackFont(400), weight: 400, style: "normal" },
+      { name: "Fallback", data: loadLocalFallbackFont(700), weight: 700, style: "bold" },
+    ];
+  }
+
+  return loaded;
 }
 
 export default loadGoogleFonts;
