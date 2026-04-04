@@ -1,0 +1,121 @@
+---
+title: Using Rust for Agent Infrastructure
+description: Why Rust is becoming the preferred language for building high-performance, reliable orchestrators and execution layers for AI agents
+layout: ../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+As agent systems grow more complex, the **orchestrator** — the component responsible for routing, tool coordination, state management, and execution control — becomes a critical bottleneck.
+
+This layer must handle:
+- High concurrent request volumes
+- Multiple tool calls per task (often in parallel)
+- Real-time decision loops
+- Trajectory logging and evaluation
+- Sandboxed code execution
+- Computer-use action handling
+
+Python excels at rapid prototyping and model experimentation, but for high-performance, long-running infrastructure, many teams are turning to **Rust**.
+
+---
+
+## Why Rust Fits Agent Infrastructure
+
+Rust offers a unique combination that is particularly valuable for agent orchestration:
+
+| Feature                    | Benefit for Agent Systems                          |
+|---------------------------|----------------------------------------------------|
+| Zero-cost abstractions    | High performance with low overhead                 |
+| Memory safety without GC  | Predictable latency, no pauses                     |
+| Excellent async story     | Efficient concurrent tool execution                |
+| Strong type system        | Fewer runtime errors in complex workflows          |
+| Great tooling             | Fast compilation, excellent debugging              |
+
+Unlike C/C++, Rust gives you **memory safety without sacrificing performance**. Unlike Python, it gives you **predictable low latency** and true parallelism.
+
+---
+
+## The Agent Orchestrator Role
+
+The orchestrator is the "brain" that ties everything together:
+
+- Routes requests using the Small Model Strategy
+- Coordinates tool calls via MCP
+- Manages agent state and memory
+- Executes planning and reasoning loops
+- Handles retries, fallbacks, and error recovery
+- Logs trajectories for evaluation and debugging
+
+In high-traffic systems, this component must handle thousands of concurrent agent sessions efficiently.
+
+---
+
+## Concurrent Tool Execution
+
+Agents frequently need to call multiple tools in parallel (search + database query + API call). Rust’s `tokio` runtime makes this natural and efficient.
+
+Example:
+
+```rust
+use tokio::join;
+
+async fn execute_step(&self, query: String) -> Result<StepResult> {
+    let (search_res, db_res, api_res) = join!(
+        self.search_tool.call(&query),
+        self.db_tool.query(&query),
+        self.api_tool.fetch_context(&query)
+    );
+
+    // Combine results and continue reasoning
+    self.process_results(search_res, db_res, api_res).await
+}
+```
+
+This pattern significantly reduces end-to-end latency compared to sequential execution in Python.
+
+---
+
+## Memory Safety & Reliability
+
+Agent infrastructure often runs 24/7. Memory leaks, use-after-free bugs, or data races can cause crashes or security issues.
+
+Rust’s ownership model and borrow checker eliminate entire classes of bugs at compile time. This is especially valuable when managing:
+- Shared agent state
+- Trajectory buffers
+- Tool response caching
+- Sandboxed execution environments
+
+---
+
+## Hybrid Rust + Python Architectures
+
+Most teams use a **hybrid approach**:
+
+- **Python** → Model experimentation, prompt engineering, rapid prototyping, LLM calling
+- **Rust**  → High-performance orchestrator, tool execution runtime, MCP server, evaluation pipeline, sandboxing layer
+
+This combination gives you the best of both worlds: developer velocity + production robustness.
+
+---
+
+## When to Choose Rust for Agent Infrastructure
+
+Rust shines when you need:
+- High throughput and low latency
+- Strong safety guarantees for long-running services
+- Efficient concurrent tool execution
+- Reliable sandboxing or computer-use layers
+- Observable, debuggable execution traces
+
+It is especially valuable for the **orchestration and execution backbone** of large-scale agent platforms.
+
+---
+
+## Looking Ahead
+
+In this article we explored why **Rust is increasingly used for agent infrastructure**, particularly for building high-performance orchestrators that coordinate tools, memory, and multi-agent workflows.
+
+In the next article we will examine **Observability for Agents** — how to monitor, trace, and debug complex agent systems in production.
+
+→ Continue to **[10.3 — Observability for Agents](/agentic-ai/high-perf-engineering/observability)**

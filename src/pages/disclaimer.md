@@ -8,9 +8,9 @@ layout: ../layouts/TutorialPage.astro
 
 Please be advised that this website is currently in an **Alpha/Pre-Beta state**. The content published here is a compilation of raw data and drafts collected from various sources for development purposes.
 
-:::caution[HEADS UP]
+
+
 We are currently undergoing a streamlining process to refine and verify all content. Until this process is complete, please be aware of the following:
-:::
 
 ### Content Status
 * **Unverified:** Information has not yet been vetted for technical accuracy or reliability.

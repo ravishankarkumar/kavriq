@@ -1,251 +1,176 @@
 ---
-
-title: The Model Context Protocol (MCP)
-description: Understanding the Model Context Protocol and how it standardizes tool discovery and interaction for AI agents
+title: The Model Context Protocol (MCP) and Building Reliable MCP Servers
+description: Understanding the Model Context Protocol for standardized tool discovery, its architecture, and implementing production-ready MCP servers in Rust and Python
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 4 — Tool Use & Protocols**.
 
-In the previous article we explored **how to design reliable tools**, including schemas, idempotency, and error handling.
+As AI agents grow more capable, they require access to many external tools and data sources: databases, filesystems, web APIs, code interpreters, and enterprise systems.
 
-However, as the number of tools available to AI agents grows, a new challenge emerges:
+Historically, every agent framework handled these integrations differently, leading to fragmentation and duplicated work. The **Model Context Protocol (MCP)** solves this by providing an open, standardized protocol for connecting AI applications to tools and data.
 
-> How can agents **discover and interact with tools in a standardized way**?
+Originally introduced by Anthropic in late 2024, MCP is now governed by the Linux Foundation’s Agentic AI Foundation and has become the de-facto standard supported by Claude, Cursor, VS Code Copilot, Gemini, and many others.
 
-The **Model Context Protocol (MCP)** was created to solve this problem.
-
-</Aside>
-
-# The Model Context Protocol (MCP)
-
-Modern AI agents increasingly rely on external tools.
-
-These tools may include:
-
-* databases
-* APIs
-* local filesystems
-* enterprise software systems
-* code execution environments
-
-However, historically every framework implemented tool integration differently.
-
-For example:
-
-| Framework     | Tool Integration Method  |
-| ------------- | ------------------------ |
-| LangChain     | tool abstractions        |
-| AutoGen       | message-based tool calls |
-| custom agents | ad-hoc APIs              |
-
-This fragmentation made it difficult to build **interoperable agent ecosystems**.
-
-To address this issue, a new standard emerged:
-
-> **The Model Context Protocol (MCP)**
-
-MCP defines a **universal interface for connecting tools and AI models**.
+MCP enables **dynamic tool discovery**, standardized schemas, secure access, and true interoperability.
 
 ---
 
-# The Motivation Behind MCP
+## MCP Architecture: Host, Client, and Server
 
-Before MCP, integrating tools with AI systems often required **custom code for each tool**.
-
-Example architecture:
+MCP uses a three-tier architecture:
 
 ```text
-LLM
-  ├── web search API
-  ├── database connector
-  ├── filesystem interface
-  └── internal service APIs
-```
-
-Each integration required:
-
-* custom schemas
-* custom authentication
-* custom communication logic
-
-This approach did not scale well as the number of tools increased.
-
-MCP introduces a **standard protocol** that allows models to interact with tools in a consistent way.
-
----
-
-# The Core Idea of MCP
-
-MCP introduces a **client-server architecture** for agent tooling.
-
-Conceptually:
-
-```text
-AI Model
+AI Application (Host)
    ↓
-MCP Client
-   ↓
+MCP Client (inside the host)
+   ↓ (stateful connection)
 MCP Server
    ↓
-Tools and Data Sources
+Tools, Resources, Databases, Filesystem, External APIs
 ```
 
-The MCP server exposes tools and resources through a **standardized interface**.
+- **Host**: The AI application the user interacts with (e.g., Claude Desktop, Cursor, custom agent framework).
+- **MCP Client**: The protocol layer inside the host. It maintains a stateful, one-to-one connection to a specific server and loads tool definitions into the model's context.
+- **MCP Server**: A lightweight program that exposes tools, resources (read-only data), and prompts in a standardized way.
 
-The model interacts with the server through the MCP client.
-
----
-
-# Why MCP Matters
-
-MCP enables several important capabilities.
-
-### Tool Interoperability
-
-Different AI systems can interact with the same tools.
+This design allows a single host to connect to many different MCP servers simultaneously, each providing specialized capabilities.
 
 ---
 
-### Tool Discovery
+## MCP Server vs Regular HTTP API — Why Not Just Use REST?
 
-Agents can dynamically discover available tools.
+You might wonder: *Why build a dedicated MCP server instead of exposing tools via a regular HTTP/REST API with JSON Schema validation?*
 
----
+Here's the key difference:
 
-### Secure Access
+| Aspect                  | Regular HTTP/REST API                          | MCP Server                                      |
+|-------------------------|------------------------------------------------|-------------------------------------------------|
+| **Discovery**           | Static documentation (OpenAPI)                 | Dynamic at runtime (`tools/list`)               |
+| **Designed for**        | Human developers / traditional software        | LLMs and AI agents                              |
+| **Statefulness**        | Usually stateless                              | Stateful sessions with context                  |
+| **Tool Usage**          | Fixed at design time                           | Discovered and selected dynamically by the agent |
+| **Integration Effort**  | Custom code per API                            | Implement MCP once → works with any compatible agent |
+| **AI-Friendliness**     | Requires precise prompts and error handling    | Built-in rich schemas, structured responses, and guidance |
 
-The protocol can enforce permissions and access control.
+**MCP servers are not replacements for APIs** — they often *wrap* existing APIs or services. They add an AI-native layer on top: the server advertises what it can do, provides detailed schemas and descriptions, and handles conversation-style interactions (including multi-step workflows).
 
----
+In short: A plain HTTP API requires the *developer* to hardcode integrations. An MCP server lets the *AI agent* discover and use capabilities at runtime, safely and consistently.
 
-### Simplified Integration
-
-Developers only need to implement the MCP interface once.
-
----
-
-# The Architecture of MCP
-
-The MCP architecture typically includes three main components.
-
-| Component  | Role                        |
-| ---------- | --------------------------- |
-| MCP Client | interface used by the model |
-| MCP Server | exposes tools and data      |
-| Tools      | external capabilities       |
-
-Diagram:
-
-```text
-          AI Agent
-              |
-         MCP Client
-              |
-          MCP Server
-      /        |        \
-  Database   API      Filesystem
-```
-
-The MCP server acts as a **gateway to external resources**.
+This is why MCP has become the standard — it solves the N×M integration problem for agent ecosystems.
 
 ---
 
-# MCP Resources and Tools
+## Why MCP Matters in 2026
 
-MCP distinguishes between two types of capabilities.
+MCP builds directly on reliable tool design principles:
+- Rich JSON Schema for inputs/outputs
+- Structured success/error responses
+- Support for idempotency and retries
+- Built-in security (OAuth-style permissions, sandboxing)
 
-| Type      | Purpose             |
-| --------- | ------------------- |
-| Resources | provide information |
-| Tools     | perform actions     |
-
-Examples:
-
-Resources:
-
-* documents
-* database records
-* knowledge bases
-
-Tools:
-
-* send_email
-* run_query
-* execute_code
-
-This distinction helps agents reason about **reading vs acting**.
+It turns custom tool integrations into a plug-and-play ecosystem.
 
 ---
 
-# Tool Discovery
+## Building an MCP Server
 
-One of MCP's most powerful features is **automatic tool discovery**.
+Let’s implement a basic but functional MCP server that exposes:
+- Custom tools
+- An SQLite database
+- Local filesystem access (with security notes)
 
-Instead of hardcoding tools into the agent, the system can query the MCP server.
-
-Example request:
-
-```text
-List available tools
-```
-
-Example response:
-
-```json
-{
-  "tools": [
-    {
-      "name": "web_search",
-      "description": "Search the internet"
-    },
-    {
-      "name": "run_sql",
-      "description": "Execute SQL queries"
-    }
-  ]
-}
-```
-
-The agent can then decide which tool to use.
+We’ll use **FastMCP** (popular for Python) and patterns from the official Rust SDK (`rmcp`).
 
 ---
 
-# Tool Registration
+## Defining and Registering Tools
 
-Tools must first be **registered with the MCP server**.
-
-Example conceptual registration:
-
-```text
-register_tool(
-  name="web_search",
-  description="Search the web",
-  schema={query: string}
-)
-```
-
-Once registered, the tool becomes discoverable.
-
----
-
-# Example MCP Server
+Modern MCP SDKs make tool definition declarative and automatic.
 
 <Tabs>
 
-<TabItem label="Python" icon="seti:python">
+<TabItem label="Python (with FastMCP)" icon="seti:python">
 
 ```python
-tools = {
-    "web_search": web_search,
-    "run_sql": run_sql
+from fastmcp import FastMCP
+from pydantic import BaseModel
+
+mcp = FastMCP("my-agent-tools")
+
+class WeatherArgs(BaseModel):
+    city: str
+    unit: str = "celsius"
+
+@mcp.tool
+def get_weather(args: WeatherArgs) -> dict:
+    """Get current weather for a city. Use when user asks about temperature or conditions."""
+    # Call external API or cache here
+    return {
+        "city": args.city,
+        "temperature": 22,
+        "condition": "cloudy",
+        "unit": args.unit
+    }
+
+# Tools are automatically discovered with full schemas
+```
+
+</TabItem>
+
+<TabItem label="Rust (using rmcp, official rust sdk for mcp)" icon="seti:rust">
+
+```rust
+use rmcp::server::{Server, Tool};
+use serde_json::Value;
+
+// In a real implementation with the Rust SDK
+#[derive(Clone)]
+struct WeatherTool;
+
+impl Tool for WeatherTool {
+    fn name(&self) -> &str { "get_weather" }
+    fn description(&self) -> &str {
+        "Get current weather for a city. Use when user asks about temperature or conditions."
+    }
+    fn schema(&self) -> Value { /* JSON Schema */ }
+    async fn execute(&self, args: Value) -> Result<Value, String> {
+        // Implementation here
+        Ok(serde_json::json!({
+            "city": "Tokyo",
+            "temperature": 18,
+            "condition": "cloudy"
+        }))
+    }
 }
 
-def list_tools():
-    return list(tools.keys())
+// Register with the server
+let mut server = Server::new();
+server.register_tool(WeatherTool);
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+## Exposing a Database (SQLite)
+
+<Tabs>
+
+<TabItem label="Python (FastMCP)" icon="seti:python">
+
+```python
+@mcp.tool
+def run_sql(query: str) -> list:
+    """Execute a read-only SQL query on the local database."""
+    import sqlite3
+    conn = sqlite3.connect("data.db")
+    cursor = conn.cursor()
+    cursor.execute(query)  # Use parameters in production!
+    return cursor.fetchall()
 ```
 
 </TabItem>
@@ -253,129 +178,128 @@ def list_tools():
 <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-let mut tools = HashMap::new();
-
-tools.insert("web_search", web_search_tool);
-tools.insert("run_sql", sql_tool);
+// Similar to earlier example, wrapped as an MCP Tool
+async fn run_sql_tool(query: String) -> Result<Value, String> {
+    // Use rusqlite with proper error handling and read-only mode
+    // ...
+}
 ```
 
 </TabItem>
 
 </Tabs>
 
-In a full MCP implementation, these tools are exposed through a **protocol interface**.
+**Security note**: Always use parameterized queries and consider read-only connections in production.
 
 ---
 
-# MCP and Context Sharing
+## Exposing the Local Filesystem
 
-Another important feature of MCP is **context sharing**.
+<Tabs>
 
-Agents often need access to contextual information such as:
+<TabItem label="Python (FastMCP)" icon="seti:python">
 
-* open documents
-* local files
-* database state
-* conversation history
-
-MCP servers can expose these resources directly to the model.
-
-Example:
-
-```text
-Available resources:
-- project files
-- research papers
-- customer database
+```python
+@mcp.resource
+def read_file(path: str) -> str:
+    """Read a file from the allowed project directory."""
+    # Sandbox: restrict to safe base path in production
+    safe_path = f"./project/{path}"
+    return open(safe_path).read()
 ```
 
-This allows the agent to **reason using external context**.
+</TabItem>
 
----
+<TabItem label="Rust" icon="seti:rust">
 
-# Security Considerations
-
-Because MCP exposes external systems to AI agents, security is critical.
-
-Common safeguards include:
-
-* authentication
-* permission checks
-* sandboxed execution
-* access auditing
-
-Example policy:
-
-```text
-Agent can read files
-Agent cannot modify files
+```rust
+// Wrap fs::read_to_string with path validation as an MCP Resource or Tool
 ```
 
-These safeguards prevent agents from performing unsafe operations.
+</TabItem>
+
+</Tabs>
+
+**Important**: Always implement sandboxing (e.g., allow-list directories) to prevent agents from accessing sensitive files.
 
 ---
 
-# MCP as the "USB-C for AI Tools"
+## Starting the MCP Server
 
-A helpful analogy is to compare MCP with **USB-C ports on computers**.
+<Tabs>
 
-Before USB-C:
+<TabItem label="Python (FastMCP)" icon="seti:python">
 
-* many incompatible connectors
-* device-specific integrations
-
-After USB-C:
-
-* standardized interface
-* plug-and-play devices
-
-Similarly:
-
-```text
-Before MCP → custom tool integrations
-After MCP → standardized tool ecosystem
+```python
+if __name__ == "__main__":
+    mcp.run()  # Starts server with stdio or HTTP transport
+    # Or: mcp.run_http(host="127.0.0.1", port=8000)
 ```
 
-This standardization may enable **large-scale tool ecosystems for AI agents**.
+</TabItem>
+
+<TabItem label="Rust" icon="seti:rust">
+
+```rust
+#[tokio::main]
+async fn main() {
+    let server = Server::new(/* registered tools */);
+    server.serve().await;  // Uses stdio, SSE, or custom transport
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+MCP supports multiple transports (stdio for local tools, HTTP/SSE for remote).
 
 ---
 
-# MCP in the Emerging Agent Ecosystem
+## How an MCP Client Interacts (Agent Side)
 
-MCP is already being explored in several contexts:
+From the agent's perspective, the flow is simple and standardized:
 
-* AI coding assistants
-* enterprise automation systems
-* local AI agents
-* developer tooling platforms
+1. Discover tools: `tools/list`
+2. Get detailed schema for a tool
+3. Call the tool with arguments
+4. Receive structured response (`status`, `data`, or error)
 
-As agent ecosystems grow, MCP-like protocols may become **fundamental infrastructure for AI applications**.
-
----
-
-# Summary
-
-In this article we explored **The Model Context Protocol (MCP)**, a standard designed to simplify tool integration for AI agents.
-
-We examined:
-
-* why MCP was created
-* the architecture of MCP
-* tool discovery and registration
-
-MCP provides a **standardized interface between AI models and external systems**, enabling more scalable and interoperable agent architectures.
+The MCP Client inside the host handles the protocol, feeding results back into the model's reasoning loop.
 
 ---
 
-# Looking Ahead
+## Production Considerations
 
-In the next article we will move from protocol design to implementation.
+Real-world MCP servers should include:
+- Full protocol compliance via official SDKs
+- Authentication (OAuth 2.0 style)
+- Rate limiting and observability
+- Sandboxing and permission scoping
+- Idempotency support for mutations
+- Caching for expensive operations
 
-We will explore **how to build an MCP server in Rust**, including:
+Rust excels for high-concurrency and performance-critical servers. Python with FastMCP is ideal for rapid development and data-centric tools.
 
-* designing tool interfaces
-* exposing SQLite databases
-* exposing local filesystems
-* leveraging Rust for high-performance agent infrastructure
+---
 
-→ Continue to **4.4 — Building an MCP Server in Rust**
+## Summary
+
+The **Model Context Protocol (MCP)** provides the standardization layer that turns custom tool integrations into a scalable ecosystem. Unlike regular HTTP APIs, MCP servers are designed specifically for AI agents — enabling dynamic discovery, stateful interactions, and safe, interoperable tool use.
+
+In this article we covered:
+- MCP architecture (Host → Client → Server)
+- Why MCP is superior to plain REST for agents
+- Practical implementation of tools, SQLite, and filesystem access in Python and Rust
+
+By combining MCP with the reliable tool design principles from the previous article, you can build powerful, secure, and future-proof agent systems.
+
+---
+
+## Looking Ahead
+
+In the next module we will explore **Memory Systems & Retrieval-Augmented Generation (RAG)**.
+
+Topics include memory hierarchies, episodic vs. semantic memory, vector databases, and multi-hop retrieval — systems that let agents remember and reason over long contexts.
+
+→ Continue to **[5.1 — The Memory Hierarchy of Agents](/agentic-ai/memory-systems-rag/memory-hierarchy)**

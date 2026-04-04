@@ -9,6 +9,8 @@ Agentic AI is one of the most important shifts in modern artificial intelligence
 
 To make the journey easier, this guide is organized as a 12-part series. By following it step by step, you will develop a solid foundation in Agentic AI — from core concepts to the advanced systems and architectures that matter today.
 
+> **This is a living roadmap.** Articles are written and published one by one. Items listed without a link are planned and coming. Linked items are published and ready to read.
+
 ---
 
 ## Prerequisite
@@ -46,7 +48,8 @@ Techniques that allow agents to solve complex tasks through multi-step reasoning
 - [Chain-of-Thought Planning](/agentic-ai/planning-systems/chain-of-thought)
 - [Tree-of-Thought Reasoning](/agentic-ai/planning-systems/tree-of-thought)
 - [Execution Graphs](/agentic-ai/planning-systems/execution-graphs)
-- [Building Agents with LangGraph](/agentic-ai/planning-systems/langgraph)
+- [Building Agents with LangGraph - Python](/agentic-ai/planning-systems/langgraph)
+- [Building Agents with Rig - Rust](/agentic-ai/planning-systems/rig)
 
 ---
 
@@ -56,7 +59,6 @@ How agents interact with APIs, databases, and external systems.
 - [Why Tools Make Agents Powerful](/agentic-ai/tool-use-protocols/why-tools)
 - [Designing Reliable Tools](/agentic-ai/tool-use-protocols/designing-reliable-tools)
 - [The Model Context Protocol (MCP)](/agentic-ai/tool-use-protocols/mcp)
-- [Building an MCP Server in Rust](/agentic-ai/tool-use-protocols/mcp-rust)
 
 ---
 
@@ -76,7 +78,7 @@ How agents store knowledge and retrieve information across interactions.
 Architectures where multiple agents collaborate to solve problems.
 
 - [Why Multi-Agent Systems Exist](/agentic-ai/multi-agent/why-multi-agent)
-- [Manager–Worker Coordination](/agentic-ai/multi-agent/centralised-coordination)
+- [Manager–Worker Coordination](/agentic-ai/multi-agent/manager-worker-pattern)
 - [Handoff Pattern (Swarm)](/agentic-ai/multi-agent/handoff-swarm)
 - [Debate Pattern](/agentic-ai/multi-agent/debate-pattern)
 - [Agent-to-Agent Communication (A2A)](/agentic-ai/multi-agent/a2a-agent-to-agent)
@@ -116,19 +118,19 @@ How to measure agent performance and reliability.
 Engineering techniques for scalable, high-performance agent systems.
 
 - [The Small Model Strategy](/agentic-ai/high-perf-engineering/small-model)
-- [Using Rust for Agent Infrastructure](/agentic-ai/high-perf-engineering/small-model-using-rust)
+- [Using Rust for Agent Infrastructure](/agentic-ai/high-perf-engineering/agent-infrastructure-in-rust)
 - [Observability for Agents](/agentic-ai/high-perf-engineering/observability)
 
 ---
 
 ## Module 11 — Agent Internals
-Building a minimal agent runtime and understanding the mechanics.
+Understanding how agents actually work by building a minimal runtime from scratch.
 
 - [Why Build Your Own Agent Runtime](/agentic-ai/agent-internals/why-build-agent-runtime)
 - [Designing a Simple Agent State Machine](/agentic-ai/agent-internals/state-machine)
-- [Implementing Tool Calling](/agentic-ai/agent-internals/tool-calling)
+- [Implementing Tool Calling & MCP Integration](/agentic-ai/agent-internals/tool-calling)
 - [Adding Time-Travel Debugging](/agentic-ai/agent-internals/time-travel)
-- [A 300-Line LangGraph Alternative](/agentic-ai/agent-internals/langgraph-alternative)
+- [A Production-Ready 300-Line Agent Runtime](/agentic-ai/agent-internals/minimal-runtime)
 
 ---
 

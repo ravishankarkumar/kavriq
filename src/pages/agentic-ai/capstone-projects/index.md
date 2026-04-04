@@ -1,9 +1,9 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "13 — Capstone Projects"
+title: "Capstone Projects"
 ---
 
-# 13 — Capstone Projects
+# Capstone Projects
 
 a) [a — The Computer-Use Researcher](./computer-use-researcher.mdx)
 

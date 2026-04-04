@@ -1,18 +1,11 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "06 — Memory Systems & RAG"
+title: "Memory Systems & RAG"
 ---
 
-# 06 — Memory Systems & RAG
-
-a) [a — Memory Hierarchy of Agents](./memory-hierarchy.mdx)
-
-b) [b — Episodic Memory](./episodic-memory.mdx)
-
-c) [c — Semantic Memory](./semantic-memory.mdx)
-
-d) [d — Procedural Memory](./procedural-memory.mdx)
-
-e) [e — Agentic RAG](./agentic-rag.mdx)
-
-f) [f — Multi-Hop Retrieval](./multi-hop.mdx)
+- [Memory Hierarchy of Agents](/agentic-ai/memory-systems-rag/memory-hierarchy)
+- [Episodic Memory](/agentic-ai/memory-systems-rag/episodic-memory)
+- [Semantic Memory](/agentic-ai/memory-systems-rag/semantic-memory)
+- [Procedural Memory](/agentic-ai/memory-systems-rag/procedural-memory)
+- [Agentic RAG](/agentic-ai/memory-systems-rag/agentic-rag)
+- [Multi-Hop Retrieval](/agentic-ai/memory-systems-rag/multi-hop)

@@ -46,7 +46,7 @@ It typically exists only for the duration of a task.
 
 Agent systems usually maintain **three levels of memory**.
 
-```id="q8f3p7"
+```text
 Long-Term Memory
     ↓
 Retrieved Context
@@ -100,7 +100,7 @@ The scratchpad is a structured space where the agent writes its reasoning.
 
 Example:
 
-```id="z8w8di"
+```bash
 Goal: summarize research paper
 
 Thought: I should extract the main sections first.
@@ -124,7 +124,7 @@ This running log of thoughts and actions helps the agent:
 
 Most modern agents represent scratchpads as **structured logs**.
 
-```id="1s02x0"
+```bash
 Thought
 Action
 Observation
@@ -134,7 +134,7 @@ This structure was popularized by the **ReAct framework**.
 
 Example:
 
-```id="k0izs0"
+```bash
 Thought: Need population data for France
 Action: web_search("France population 2024")
 Observation: 67 million
@@ -162,7 +162,7 @@ When tools return results, those results must be remembered.
 
 Example:
 
-```id="7ndmwo"
+```bash
 Tool: web_search
 Result: GDP growth rate 3.2%
 ```
@@ -219,7 +219,7 @@ The agent keeps only the **most recent reasoning steps**.
 
 Example:
 
-```id="6i0l3p"
+``` text
 Step 12
 Step 13
 Step 14
@@ -236,7 +236,7 @@ Older reasoning steps are compressed into summaries.
 
 Example:
 
-```id="0xg2sj"
+``` text
 Summary:
 The agent already collected three market reports
 and extracted key economic indicators.
@@ -273,29 +273,149 @@ Let us implement a minimal scratchpad system.
 <TabItem label="Python" icon="seti:python">
 
 ```python
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from ollama import chat
+from pydantic import BaseModel, ValidationError
+
+MODEL = "qwen3.5:9b"
+MAX_STEPS = 6
+
+
+@dataclass
+class Step:
+    thought: str
+    action: str
+    observation: str
+
+
+class AgentAction(BaseModel):
+    thought: str
+    action: str  # "web_search" | "finish"
+    input: str
+
+
 class Scratchpad:
+    def __init__(self, max_steps: int = 8):
+        self.max_steps = max_steps
+        self.steps: list[Step] = []
 
-    def __init__(self):
-        self.steps = []
+    def add(self, thought: str, action: str, observation: str) -> None:
+        self.steps.append(Step(thought=thought, action=action, observation=observation))
+        # Sliding window to keep working memory bounded.
+        self.steps = self.steps[-self.max_steps :]
 
-    def add(self, thought, action, observation):
+    def build_prompt(self, goal: str) -> str:
+        memory_lines = []
+        for s in self.steps:
+            memory_lines.append(f"Thought: {s.thought}")
+            memory_lines.append(f"Action: {s.action}")
+            memory_lines.append(f"Observation: {s.observation}")
+            memory_lines.append("")
+        memory_text = "\n".join(memory_lines) if memory_lines else "(empty)"
+        return f"""
+You are an agent planner.
+Given GOAL and WORKING MEMORY, return ONLY JSON:
+{{
+  "thought": string,
+  "action": "web_search" | "finish",
+  "input": string
+}}
 
-        self.steps.append({
-            "thought": thought,
-            "action": action,
-            "observation": observation
-        })
+GOAL:
+{goal}
 
-    def build_prompt(self):
+WORKING MEMORY:
+{memory_text}
+""".strip()
 
-        text = ""
+    def render(self) -> str:
+        if not self.steps:
+            return "(empty)"
+        lines = []
+        for i, s in enumerate(self.steps, start=1):
+            lines.append(f"{i}. Thought: {s.thought}")
+            lines.append(f"   Action: {s.action}")
+            lines.append(f"   Observation: {s.observation}")
+        return "\n".join(lines)
 
-        for step in self.steps:
-            text += f"Thought: {step['thought']}\n"
-            text += f"Action: {step['action']}\n"
-            text += f"Observation: {step['observation']}\n\n"
 
-        return text
+def web_search(query: str) -> str:
+    # Replace with real tool integration if needed.
+    return f"[mock-search-result] {query}: RTX 4090 has strong local value; H100 leads datacenter throughput."
+
+
+def parse_action(raw: str) -> AgentAction:
+    """Parse model output robustly even if it includes extra text."""
+    try:
+        return AgentAction.model_validate_json(raw)
+    except ValidationError:
+        # Fallback: extract first JSON object from mixed output.
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise ValueError(f"Model returned non-JSON output: {raw[:200]}")
+        return AgentAction.model_validate_json(raw[start : end + 1])
+
+
+def run_agent(goal: str) -> str:
+    scratchpad = Scratchpad(max_steps=10)
+
+    for step_no in range(1, MAX_STEPS + 1):
+        prompt = scratchpad.build_prompt(goal)
+        response = chat(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            format=AgentAction.model_json_schema(),
+            options={"temperature": 0.2},
+        )
+
+        try:
+            action = parse_action(response.message.content)
+        except Exception:
+            scratchpad.add(
+                "Parser failure",
+                "finish",
+                "Model output was not valid JSON. Retrying with stricter prompt is recommended.",
+            )
+            print(f"[step {step_no}/{MAX_STEPS}] parse_error")
+            print("[scratchpad]")
+            print(scratchpad.render())
+            return "Stopped: model did not return valid structured output."
+
+        thought = action.thought
+        action_name = action.action
+        action_input = action.input
+
+        if action_name == "finish":
+            scratchpad.add(thought, "finish", action_input)
+            print(f"[step {step_no}/{MAX_STEPS}] finished")
+            print("[scratchpad]")
+            print(scratchpad.render())
+            return action_input
+
+        if action_name == "web_search":
+            tool_result = web_search(action_input)
+            scratchpad.add(thought, f"web_search({action_input})", tool_result)
+            print(f"[step {step_no}/{MAX_STEPS}] tool=web_search")
+            print("[scratchpad]")
+            print(scratchpad.render())
+            continue
+
+        scratchpad.add(thought, action_name, "Unknown action. Ask model to finish.")
+        print(f"[step {step_no}/{MAX_STEPS}] tool=unknown")
+        print("[scratchpad]")
+        print(scratchpad.render())
+
+    return "Stopped: reached max iterations without final answer."
+
+
+if __name__ == "__main__":
+    final_answer = run_agent("Find the best laptop GPU choice for local ML and explain why.")
+    print("\nFinal answer:")
+    print(final_answer)
 ```
 
 </TabItem>
@@ -303,37 +423,190 @@ class Scratchpad:
 <TabItem label="Rust" icon="seti:rust">
 
 ```rust
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    generation::parameters::FormatType,
+    Ollama,
+};
+use serde::{Deserialize, Serialize};
+
+const MODEL: &str = "qwen3.5:9b";
+const MAX_STEPS: usize = 6;
+
+#[derive(Clone, Debug)]
 struct Step {
     thought: String,
     action: String,
     observation: String,
 }
 
+#[derive(Default)]
 struct Scratchpad {
     steps: Vec<Step>,
+    max_steps: usize,
 }
 
 impl Scratchpad {
-
-    fn add(&mut self, thought: String, action: String, observation: String) {
-        self.steps.push(Step { thought, action, observation });
+    fn new(max_steps: usize) -> Self {
+        Self {
+            steps: Vec::new(),
+            max_steps,
+        }
     }
 
-    fn build_prompt(&self) -> String {
+    fn add(&mut self, thought: String, action: String, observation: String) {
+        self.steps.push(Step {
+            thought,
+            action,
+            observation,
+        });
+        // Sliding window memory.
+        if self.steps.len() > self.max_steps {
+            let keep_from = self.steps.len() - self.max_steps;
+            self.steps = self.steps.split_off(keep_from);
+        }
+    }
+
+    fn build_prompt(&self, goal: &str) -> String {
+        let mut memory = String::new();
+        if self.steps.is_empty() {
+            memory.push_str("(empty)\n");
+        } else {
+            for step in &self.steps {
+                memory.push_str(&format!(
+                    "Thought: {}\nAction: {}\nObservation: {}\n\n",
+                    step.thought, step.action, step.observation
+                ));
+            }
+        }
+
+        format!(
+            r#"You are an agent planner.
+Return ONLY JSON:
+{{
+  "thought": string,
+  "action": "web_search" | "finish",
+  "input": string
+}}
+
+GOAL:
+{}
+
+WORKING MEMORY:
+{}"#,
+            goal, memory
+        )
+    }
+
+    fn render(&self) -> String {
+        if self.steps.is_empty() {
+            return "(empty)".to_string();
+        }
 
         let mut text = String::new();
-
-        for step in &self.steps {
+        for (i, step) in self.steps.iter().enumerate() {
             text.push_str(&format!(
-                "Thought: {}\nAction: {}\nObservation: {}\n\n",
+                "{}. Thought: {}\n   Action: {}\n   Observation: {}\n",
+                i + 1,
                 step.thought,
                 step.action,
                 step.observation
             ));
         }
-
         text
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AgentAction {
+    thought: String,
+    action: String,
+    input: String,
+}
+
+fn parse_agent_action(raw: &str) -> Result<AgentAction, Box<dyn std::error::Error>> {
+    // First try direct JSON parsing.
+    if let Ok(action) = serde_json::from_str::<AgentAction>(raw) {
+        return Ok(action);
+    }
+
+    // Fallback: extract first JSON object from mixed output.
+    if let (Some(start), Some(end)) = (raw.find('{'), raw.rfind('}')) {
+        if end > start {
+            let candidate = &raw[start..=end];
+            let action = serde_json::from_str::<AgentAction>(candidate)?;
+            return Ok(action);
+        }
+    }
+
+    Err(format!("Model returned non-JSON output: {}", &raw.chars().take(200).collect::<String>()).into())
+}
+
+fn web_search(query: &str) -> String {
+    format!(
+        "[mock-search-result] {query}: RTX 4090 has strong local value; H100 leads datacenter throughput."
+    )
+}
+
+async fn run_agent(goal: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let ollama = Ollama::default();
+    let mut scratchpad = Scratchpad::new(10);
+
+    for step_no in 1..=MAX_STEPS {
+        let prompt = scratchpad.build_prompt(goal);
+        let request = ChatMessageRequest::new(MODEL.to_string(), vec![ChatMessage::user(prompt)])
+            .format(FormatType::Json);
+        let response = ollama.send_chat_messages(request).await?;
+        let action = match parse_agent_action(&response.message.content) {
+            Ok(action) => action,
+            Err(_) => {
+                scratchpad.add(
+                    "Parser failure".to_string(),
+                    "finish".to_string(),
+                    "Model output was not valid JSON. Retrying with stricter prompt is recommended.".to_string(),
+                );
+                println!("[step {step_no}/{MAX_STEPS}] parse_error");
+                println!("[scratchpad]\n{}", scratchpad.render());
+                return Ok("Stopped: model did not return valid structured output.".to_string());
+            }
+        };
+
+        if action.action == "finish" {
+            scratchpad.add(action.thought, "finish".to_string(), action.input.clone());
+            println!("[step {step_no}/{MAX_STEPS}] finished");
+            println!("[scratchpad]\n{}", scratchpad.render());
+            return Ok(action.input);
+        }
+
+        if action.action == "web_search" {
+            let tool_result = web_search(&action.input);
+            scratchpad.add(
+                action.thought,
+                format!("web_search({})", action.input),
+                tool_result,
+            );
+            println!("[step {step_no}/{MAX_STEPS}] tool=web_search");
+            println!("[scratchpad]\n{}", scratchpad.render());
+            continue;
+        }
+
+        scratchpad.add(
+            action.thought,
+            action.action,
+            "Unknown action. Ask model to finish.".to_string(),
+        );
+        println!("[step {step_no}/{MAX_STEPS}] tool=unknown");
+        println!("[scratchpad]\n{}", scratchpad.render());
+    }
+
+    Ok("Stopped: reached max iterations without final answer.".to_string())
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let final_answer = run_agent("Find the best laptop GPU choice for local ML and explain why.").await?;
+    println!("\nFinal answer:\n{final_answer}");
+    Ok(())
 }
 ```
 
@@ -349,7 +622,7 @@ This scratchpad becomes part of the **agent prompt** at every step.
 
 Below is what a full reasoning cycle might look like.
 
-```id="ewkjbt"
+``` plaintext
 Goal: Find best laptop for machine learning
 
 Thought: I should compare GPUs first
@@ -440,4 +713,4 @@ We examined:
 
 In the next article we will explore the **Planner / Reasoner**, the component responsible for transforming goals into executable plans.
 
-→ Continue to **2.4 — The Planner / Reasoner**
+→ Continue to **2.4 — [The Planner / Reasoner](/agentic-ai/agent-architecture/the-planner-reasoner)**

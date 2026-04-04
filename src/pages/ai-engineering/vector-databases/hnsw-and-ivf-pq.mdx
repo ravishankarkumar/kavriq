@@ -1,0 +1,272 @@
+---
+title: HNSW and IVF-PQ — The Algorithms Behind Vector Search
+description: A deep dive into Hierarchical Navigable Small Worlds and Inverted File Index with Product Quantization — the two dominant ANN algorithms in production vector databases.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+Two algorithms dominate production vector search: HNSW and IVF-PQ. Understanding them deeply — not just what they do but *why* they work — is what separates engineers who can tune and operate vector databases from those who just call the API.
+
+---
+
+## Part 1 — HNSW: Hierarchical Navigable Small Worlds
+
+HNSW is the most widely deployed ANN algorithm. It powers Pinecone, Qdrant, Weaviate, Milvus, and most enterprise vector search systems. It consistently delivers the best recall-latency tradeoff of any single-index approach.
+
+### The Core Idea: A Multi-Layer Proximity Graph
+
+HNSW builds a layered graph where:
+- Each node represents a vector
+- Edges connect approximate nearest neighbors
+- Upper layers are sparse with long-range connections
+- The bottom layer is dense with local connections
+
+```
+Layer 3:  A ──────────────── B
+          │                  │
+Layer 2:  C ──── D ──────── E
+          │      │
+Layer 1:  F ─ G ─ H ─ I ─ J ─ K
+          │   │       │
+Layer 0: (dense local neighborhood graph)
+```
+
+This structure is inspired by the "small world" phenomenon in network theory — you can reach any node in a large network in a small number of hops if the network has both local clustering and long-range shortcuts.
+
+The hierarchy solves a fundamental problem with flat proximity graphs: greedy search gets stuck in local optima. By starting at a coarse level and progressively refining, HNSW avoids this.
+
+---
+
+### Building the Index
+
+When inserting a new vector $\mathbf{v}$:
+
+1. **Assign a layer** by sampling from an exponential distribution: $l = \lfloor -\ln(\text{uniform}(0,1)) \cdot m_L \rfloor$. Most vectors land at layer 0; a few reach higher layers.
+
+2. **Find entry point** — start from the top layer's entry node.
+
+3. **Greedy descent** — from the current layer down to layer $l+1$, greedily move to the neighbor closest to $\mathbf{v}$.
+
+4. **Connect at each layer** from $l$ down to 0 — find the $M$ nearest neighbors using a beam search with width $ef_\text{construction}$, then add bidirectional edges.
+
+The key insight is that the exponential layer assignment creates a natural hierarchy: high-layer nodes act as "highway" nodes that enable fast long-range navigation.
+
+---
+
+### Searching the Index
+
+Given query $\mathbf{q}$, find top-$K$ nearest neighbors:
+
+1. Start at the entry point of the top layer
+2. Greedily move to the neighbor closest to $\mathbf{q}$ at each layer
+3. When no closer neighbor exists, drop to the next layer
+4. At layer 0, run a beam search with width $ef_\text{search}$, maintaining a priority queue of candidates
+5. Return the top-$K$ from the final candidate set
+
+Search complexity is $O(\log N)$ — the hierarchical structure means you traverse roughly $\log N$ nodes before reaching the dense bottom layer.
+
+---
+
+### Key Parameters
+
+**M** — maximum number of bidirectional edges per node at each layer (except layer 0, which uses $2M$).
+
+- Higher M → better recall, more memory, slower inserts
+- Typical values: 8–64. Default 16 is a good starting point.
+- Memory per node ≈ $M \times 8$ bytes for edge pointers
+
+**efConstruction** — beam width during index construction. Controls graph quality.
+
+- Higher → better recall at query time, much slower build
+- Typical values: 100–500. Must be ≥ M.
+
+**efSearch** — beam width during query. The primary recall-latency knob at query time.
+
+- Higher → better recall, higher latency
+- Can be tuned without rebuilding the index
+- Typical values: 50–500
+
+The recall-latency curve for HNSW is steep — you can often get from 90% to 99% recall with only 2–3x latency increase by raising efSearch.
+
+---
+
+### Memory Footprint
+
+HNSW is memory-hungry. For $N$ vectors of dimension $d$ with parameter $M$:
+
+$$\text{Memory} \approx N \times (d \times 4 \text{ bytes} + M \times 2 \times 8 \text{ bytes})$$
+
+For 10M vectors at 768 dimensions with M=16:
+
+$$10^7 \times (768 \times 4 + 32 \times 8) = 10^7 \times 3328 \approx 33 \text{ GB}$$
+
+This is why HNSW is typically used for datasets up to ~100M vectors on a single node. Beyond that, you need either distributed HNSW or a compression-based approach.
+
+---
+
+### Deletions and Updates
+
+HNSW does not support true deletions efficiently. The standard approach is **lazy deletion** — mark nodes as deleted and filter them from results, then periodically rebuild the index or compact segments.
+
+This is a real operational concern. If your dataset has high churn (many updates/deletes), HNSW's effective recall degrades over time as deleted nodes accumulate in the graph. Production systems handle this with segment-based architectures (covered in the storage article).
+
+---
+
+### HNSW Strengths and Weaknesses
+
+| Strength | Weakness |
+|---|---|
+| Best recall/latency tradeoff | High memory usage |
+| Incremental inserts supported | Inserts are slow ($O(\log N)$ graph traversal) |
+| No GPU required | Deletions require lazy marking + rebuild |
+| Tunable at query time (efSearch) | Hard to shard efficiently |
+| Works well on CPU with SIMD | Poor for streaming ingestion >50K writes/sec |
+
+---
+
+## Part 2 — IVF: Inverted File Index
+
+IVF takes a completely different approach: instead of building a graph, it partitions the vector space into clusters and only searches the relevant ones.
+
+### The Core Idea: Coarse Quantization
+
+1. Run k-means on the full dataset to produce $C$ centroids (typically $C = \sqrt{N}$)
+2. Assign each vector to its nearest centroid
+3. Store vectors grouped by their centroid (the "inverted lists")
+4. At query time, find the $n_\text{probe}$ nearest centroids, then search only those lists
+
+```
+100M vectors
+    ↓ k-means with C=10,000 clusters
+10,000 inverted lists, ~10,000 vectors each
+    ↓ at query time, search nprobe=64 lists
+Search 640,000 vectors instead of 100,000,000
+= 0.64% of the dataset
+```
+
+This gives a ~150x speedup with modest recall loss.
+
+---
+
+### IVF-Flat
+
+The simplest variant: IVF with raw (uncompressed) vectors stored in each list.
+
+- Good recall (only loses from coarse quantization, not compression)
+- High memory (stores full vectors)
+- Fast to build (just k-means + assignment)
+- Good for 1M–50M vectors where memory is available
+
+---
+
+### Product Quantization (PQ)
+
+PQ is the compression layer that makes IVF scale to billions of vectors.
+
+**The idea**: split each $d$-dimensional vector into $m$ subvectors of dimension $d/m$, and quantize each subvector independently using a small codebook of $k^*$ centroids (typically $k^* = 256$, so each subvector is encoded as 1 byte).
+
+For a 768-dim vector with $m=8$ subspaces:
+
+$$\mathbf{v} = [\underbrace{v_1, \ldots, v_{96}}_{\text{subvec 1}}, \underbrace{v_{97}, \ldots, v_{192}}_{\text{subvec 2}}, \ldots, \underbrace{v_{673}, \ldots, v_{768}}_{\text{subvec 8}}]$$
+
+Each subvector is replaced by its nearest centroid index (0–255), stored as 1 byte. The full vector is compressed from $768 \times 4 = 3072$ bytes to $8$ bytes — a **384x compression ratio**.
+
+**Distance computation with PQ** uses precomputed lookup tables:
+
+1. For each subspace $j$, compute the distance from the query subvector $\mathbf{q}_j$ to all $k^*$ centroids: $D_j[c] = d(\mathbf{q}_j, \mathbf{c}_{j,c})$
+2. For a compressed vector with codes $[c_1, c_2, \ldots, c_m]$, the approximate distance is: $\hat{d}(\mathbf{q}, \mathbf{v}) \approx \sum_{j=1}^{m} D_j[c_j]$
+3. This is just $m$ table lookups and additions — extremely fast
+
+The lookup tables are computed once per query and reused for all vectors in the searched lists.
+
+---
+
+### IVF-PQ: The Workhorse of Large-Scale Search
+
+Combining IVF (coarse quantization for fast list selection) with PQ (fine quantization for memory compression) gives IVF-PQ — the standard choice for datasets above 50M vectors.
+
+```
+Build time:
+  1. Train PQ codebooks on a sample of vectors
+  2. Run k-means to get IVF centroids
+  3. Assign vectors to clusters, encode with PQ
+
+Query time:
+  1. Find nprobe nearest IVF centroids
+  2. For each list, compute approximate distances using PQ lookup tables
+  3. Return top-K candidates
+  4. (Optional) Re-rank with exact distances on top candidates
+```
+
+The optional re-ranking step — fetching the original vectors for the top candidates and computing exact distances — is called **IVFPQ with re-ranking** and significantly improves recall at modest cost.
+
+---
+
+### PQ Variants
+
+**OPQ (Optimized PQ)** — applies a learned rotation to the vector space before quantization, aligning the subspaces with the principal axes of the data. Improves recall by 2–5% at the cost of a more expensive training step.
+
+**SQ (Scalar Quantization)** — quantizes each dimension independently to 8-bit integers. Simpler than PQ, 4x compression (vs 384x for PQ), but much better recall. Good middle ground when memory is available but you want some compression.
+
+**HNSW-PQ** — builds an HNSW graph over PQ-compressed vectors. Gets HNSW's graph navigation with PQ's memory savings. Used in Milvus and Qdrant for large-scale deployments.
+
+---
+
+### Choosing Between HNSW and IVF-PQ
+
+| Scenario | Recommendation |
+|---|---|
+| < 10M vectors, memory available | HNSW |
+| 10M–100M vectors, memory available | HNSW or IVF-Flat |
+| > 100M vectors | IVF-PQ |
+| Streaming ingestion > 10K/sec | IVF-PQ (HNSW inserts are too slow) |
+| Highest possible recall | HNSW with high efSearch |
+| Lowest possible memory | IVF-PQ with aggressive compression |
+| GPU available | FAISS GPU with IVF-PQ |
+
+---
+
+### Hybrid Indexes
+
+Production systems often combine approaches:
+
+**HNSW + PQ**: Build HNSW graph, store PQ-compressed vectors at nodes. Navigate graph with approximate distances, re-rank top candidates with exact distances. Used in Qdrant's HNSW implementation.
+
+**IVF + HNSW refinement**: Use IVF for coarse selection, then HNSW within each cluster for fine search. Rare but used in some research systems.
+
+**DiskANN**: Graph-based index designed for SSD storage. Keeps the graph structure on disk, uses PQ for in-memory distance approximation. Enables billion-scale search with modest RAM. Used in Azure Cognitive Search.
+
+---
+
+## Recall-Latency Curves
+
+The most important thing to understand about ANN indexes is that recall and latency are not fixed — they're a tradeoff controlled by parameters.
+
+For HNSW, the curve is controlled by `efSearch`. For IVF, it's controlled by `nprobe`. Both produce smooth curves:
+
+```
+Recall  │                              ●●●
+        │                         ●●●
+        │                    ●●●
+        │               ●●●
+        │          ●●●
+        │     ●●●
+        └──────────────────────────────── Latency
+```
+
+When benchmarking or tuning, always plot this curve rather than reporting a single (recall, latency) point. The shape of the curve tells you how much headroom you have.
+
+The standard benchmark for ANN algorithms is [ann-benchmarks.com](https://ann-benchmarks.com), which plots these curves for all major algorithms across standard datasets.
+
+---
+
+## Summary
+
+- HNSW builds a hierarchical proximity graph; search is $O(\log N)$ graph traversal
+- HNSW gives the best recall/latency tradeoff but is memory-heavy and slow to insert into
+- IVF partitions vectors into clusters; only the nearest clusters are searched at query time
+- PQ compresses vectors 10–400x using learned subspace codebooks with lookup-table distance computation
+- IVF-PQ combines both for billion-scale search with modest memory
+- Choose HNSW for < 100M vectors with moderate ingestion; IVF-PQ for larger scale or high-throughput writes
+- Always tune using recall-latency curves, not single operating points
+
+The next article covers how vector databases store, persist, and ingest data — the storage engine layer that makes these indexes work in production.

@@ -1,16 +1,10 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "07 — Multi-Agent Orchestration"
+title: "Multi-Agent Orchestration"
 ---
 
-# 07 — Multi-Agent Orchestration
-
-a) [a — Why Multi-Agent Systems Exist](./why-multi-agent.mdx)
-
-b) [b — Manager–Worker Pattern](./centralised-coordination.mdx)
-
-c) [c — Handoff Pattern (Swarm)](./handoff-swarm.mdx)
-
-d) [d — Debate Pattern](./debate-pattern.mdx)
-
-e) [e — Agent-to-Agent Communication (A2A)](./a2a-agent-to-agent.mdx)
+- [Why Multi-Agent Systems Exist](/agentic-ai/multi-agent/why-multi-agent)
+- [Manager–Worker Pattern](/agentic-ai/multi-agent/manager-worker-pattern)
+- [Handoff Pattern (Swarm)](/agentic-ai/multi-agent/handoff-swarm)
+- [Debate Pattern](/agentic-ai/multi-agent/debate-pattern)
+- [Agent-to-Agent Communication (A2A)](/agentic-ai/multi-agent/a2a-agent-to-agent)

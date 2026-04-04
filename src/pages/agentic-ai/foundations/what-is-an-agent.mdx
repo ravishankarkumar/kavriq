@@ -125,31 +125,19 @@ This loop is what makes an agent adaptive instead of purely reactive.
 
 If your environment is not set up yet, please follow the [instructions here](/agentic-ai/prerequisite/setting-up) and then come back.
 
-Let’s now look at a tiny example.
+Let's now look at a tiny example.
 
-> **Problem:** Count the number of files in the current directory, and tell one interesting mathematical fact about that number.
+> **Problem:** Count the number of files in the current directory, and tell one interesting mathematical fact about that number multiplied by a random prime number.
+
+>For this exercice, a Gemini based code snippet is provided in the [sample code github repo](https://github.com/ravishankarkumar/aiunderthehood-sample-code). So, that if you are using Gemini, you can get started. In future, we will only provide Ollama based sample code, unless there is a specific reason such as some feature being unavailable in Ollama.
 
 <Tabs >
   <TabItem label="Python" icon="seti:python">
 
 ```python
-import os
+import json
 from pathlib import Path
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
-
-# -----------------------------
-# Load environment variables
-# -----------------------------
-env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
-
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in environment variables.")
-
-client = genai.Client(api_key=api_key)
+import ollama
 
 # -----------------------------
 # Tool: Count regular files
@@ -157,35 +145,101 @@ client = genai.Client(api_key=api_key)
 def count_files(directory: str = ".") -> str:
     try:
         path = Path(directory)
+
         if not path.exists():
             return f"Error: directory '{directory}' does not exist."
+
         if not path.is_dir():
             return f"Error: '{directory}' is not a directory."
-        count = sum(1 for item in path.iterdir() if item.is_file() and not item.name.startswith("."))
+
+        count = sum(
+            1 for item in path.iterdir()
+            if item.is_file() and not item.name.startswith(".")
+        )
+
         return str(count)
+
     except Exception as e:
         return f"Error counting files: {e}"
 
 
+# -----------------------------
+# Agent loop (Ollama version)
+# -----------------------------
 def run_agent(user_query: str):
-    chat = client.chats.create(
-        model="gemini-2.5-flash",
-        config=types.GenerateContentConfig(
-            tools=[count_files], # Just pass the function itself!
-            temperature=0.1,
-            system_instruction=(
-              "You are a helpful assistant. "
-              "When the user asks about the number of files in a folder, "
-              "use the count_files tool instead of guessing."
-            ),
+    model = "qwen3.5:9b"
+
+    # 🔥 This replaces Gemini's tools=[count_files]
+    system_prompt = """
+You are a helpful assistant.
+
+You have access to a tool:
+
+Tool: count_files(directory: string)
+Description: Count number of regular non-hidden files in a directory.
+
+When the user asks about file counts:
+- DO NOT guess
+- ALWAYS call the tool
+
+To call the tool, respond ONLY with JSON:
+
+{
+  "tool": "count_files",
+  "arguments": { "directory": "." }
+}
+
+After receiving the tool result, continue normally.
+"""
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_query},
+    ]
+
+    while True:
+        response = ollama.chat(
+            model=model,
+            messages=messages,
         )
-    )
-    response = chat.send_message(user_query)
-    return response.text
+
+        content = response["message"]["content"]
+        print("Model:", content, "\n")
+
+        # Try to parse tool call
+        try:
+            parsed = json.loads(content)
+
+            if parsed.get("tool") == "count_files":
+                directory = parsed.get("arguments", {}).get("directory", ".")
+
+                result = count_files(directory)
+                print("📦 Tool Result:", result, "\n")
+
+                # Add assistant tool call
+                messages.append({"role": "assistant", "content": content})
+
+                # Feed result back (like Gemini internally does)
+                messages.append({
+                    "role": "user",
+                    "content": f"Tool result: {result}. Now answer the original question."
+                })
+
+                continue
+
+        except json.JSONDecodeError:
+            pass
+
+        # Final response
+        return content
 
 
+# -----------------------------
+# Main
+# -----------------------------
 if __name__ == "__main__":
-    query = "Count the number of files in the current folder, and tell me one interesting mathematical fact about that number."
+    query = "Count the number of files in the current folder, and tell me one interesting mathematical fact about that number multiplied by a random prime number."
+
     answer = run_agent(query)
 
     print("\nFinal answer:\n")
@@ -197,33 +251,28 @@ if __name__ == "__main__":
   <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-use dotenvy::from_path;
-use gemini_client_api::gemini::types::request::Tool;
-use std::env;
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    Ollama,
+};
+use serde_json::{json, Value};
 use std::fs;
 use std::path::Path;
 
-use gemini_client_api::gemini::utils::execute_function_calls;
-use gemini_client_api::gemini::ask::Gemini;
-use gemini_client_api::gemini::types::sessions::Session;
-use gemini_client_api::serde_json::{json, Value};
+// -----------------------------
+// Tool: Count Files in Directory
+// -----------------------------
+pub struct CountFiles;
 
-#[allow(non_camel_case_types)]
-pub struct count_files;
-
-impl count_files {
-    // Change the return type to Result<Value, String>
-    pub async fn execute(directory: Value) -> Result<Value, String> {
-        // Extract the string, default to current directory if not provided
+impl CountFiles {
+    pub async fn execute(directory: &Value) -> Value {
         let directory_str = directory.as_str().unwrap_or(".");
-
         let path = Path::new(directory_str);
 
         if !path.exists() {
-            // We return Ok here so the AI receives the message about the missing folder
-            return Ok(json!({
+            return json!({
                 "error": format!("directory '{}' does not exist", directory_str)
-            }));
+            });
         }
 
         let count = match fs::read_dir(path) {
@@ -236,76 +285,88 @@ impl count_files {
                 })
                 .count(),
             Err(e) => {
-                return Ok(json!({
+                return json!({
                     "error": format!("failed to read directory: {}", e)
-                }));
+                })
             }
         };
 
-        // Wrap the final JSON in Ok()
-        Ok(json!({
+        json!({
             "directory": directory_str,
             "count": count
-        }))
+        })
     }
 }
 
-fn get_count_files_schema() -> Value {
-    json!({
-        "name": "count_files",
-        "description": "Count the number of regular non-hidden files in a directory.",
-        "parameters": {
-            "type": "OBJECT",
-            "properties": {
-                "directory": {
-                    "type": "STRING",
-                    "description": "Directory path. Use '.' for the current folder."
-                }
-            },
-            "required": ["directory"]
-        }
-    })
-}
-
+// -----------------------------
+// Main Agent Loop
+// -----------------------------
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    from_path("../.env").ok();
+    let ollama = Ollama::default();
+    let model = "qwen3.5:9b".to_string();
 
-    let api_key = env::var("GEMINI_API_KEY")
-        .expect("GEMINI_API_KEY must be set in the workspace root .env");
+    let system_prompt = r#"
+You are an AI agent.
 
-    let mut session = Session::new(10);
+You have access to a tool:
 
-    let ai = Gemini::new(
-        api_key,
-        "gemini-2.5-flash", 
-        Some("You are a helpful assistant. Use tools when asked about files.".into()),
-    )
-    .set_tools(vec![Tool::FunctionDeclarations(vec![get_count_files_schema()])]);
+Tool: count_files
+Description: Count files in a directory
 
-    let prompt = "Count the number of files in the current folder, and tell me one interesting mathematical fact about that number.";
-    println!("User: {}\n", prompt);
+When needed, respond with a JSON tool call:
 
-    let mut response = ai.ask(session.ask(prompt)).await?;
+{
+  "tool": "count_files",
+  "arguments": { "directory": "." }
+}
+
+Otherwise, respond normally.
+"#;
+
+    let user_prompt = "Count the number of files in the current folder and tell me a math fact about the number multiplied by a random prime number.";
+
+    println!("User: {}\n", user_prompt);
+
+    let mut messages = vec![
+        ChatMessage::system(system_prompt.to_string()),
+        ChatMessage::user(user_prompt.to_string()),
+    ];
 
     loop {
-        if response.get_chat().has_function_call() {
-            println!("Gemini requested a function call...");
+        let request = ChatMessageRequest::new(model.clone(), messages.clone());
+        let res = ollama.send_chat_messages(request).await?;
 
-            // The macro now finds count_files::execute()
-            let results = execute_function_calls!(session, count_files);
+        let response_message = res.message;
+        let content = response_message.content.clone();
 
-            for (idx, res) in results.iter().enumerate() {
-                if let Some(r) = res {
-                    println!("  Call #{} result: {:?}", idx + 1, r);
-                }
+        println!("Model: {}\n", content);
+
+        // Try parsing tool call
+        let parsed: Result<Value, _> = serde_json::from_str(&content);
+
+        if let Ok(json) = parsed {
+            if json.get("tool") == Some(&Value::String("count_files".to_string())) {
+                let args = &json["arguments"];
+
+                let result = CountFiles::execute(args).await;
+
+                println!("📦 Tool Result: {}\n", result);
+
+                // feed result back
+                messages.push(ChatMessage::assistant(content));
+                messages.push(ChatMessage::user(format!(
+                    "Tool result: {}. Now complete the task.",
+                    result
+                )));
+
+                continue;
             }
-
-            response = ai.ask(&mut session).await?;
-        } else {
-            println!("\nGemini: {}", response.get_chat().get_text_no_think("\n"));
-            break;
         }
+
+        // No tool call → final answer
+        println!("✅ Final Answer: {}\n", content);
+        break;
     }
 
     Ok(())
@@ -315,7 +376,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   </TabItem>
 </Tabs>
 
-> This may look like a lot at first, but don’t worry — we will unpack each concept properly in upcoming articles.
+> This may look like a lot at first, but don't worry — we will unpack each concept properly in upcoming articles.
 
 ---
 

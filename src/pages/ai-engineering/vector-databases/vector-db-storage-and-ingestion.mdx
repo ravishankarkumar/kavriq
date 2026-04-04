@@ -1,0 +1,214 @@
+---
+title: Vector Database Storage and Ingestion — Segments, WAL, and Compaction
+description: How vector databases persist data, handle real-time writes, and manage the tension between fast ingestion and high-quality ANN indexes.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+The ANN algorithms — HNSW, IVF-PQ — tell you how to search vectors. But a production database needs to do much more: persist data durably, handle concurrent writes, recover from crashes, and keep the index fresh as data changes. This article covers the storage engine layer that makes vector databases work in production.
+
+---
+
+## The Core Tension: Indexing vs Ingestion
+
+HNSW gives excellent search performance but has a fundamental problem for production systems: **inserts are expensive**.
+
+Each insertion requires:
+1. Finding the $M$ nearest neighbors in the existing graph (a full ANN search)
+2. Adding bidirectional edges to those neighbors
+3. Potentially rewiring existing edges to maintain graph quality
+
+At high ingestion rates (>10K vectors/sec), this becomes a bottleneck. You can't build a high-quality HNSW graph in real time while also serving low-latency queries.
+
+The solution used by every production vector database is a **segment-based architecture** — separate the write path from the index-build path.
+
+---
+
+## Segment-Based Architecture
+
+A segment is an immutable, self-contained unit of storage containing:
+- A set of vectors (raw or compressed)
+- An ANN index over those vectors
+- Metadata and filter indexes
+- Deletion markers
+
+```
+┌─────────────────────────────────────────────┐
+│  Vector Database Storage                    │
+│                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ Segment 1│  │ Segment 2│  │ Segment 3│  │
+│  │ 500K vecs│  │ 500K vecs│  │ 200K vecs│  │
+│  │ HNSW idx │  │ HNSW idx │  │ building │  │
+│  │ sealed   │  │ sealed   │  │ (growing)│  │
+│  └──────────┘  └──────────┘  └──────────┘  │
+│                                             │
+│  ┌──────────────────────────────────────┐   │
+│  │  Write Buffer (in-memory)            │   │
+│  │  New writes land here first          │   │
+│  └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+**Write path**: New vectors go into an in-memory write buffer. This is fast — no index building required.
+
+**Seal**: When the buffer reaches a threshold size (e.g. 100K vectors), it's sealed — no more writes accepted — and becomes a new segment.
+
+**Index build**: A background process builds the ANN index for the sealed segment. This can take seconds to minutes depending on segment size and index type.
+
+**Query path**: Queries fan out across all segments (including the write buffer, which is searched with brute force) and results are merged.
+
+This design decouples write throughput from index quality. You can ingest at millions of vectors per second into the write buffer while background indexing keeps up asynchronously.
+
+---
+
+## Write-Ahead Log (WAL)
+
+The write buffer is in memory — a crash would lose all unindexed writes. The WAL solves this.
+
+Every write is first appended to the WAL (a sequential log on disk) before being acknowledged to the client. On crash recovery, the system replays the WAL to reconstruct the write buffer.
+
+```
+Client write
+    ↓
+Append to WAL (disk, sequential write — fast)
+    ↓
+Acknowledge to client
+    ↓
+Apply to in-memory write buffer
+    ↓
+(background) Seal buffer → build segment index → persist segment
+    ↓
+Truncate WAL up to persisted point
+```
+
+Sequential disk writes are fast (hundreds of MB/s on SSDs), so WAL writes add minimal latency. The WAL is typically kept small — once a segment is persisted and indexed, the corresponding WAL entries are deleted.
+
+---
+
+## Segment Lifecycle
+
+```
+Write Buffer
+    │
+    │ (seal when full)
+    ▼
+Growing Segment (raw vectors, no index yet)
+    │
+    │ (background index build)
+    ▼
+Indexed Segment (vectors + HNSW/IVF index)
+    │
+    │ (accumulate multiple small segments)
+    ▼
+Compaction → Merged Segment (larger, better index quality)
+```
+
+**Why compaction?** Small segments have worse index quality than large ones — HNSW graphs built on 10K vectors have fewer long-range connections than graphs built on 1M vectors. Merging segments and rebuilding the index improves recall. Compaction also reclaims space from deleted vectors.
+
+Compaction is expensive (full index rebuild) so it runs in the background during low-traffic periods, similar to LSM-tree compaction in RocksDB.
+
+---
+
+## Deletions
+
+Vector databases handle deletions with **tombstones** (lazy deletion):
+
+1. Mark the vector's ID as deleted in a deletion bitmap
+2. Filter deleted vectors from search results
+3. During compaction, physically remove deleted vectors and rebuild the index
+
+True in-place deletion from an HNSW graph is impractical — removing a node requires rewiring all its neighbors, which can cascade through the graph. Tombstones are the universal solution.
+
+The operational implication: if your dataset has high delete rates (e.g. a product catalog with frequent removals), recall degrades over time as deleted nodes accumulate in the graph. Monitor your delete ratio and trigger compaction proactively.
+
+---
+
+## Updates
+
+Updates are implemented as delete + insert:
+
+1. Tombstone the old vector
+2. Insert the new vector into the write buffer
+
+This means updated vectors temporarily exist in two places — the old (tombstoned) location in a sealed segment, and the new location in the write buffer. Queries correctly return only the new version because tombstones are filtered.
+
+---
+
+## Storage Layout
+
+A vector database node's disk layout typically looks like:
+
+```
+/data/
+  wal/
+    wal-000001.log
+    wal-000002.log
+  segments/
+    seg-001/
+      vectors.bin        # raw float32 vectors
+      index.hnsw         # HNSW graph
+      metadata.db        # SQLite or similar for metadata
+      deletions.bitmap   # deleted vector IDs
+      manifest.json      # segment metadata
+    seg-002/
+      ...
+  snapshots/
+    snapshot-2024-01-15/ # periodic full snapshots for fast recovery
+```
+
+The separation of raw vectors from the index is important: you can rebuild the index from raw vectors if the index file is corrupted, without losing data.
+
+---
+
+## Real-Time Ingestion at Scale
+
+For high-throughput ingestion (millions of vectors per hour), the write buffer approach has limits. Production systems use additional techniques:
+
+**Batched writes**: Accumulate writes client-side and send in batches of 1K–10K vectors. Reduces per-write overhead dramatically.
+
+**Parallel segment building**: Multiple background workers build indexes for different segments simultaneously.
+
+**IVF for write-heavy workloads**: IVF-PQ indexes are faster to build than HNSW (no graph rewiring). Systems like Milvus use IVF-PQ for freshly sealed segments and optionally upgrade to HNSW during compaction.
+
+**Tiered storage**: Hot segments (recent, frequently queried) stay in RAM with HNSW. Cold segments move to SSD with DiskANN or IVF-PQ. Queries fan out across tiers.
+
+---
+
+## Consistency Models
+
+Vector databases typically offer **eventual consistency** for the index:
+
+- Writes are immediately durable (WAL)
+- Writes are immediately searchable (write buffer brute-force search)
+- Full index quality is available after background indexing completes (seconds to minutes)
+
+This is acceptable for most use cases — a newly ingested document being found via brute-force search in the write buffer is functionally equivalent to finding it via HNSW in a sealed segment.
+
+For strong consistency requirements (e.g. financial documents that must be immediately searchable with full recall), some systems offer synchronous indexing at the cost of write throughput.
+
+---
+
+## Snapshot and Recovery
+
+Full snapshots are taken periodically (hourly or daily) to enable fast recovery:
+
+```
+Recovery without snapshot: replay entire WAL from beginning (slow)
+Recovery with snapshot:    load snapshot + replay WAL since snapshot (fast)
+```
+
+Snapshots are typically stored in object storage (S3, GCS) for durability. The snapshot + WAL combination gives a recovery point objective (RPO) of seconds and a recovery time objective (RTO) of minutes.
+
+---
+
+## Summary
+
+- Segment-based architecture decouples write throughput from index quality
+- New writes go to an in-memory buffer; background processes seal and index segments
+- WAL provides durability for unindexed writes
+- Deletions use tombstones; physical removal happens during compaction
+- Compaction merges small segments, rebuilds indexes, and reclaims deleted space
+- High-throughput ingestion uses batching, parallel indexing, and tiered storage
+- Consistency is typically eventual for index quality, immediate for durability
+
+The next article covers how vector databases scale horizontally — sharding, replication, distributed query execution, and metadata filtering.

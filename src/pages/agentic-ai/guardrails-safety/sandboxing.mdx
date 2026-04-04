@@ -1,407 +1,129 @@
 ---
-
 title: Sandboxing Agent Execution
-description: How Docker containers, WebAssembly, and secure runtimes protect systems from unsafe AI agent behavior
+description: How Docker, WebAssembly, and secure runtimes isolate AI agent code to prevent damage to the host system
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article concludes **Module 8 — Guardrails & Safety**.
+AI agents often need to execute code — running Python scripts for data analysis, compiling programs, executing shell commands, or running research scripts. 
 
-In previous articles we explored **prompt injection defenses**, **tool permission systems**, and **human-in-the-loop oversight**.
+While powerful, this capability introduces serious risks. A single malicious, faulty, or injected instruction can delete files, exfiltrate data, or compromise the entire host.
 
-However, some agents are capable of executing code or interacting with operating systems.
-Without proper isolation, these actions could damage the system or expose sensitive data.
-
-In this article we examine **sandboxing**, a technique that isolates agent execution inside controlled environments.
-
-</Aside>
-
-# Sandboxing Agent Execution
-
-Many modern AI agents can execute code.
-
-Examples include:
-
-* data analysis agents running Python
-* coding assistants compiling programs
-* automation agents executing shell commands
-* research agents running scripts
-
-While this capability is powerful, it also introduces significant risks.
-
-Example malicious or faulty code:
-
-```python
-import os
-os.system("rm -rf /")
-```
-
-If executed directly on a host system, this could cause catastrophic damage.
-
-To prevent such risks, agent systems execute code inside **sandboxes**.
-
-A sandbox is an **isolated environment that restricts access to the host system**.
+**Sandboxing** solves this by executing agent code inside isolated, restricted environments that limit damage even if something goes wrong.
 
 ---
 
-# What Is a Sandbox?
+## What Is a Sandbox?
 
-A sandbox limits what code can do.
+A sandbox is an isolated execution environment that restricts what code can access or modify on the host system.
 
-Example restrictions:
+Typical restrictions include:
+- Filesystem access (read-only or limited directories)
+- Network connectivity (whitelisted endpoints only)
+- System calls (via seccomp or similar)
+- CPU, memory, and execution time limits
+- No direct access to host processes or hardware
 
-* limited filesystem access
-* restricted network access
-* limited CPU and memory usage
-* no access to host operating system
-
-Conceptually:
-
-```text
-Agent Code
-    ↓
-Sandbox Environment
-    ↓
-Host System
-```
-
-The sandbox protects the host even if the agent executes unsafe code.
+The goal is **containment**: even if the agent runs destructive or compromised code, the impact is limited to the sandbox.
 
 ---
 
-# Docker Sandboxing
+## Common Sandboxing Technologies (2026)
 
-One common sandboxing technique is **containerization using Docker**.
+| Technology       | Isolation Level      | Strengths                              | Typical Use Case                     |
+|------------------|----------------------|----------------------------------------|--------------------------------------|
+| Docker           | OS-level container   | Mature ecosystem, easy to manage       | General code execution               |
+| WebAssembly (WASM) | Language-level       | Strong isolation, fast startup, portable | Lightweight, secure function execution |
+| gVisor / Firecracker | Lightweight VM      | Stronger isolation than containers     | High-security environments           |
+| Kata Containers  | VM-based containers  | Hardware-level isolation               | Enterprise-grade security            |
 
-Docker containers package applications into isolated environments.
-
-Example architecture:
-
-```text
-Host Machine
-   ↓
-Docker Container
-   ↓
-Agent Code Execution
-```
-
-The container isolates:
-
-* filesystem
-* processes
-* networking
-* system libraries
-
-This prevents agent code from affecting the host system.
+Most production systems use **layered isolation** — combining multiple technologies for defense-in-depth.
 
 ---
 
-# Example Docker Execution
+## Docker-Based Sandboxing
 
-A system might run agent-generated code inside a container.
+Docker remains one of the most widely used sandboxing methods for agents. Each execution runs in a temporary, disposable container with strict limits.
 
-Example command:
-
-```text
-docker run --rm sandbox-python python script.py
-```
-
-The `--rm` flag ensures that the container is destroyed after execution.
-
-This prevents persistent modifications.
+Key best practices:
+- Use `--rm` to auto-delete containers after execution
+- Set resource limits (`--memory`, `--cpus`)
+- Mount only necessary volumes with read-only where possible
+- Apply seccomp profiles to restrict system calls
 
 ---
 
-# Example Containerized Execution
+## WebAssembly Sandboxing
 
-<Tabs>
+WebAssembly (especially with WASI — WebAssembly System Interface) is increasingly popular for secure agent code execution because it provides strong isolation by design. Code runs in a sandboxed virtual machine with no direct access to the host unless explicitly allowed through controlled interfaces.
 
-<TabItem label="Python" icon="seti:python">
-
-```python
-import subprocess
-
-subprocess.run([
-    "docker",
-    "run",
-    "--rm",
-    "sandbox-python",
-    "python",
-    "script.py"
-])
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use std::process::Command;
-
-Command::new("docker")
-    .args([
-        "run",
-        "--rm",
-        "sandbox-python",
-        "python",
-        "script.py"
-    ])
-    .output()?;
-```
-
-</TabItem>
-
-</Tabs>
-
-This approach isolates execution inside a temporary container.
+Advantages:
+- Very fast startup and low overhead
+- Predictable, deterministic behavior
+- Fine-grained capability control (only grant specific WASI functions)
+- Works well for Python, JavaScript, and other languages compiled to WASM
 
 ---
 
-# Resource Limits
+## Multi-Layer Sandboxing in Practice
 
-Containers can also enforce **resource limits**.
-
-Example restrictions:
-
-```text
-Memory: 512 MB
-CPU: 1 core
-Execution time: 30 seconds
-```
-
-These limits prevent agents from consuming excessive resources.
-
-Example Docker flags:
-
-```text
---memory=512m
---cpus=1
-```
-
-This ensures that agent code cannot overwhelm the system.
-
----
-
-# WebAssembly Isolation
-
-Another powerful sandboxing technology is **WebAssembly (WASM)**.
-
-WebAssembly is a portable execution format designed for **secure, sandboxed environments**.
-
-Conceptually:
+Robust systems combine multiple layers:
 
 ```text
 Agent Code
    ↓
-WebAssembly Runtime
+Language Runtime Restrictions (e.g., restricted Python interpreter)
    ↓
-Sandboxed Execution
-```
-
-Unlike native code, WebAssembly programs cannot access the system directly.
-
-They interact only through **explicitly allowed interfaces**.
-
----
-
-# Why WebAssembly Is Attractive
-
-WebAssembly offers several advantages for sandboxing.
-
-| Feature                | Benefit                 |
-| ---------------------- | ----------------------- |
-| strong isolation       | protects host system    |
-| portable runtime       | runs on many platforms  |
-| fast startup           | low latency execution   |
-| deterministic behavior | predictable performance |
-
-These properties make WASM a popular choice for **secure agent execution**.
-
----
-
-# Example WebAssembly Execution
-
-<Tabs>
-
-<TabItem label="Python" icon="seti:python">
-
-```python
-import wasmtime
-
-engine = wasmtime.Engine()
-module = wasmtime.Module.from_file(engine, "program.wasm")
-
-store = wasmtime.Store(engine)
-
-instance = wasmtime.Instance(store, module, [])
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use wasmtime::*;
-
-let engine = Engine::default();
-
-let module = Module::from_file(&engine, "program.wasm")?;
-
-let mut store = Store::new(&engine, ());
-
-let instance = Instance::new(&mut store, &module, &[])?;
-```
-
-</TabItem>
-
-</Tabs>
-
-The WebAssembly runtime strictly controls available system functions.
-
----
-
-# Safe Code Execution
-
-Sandboxing systems must also control **what code is allowed to run**.
-
-Example safeguards include:
-
-* disabling system commands
-* restricting filesystem access
-* preventing network calls
-* limiting runtime duration
-
-Example policy:
-
-```text
-Allowed:
-• numerical computation
-• data processing
-
-Restricted:
-• file deletion
-• system commands
-• external network requests
-```
-
-These restrictions prevent dangerous behavior.
-
----
-
-# Combining Multiple Isolation Layers
-
-Production systems often combine multiple sandboxing layers.
-
-Example architecture:
-
-```text
-Agent Code
-    ↓
-Language Runtime Restrictions
-    ↓
-WebAssembly Sandbox
-    ↓
-Docker Container
-    ↓
-Host System
-```
-
-Each layer adds additional protection.
-
----
-
-# Sandboxing in Modern AI Systems
-
-Many AI platforms already rely on sandboxed execution.
-
-Examples include:
-
-| System                 | Isolation Method                  |
-| ---------------------- | --------------------------------- |
-| code interpreter tools | containerized execution           |
-| cloud functions        | sandboxed runtimes                |
-| AI coding assistants   | isolated compilation environments |
-| enterprise automation  | restricted containers             |
-
-These systems prevent AI-generated code from damaging infrastructure.
-
----
-
-# Challenges of Sandboxing
-
-Sandboxing introduces several challenges.
-
-### Performance Overhead
-
-Isolation layers can increase execution latency.
-
----
-
-### Resource Management
-
-Systems must carefully allocate CPU and memory.
-
----
-
-### Security Gaps
-
-Improperly configured sandboxes may still expose vulnerabilities.
-
-Designing secure sandboxes requires **careful engineering and continuous auditing**.
-
----
-
-# Sandboxing as a Safety Boundary
-
-Sandboxing acts as the **last line of defense** in agent systems.
-
-Even if an agent:
-
-* generates malicious code
-* is compromised by prompt injection
-* misuses tools
-
-the sandbox prevents damage to the host environment.
-
-Conceptually:
-
-```text
-Unsafe code
+WebAssembly or Container Sandbox
    ↓
-Sandbox boundary
+Host-level Controls (seccomp, AppArmor, resource limits)
    ↓
-Host system protected
+Host System (protected)
 ```
 
----
-
-# Summary of Module 8
-
-In this module we explored how to build **safe and secure agent systems**.
-
-| Topic                   | Concept                          |
-| ----------------------- | -------------------------------- |
-| Prompt Injection        | how agents can be manipulated    |
-| Tool Permission Systems | restricting agent capabilities   |
-| Human-in-the-Loop       | oversight and approval workflows |
-| Sandboxing              | isolating code execution         |
-
-Together, these techniques form the **security layer of modern AI agent architectures**.
+This layered approach significantly reduces the attack surface.
 
 ---
 
-# Looking Ahead
+## Best Practices for Sandboxing Agents
 
-In the next module we will explore **Evaluation & Metrics for Agent Systems**.
+- Always use temporary, disposable environments (`--rm` in Docker)
+- Apply strict resource limits to prevent DoS
+- Use read-only mounts wherever possible
+- Combine with tool permission systems (MCP) and HITL for high-risk actions
+- Monitor sandbox exits and resource usage for anomalies
+- Regularly audit and update sandbox images/runtimes
 
-Topics include:
+For computer-use agents, sandboxing becomes even more critical since they can control mouse/keyboard and potentially the entire desktop environment.
 
-* why evaluating agents is difficult
-* LLM-as-a-judge evaluation
-* trajectory-based metrics
-* building evaluation pipelines
+---
 
-→ Continue to **9.1 — Why Agent Evaluation Is Hard**
+## Challenges of Sandboxing
+
+- **Performance overhead** — containers and VMs add latency (especially cold starts)
+- **Debugging difficulty** — errors inside sandboxes are harder to diagnose
+- **Escape vulnerabilities** — sophisticated attacks may try to break out of the sandbox
+- **Resource management** — balancing security with acceptable performance
+
+Continuous auditing and keeping sandbox runtimes up-to-date are essential.
+
+---
+
+## Sandboxing as the Last Line of Defense
+
+Even if prompt injection succeeds, tool permissions are bypassed, or HITL is not triggered, a well-designed sandbox ensures that unsafe code cannot damage the host system or access sensitive resources outside its allowed scope.
+
+It is the final technical guardrail in a comprehensive agent safety strategy.
+
+---
+
+## Looking Ahead
+
+In this article we explored **Sandboxing Agent Execution** — how containers, WebAssembly, and secure runtimes isolate agent code to protect the underlying system.
+
+With this article, **Module 8 — Guardrails & Safety** is complete.
+
+In the next module we will explore **Evaluation & Metrics for Agent Systems**, focusing on how to measure and improve agent performance reliably.
+
+→ Continue to **[9.1 — Why Agent Evaluation Is Hard](/agentic-ai/evaluation-metrics/why-evaluation-is-hard)**

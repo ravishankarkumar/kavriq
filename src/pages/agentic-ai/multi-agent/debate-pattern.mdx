@@ -1,224 +1,125 @@
 ---
-
 title: Debate Pattern
-description: Improving reasoning accuracy by allowing agents to critique and challenge each other's conclusions
+description: Improving reasoning accuracy through structured multi-agent critique and iterative refinement
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 6 — Multi-Agent Orchestration**.
 
-In previous articles we explored coordination architectures such as the **Manager–Worker pattern** and the **Handoff (Swarm) pattern**.
+One of the persistent challenges in AI systems is **reasoning reliability**. Even advanced models can produce confident but incorrect conclusions, hallucinated facts, or shallow reasoning chains.
 
-In this article we examine the **Debate Pattern**, where multiple agents propose and critique solutions in order to improve reasoning accuracy.
+The **Debate Pattern** addresses this by letting multiple agents **critique and challenge** each other’s outputs in a structured way. Instead of accepting a single agent’s answer, the system generates competing perspectives, identifies weaknesses, and iteratively refines the reasoning.
 
-</Aside>
+This collaborative critique often leads to significantly more accurate and nuanced results than single-agent generation.
 
-# Debate Pattern
+---
 
-One of the biggest challenges in AI systems is **reasoning reliability**.
+## The Core Idea
 
-Language models sometimes produce:
+Inspired by human expert debates and scientific peer review, the debate pattern turns reasoning into a **multi-round argumentative process**:
 
-* incorrect conclusions
-* hallucinated facts
-* weak reasoning chains
-
-One effective technique for improving reliability is to allow **multiple agents to challenge each other’s reasoning**.
-
-This architecture is known as the **Debate Pattern**.
-
-Instead of relying on a single answer, multiple agents generate competing solutions and critique each other.
-
-Conceptually:
+1. One or more agents propose initial answers.
+2. Critic agents identify flaws, missing evidence, or faulty logic.
+3. Proposers revise their reasoning based on the critique.
+4. A judge (or consensus mechanism) selects or synthesizes the strongest conclusion.
 
 ```text
 Question
-  ↓
-Agent A proposes answer
-  ↓
-Agent B critiques answer
-  ↓
-Agent A revises reasoning
-  ↓
-Judge selects best answer
+   ↓
+Proposer(s) → Initial Answer
+   ↓
+Critic(s)   → Identify Weaknesses
+   ↓
+Proposer(s) → Revised Answer
+   ↓
+Judge       → Final Decision
 ```
 
-The final result is often **more accurate than a single-agent response**.
+Multiple rounds can be run for especially difficult problems.
 
 ---
 
-# The Idea Behind Debate
+## Basic Roles in a Debate System
 
-The debate pattern is inspired by **human problem-solving**.
+| Role       | Responsibility                          |
+|------------|-----------------------------------------|
+| Proposer   | Generates candidate solutions           |
+| Critic     | Challenges assumptions and evidence     |
+| Judge      | Evaluates arguments and selects winner  |
 
-When experts disagree, they often debate:
-
-* presenting arguments
-* challenging assumptions
-* identifying errors
-
-Through discussion, the group often arrives at a **better solution**.
-
-Multi-agent debate attempts to replicate this process.
+In practice, roles can overlap — for example, the same model can play both proposer and critic in a self-debate setup.
 
 ---
 
-# Basic Debate Architecture
+## Example: AI Chip Architecture Debate
 
-A typical debate system includes three roles.
+**Question**: “Which GPU architecture is best for training large transformer models in 2026?”
 
-| Role     | Responsibility                |
-| -------- | ----------------------------- |
-| Proposer | suggests a solution           |
-| Critic   | challenges the solution       |
-| Judge    | evaluates competing arguments |
+**Round 1**  
+Proposer A: “H100 is clearly superior due to its Transformer Engine.”
 
-Conceptually:
+**Round 2**  
+Critic: “This ignores memory bandwidth limitations and total cost of ownership. Blackwell and MI300X offer better scaling in large clusters.”
 
-```text
-          Question
-             ↓
-        ┌──────────┐
-        │ Proposer │
-        └──────────┘
-             ↓
-        ┌──────────┐
-        │ Critic   │
-        └──────────┘
-             ↓
-        ┌──────────┐
-        │ Judge    │
-        └──────────┘
-```
+**Round 3**  
+Proposer A (revised): “H100 remains best for raw single-node performance, but for large-scale training, a mix of architectures is optimal depending on workload.”
 
-The process may repeat for several rounds.
+**Judge**: “The optimal choice depends on specific constraints: performance vs. cost vs. cluster size.”
+
+The debate produces a **more balanced and trustworthy answer**.
 
 ---
 
-# Example Debate Workflow
+## Why Debate Improves Reasoning
 
-Consider the question:
+- **Error detection** — Critics are incentivized to find flaws.
+- **Perspective diversity** — Different agents bring varied knowledge and biases.
+- **Iterative refinement** — Weak arguments are strengthened or discarded.
+- **Reasoning transparency** — All steps are explicit and auditable.
+- **Reduced overconfidence** — The system is less likely to present uncertain answers as facts.
 
-> “Which GPU architecture is best for training large transformer models?”
-
-Debate process:
-
-```text
-Agent A:
-"H100 GPUs are best due to transformer engine support."
-
-Agent B:
-"This ignores cost efficiency and cluster scalability."
-
-Agent A:
-"You're correct — H100 is best for raw performance but not always cost-efficient."
-```
-
-Finally:
-
-```text
-Judge:
-"Both arguments are valid. The answer depends on performance vs cost tradeoffs."
-```
-
-The debate produces a **more nuanced answer**.
+Debate has shown particularly strong results in mathematical reasoning, logical puzzles, scientific analysis, and high-stakes decision making.
 
 ---
 
-# Debate Rounds
+## Variants of the Debate Pattern
 
-Debates typically proceed in multiple rounds.
+| Variant            | Description                                      | Trade-off                     |
+|--------------------|--------------------------------------------------|-------------------------------|
+| Two-Agent Debate   | Proposer vs dedicated Critic                     | Simple and efficient          |
+| Multi-Agent Debate | Multiple competing proposers + critics           | Richer perspectives           |
+| Self-Debate        | Single model critiques its own output            | Lower cost                    |
+| Panel Debate       | Multiple critics evaluate one strong proposal    | High quality, higher cost     |
 
-Example structure:
-
-```text
-Round 1 → initial answers
-Round 2 → critique
-Round 3 → revision
-Round 4 → final judgment
-```
-
-Each round allows agents to **refine their reasoning**.
+Many production systems combine debate with Agentic RAG and multi-hop retrieval for even stronger results.
 
 ---
 
-# Why Debate Improves Accuracy
-
-Debate improves reasoning for several reasons.
-
-### Error Detection
-
-Critic agents can identify mistakes.
-
----
-
-### Perspective Diversity
-
-Different agents may approach problems differently.
-
----
-
-### Reasoning Transparency
-
-Arguments must be explicitly explained.
-
----
-
-### Iterative Improvement
-
-Agents revise their answers after receiving criticism.
-
----
-
-# Debate Pattern in Mathematical Reasoning
-
-Debate architectures have shown strong results in tasks such as:
-
-* mathematical proofs
-* logical puzzles
-* scientific analysis
-
-Example reasoning critique:
-
-```text
-Agent A:
-"The answer is 42."
-
-Agent B:
-"Your calculation ignored the second term in the equation."
-```
-
-The error is caught during debate.
-
----
-
-# Example Implementation
+## Example Implementation (Multi-Round Debate)
 
 <Tabs>
 
 <TabItem label="Python" icon="seti:python">
 
 ```python
-def debate(question, agent_a, agent_b, judge):
+def run_debate(question: str, proposer, critic, judge, rounds=3):
+    current_answer = proposer.generate(question)
 
-    answer_a = agent_a.generate(question)
+    for round_num in range(rounds):
+        critique = critic.generate(
+            f"Question: {question}\nCurrent Answer: {current_answer}\nFind flaws and suggest improvements."
+        )
 
-    critique = agent_b.generate(
-        f"Critique this answer:\n{answer_a}"
+        current_answer = proposer.generate(
+            f"Question: {question}\nPrevious Answer: {current_answer}\nCritique: {critique}\nRevise your answer."
+        )
+
+    final_decision = judge.generate(
+        f"Question: {question}\nFinal Candidate: {current_answer}\nProvide the best reasoned answer."
     )
 
-    revised = agent_a.generate(
-        f"Revise your answer considering:\n{critique}"
-    )
-
-    decision = judge.generate(
-        f"Answer A: {revised}\nCritique: {critique}"
-    )
-
-    return decision
+    return final_decision
 ```
 
 </TabItem>
@@ -226,21 +127,26 @@ def debate(question, agent_a, agent_b, judge):
 <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-fn debate(question: &str, a: &Agent, b: &Agent, judge: &Agent) -> String {
+async fn run_debate(
+    question: &str,
+    proposer: &Agent,
+    critic: &Agent,
+    judge: &Agent,
+    max_rounds: usize,
+) -> String {
+    let mut current_answer = proposer.generate(question).await;
 
-    let answer_a = a.generate(question);
+    for _ in 0..max_rounds {
+        let critique = critic.generate(
+            &format!("Question: {}\nAnswer: {}\nCritique and improve.", question, current_answer)
+        ).await;
 
-    let critique = b.generate(
-        &format!("Critique this answer:\n{}", answer_a)
-    );
+        current_answer = proposer.generate(
+            &format!("Question: {}\nPrevious: {}\nCritique: {}\nRevise.", question, current_answer, critique)
+        ).await;
+    }
 
-    let revised = a.generate(
-        &format!("Revise considering:\n{}", critique)
-    );
-
-    judge.generate(
-        &format!("Answer: {}\nCritique: {}", revised, critique)
-    )
+    judge.generate(&format!("Question: {}\nFinal answer:", question, current_answer)).await
 }
 ```
 
@@ -248,118 +154,37 @@ fn debate(question: &str, a: &Agent, b: &Agent, judge: &Agent) -> String {
 
 </Tabs>
 
-This simple loop simulates **argument and critique**.
+In production systems, this pattern is often combined with structured memory (to remember past debate outcomes) and procedural templates for consistent critique quality.
 
 ---
 
-# Variants of Debate Systems
+## Challenges and Best Practices
 
-Several variations of the debate pattern exist.
+**Challenges**:
+- **Cost and latency** — Multiple rounds multiply model calls.
+- **Judge bias** — The judge can favor persuasive but incorrect arguments.
+- **Inconsistent critique quality** — Poorly prompted critics may miss subtle errors.
+- **Overhead** — Debate can be unnecessary for simple questions.
 
-| Variant            | Description                          |
-| ------------------ | ------------------------------------ |
-| Two-agent debate   | proposer vs critic                   |
-| Multi-agent debate | multiple competing answers           |
-| Self-debate        | a single model critiques itself      |
-| Panel debate       | multiple critics evaluate one answer |
-
-These variations provide different tradeoffs between **accuracy and computational cost**.
-
----
-
-# Self-Debate
-
-Even a single model can simulate debate by generating **multiple perspectives**.
-
-Example prompt:
-
-```text
-Propose an answer.
-
-Now critique your own reasoning.
-
-Now produce a revised answer.
-```
-
-This technique can improve reasoning without requiring multiple models.
+**Best practices in 2026**:
+- Use debate selectively for high-stakes or complex reasoning tasks.
+- Combine with Agentic RAG and multi-hop retrieval for grounded arguments.
+- Give agents access to shared semantic and episodic memory.
+- Implement cost controls and early stopping when confidence is high.
+- Use structured debate protocols (e.g., claim-evidence-rebuttal format).
 
 ---
 
-# Debate vs Majority Voting
+## Debate as Collaborative Intelligence
 
-Another common approach to improving accuracy is **majority voting**.
-
-Example:
-
-```text
-Agent A → answer X
-Agent B → answer X
-Agent C → answer Y
-```
-
-Final answer:
-
-```text
-Majority = X
-```
-
-However, majority voting lacks **structured critique**.
-
-Debate encourages deeper reasoning.
+The Debate Pattern transforms reasoning from a solitary process into a **collaborative, self-correcting** one. By allowing agents to argue, critique, and refine, we move closer to the kind of rigorous thinking humans achieve through discussion and peer review.
 
 ---
 
-# Challenges of Debate Systems
+## Looking Ahead
 
-Despite their benefits, debate systems have limitations.
+In this article we explored the **Debate Pattern**, a powerful technique for improving reasoning accuracy through structured multi-agent critique.
 
-### Increased Cost
+In the next article we will examine **Agent-to-Agent Communication (A2A)** — standardized protocols that allow independent agents to discover, negotiate, and collaborate with each other across different systems and platforms.
 
-Multiple agents require multiple model calls.
-
----
-
-### Latency
-
-Debate rounds increase response time.
-
----
-
-### Coordination Complexity
-
-Agents must follow structured communication protocols.
-
-Despite these costs, debate can significantly improve **accuracy for difficult problems**.
-
----
-
-# Debate as Collaborative Reasoning
-
-Debate systems transform reasoning from a **single decision** into a **collaborative process**.
-
-Instead of:
-
-```text
-LLM → answer
-```
-
-we get:
-
-```text
-LLM A → proposal
-LLM B → critique
-LLM A → revision
-Judge → decision
-```
-
-This approach often produces more **robust and reliable results**.
-
----
-
-# Looking Ahead
-
-In this article we explored the **Debate Pattern**, where multiple agents challenge each other’s reasoning to improve accuracy.
-
-In the next article we will examine **Agent-to-Agent Communication (A2A)**, a protocol designed to allow independent agents to discover and collaborate with each other across systems.
-
-→ Continue to **6.5 — Agent-to-Agent Communication (A2A)**
+→ Continue to **[6.5 — Agent-to-Agent Communication (A2A)](/agentic-ai/multi-agent/a2a-agent-to-agent)**

@@ -1,0 +1,213 @@
+---
+title: Building Agents with Rig and Custom Graphs
+description: Implementing stateful, graph-based agent architectures in Rust with Rig
+layout: ../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="Which Track Are You Following?">
+If you are following the **Python track**, continue to **[3.6 — Building Agents with LangGraph](/agentic-ai/planning-systems/langgraph)** instead.
+
+If you are following the **Rust track**, keep reading below.
+</Aside>
+
+As agents grew more sophisticated, the limitations of simple control loops became clear. Traditional loops (`observe → reason → act`) work for basic tasks but struggle with conditional logic, long-running workflows, and maintaining reliable state over many steps.
+
+In the Rust ecosystem, developers often combine **Rig** — a powerful, ergonomic LLM framework — with **custom graph orchestration** (or libraries like `graph-flow`) to build stateful, graph-based agents. This approach gives you Rust’s signature performance, type safety, and fine-grained control.
+
+---
+
+## What Is Rig + Graph-Based Agents?
+
+**Rig** is a modular Rust library for building scalable LLM-powered applications. It excels at creating clean, type-safe agents with tools, preambles, and dynamic context.
+
+When combined with a **custom graph** (or a lightweight graph-flow library), you can model complex agent workflows as explicit directed graphs instead of hidden loops.
+
+- **Nodes** = discrete steps (reasoning with Rig agent, tool execution, reflection, etc.)
+- **Edges** = transitions, often with conditional logic
+- **State** = a shared, strongly-typed struct that flows through the graph
+
+This design makes workflows **explicit, testable, and production-ready**.
+
+---
+
+## Core Concepts
+
+### Agent State
+Everything revolves around a shared, typed state struct.
+
+```rust
+#[derive(Debug, Clone, Default)]
+struct AgentState {
+    goal: String,
+    messages: Vec<Message>,
+    tool_results: Vec<ToolResult>,
+    final_report: Option<String>,
+}
+```
+
+Each node receives `&mut AgentState` (or an owned version) and updates it.
+
+### Nodes and Edges
+- **Nodes** are async functions that perform one focused task.
+- **Edges** define the flow — you can implement conditional routing and cycles manually or with a graph library.
+
+---
+
+## Typical Rig + Graph Workflow
+
+A common agent graph often mirrors the architecture we studied in Module 2:
+
+```text
+User Input
+   ↓
+Reasoning (Rig Agent)
+   ↓
+Tool Selection & Execution
+   ↓
+Observation Processing
+   ↓
+Reflection
+   ↓ (cycle if needed)
+Final Answer
+```
+
+---
+
+## Complete Example: Rig + Custom Graph
+
+Here’s a realistic example implementing a ReAct-style agent for comparing GPUs (RTX 4090 vs H100) using **Rig** for the LLM/agent part and a simple custom graph runner:
+
+```rust
+use rig::client::{CompletionClient, Nothing};
+use rig::completion::Prompt;
+use rig::providers::ollama;
+
+const MODEL: &str = "qwen3.5:9b";
+
+#[derive(Debug, Default)]
+struct AgentState {
+    goal: String,
+    messages: Vec<String>,
+    next_action: String,
+    final_report: Option<String>,
+}
+
+async fn reasoning_node(state: &mut AgentState, agent: &impl Prompt) {
+    let prompt = format!(
+        "Goal: {}\n\nHistory:\n{}\n\nDecide next action. Reply with 'use tool' to call a tool, or 'final_answer' to finish.",
+        state.goal,
+        state.messages.join("\n")
+    );
+
+    match agent.prompt(&prompt).await {
+        Ok(response) => {
+            state.next_action = if response.to_lowercase().contains("tool") {
+                "tools".to_string()
+            } else {
+                "final_answer".to_string()
+            };
+            state.messages.push(format!("Assistant: {response}"));
+        }
+        Err(e) => {
+            eprintln!("Reasoning error: {e}");
+            state.next_action = "final_answer".to_string();
+        }
+    }
+}
+
+async fn tool_node(state: &mut AgentState) {
+    let result = "H100 outperforms RTX 4090 in training throughput by 2-3x.";
+    state.messages.push(format!("Tool result: {result}"));
+}
+
+async fn final_answer_node(state: &mut AgentState, agent: &impl Prompt) {
+    let prompt = format!(
+        "Summarize a clear final answer based on:\n{}",
+        state.messages.join("\n")
+    );
+
+    match agent.prompt(&prompt).await {
+        Ok(report) => state.final_report = Some(report),
+        Err(e) => eprintln!("Final answer error: {e}"),
+    }
+}
+
+async fn run_agent_graph(goal: String) {
+    let client = ollama::Client::new(Nothing).expect("Failed to create Ollama client");
+    let agent = client
+        .agent(MODEL)
+        .preamble("You are a GPU expert.")
+        .build();
+
+    let mut state = AgentState {
+        goal,
+        ..Default::default()
+    };
+
+    for i in 0..10 {
+        println!("--- Iteration {} ---", i + 1);
+        reasoning_node(&mut state, &agent).await;
+
+        match state.next_action.as_str() {
+            "tools" => tool_node(&mut state).await,
+            "final_answer" => {
+                final_answer_node(&mut state, &agent).await;
+                break;
+            }
+            _ => break,
+        }
+    }
+
+    println!(
+        "\n=== FINAL REPORT ===\n{}",
+        state.final_report.unwrap_or_else(|| "No report generated.".to_string())
+    );
+}
+
+#[tokio::main]
+async fn main() {
+    run_agent_graph("Compare RTX 4090 and H100 for machine learning workloads".to_string()).await;
+}
+
+```
+
+This example demonstrates:
+- Clean integration with **Rig** for LLM/agent logic
+- A custom graph runner with explicit state management
+- Support for cycles (via the `while` loop + `next_action`)
+- Type safety and async execution
+
+In production, you can replace the custom runner with `graph-flow` or a similar library for more advanced features like checkpointing and visual graph definition.
+
+---
+
+## Key Features When Using Rig + Graphs
+
+- **Cycles** — Easy to implement with loops or graph libraries for repeated reasoning/tool use.
+- **Conditional Branching** — Controlled via state fields like `next_action`.
+- **State Persistence** — You can add manual serialization or integrate with a store (Redis, SQLite, etc.).
+- **Performance & Safety** — Rust gives you speed, memory safety, and compile-time guarantees.
+
+---
+
+## Advantages of Rig + Graph-Based Agents
+
+- Explicit and readable workflow
+- Full control and type safety
+- Excellent performance and concurrency (thanks to Tokio)
+- Easy debugging and testing of individual nodes
+- Scalable composition of complex behaviors
+
+This approach represents the shift from **prompt engineering** to **workflow engineering** in Rust.
+
+---
+
+## Looking Ahead
+
+Building agents with Rig and custom graphs (or `graph-flow`) gives you a powerful, high-performance foundation for production agent systems in Rust.
+
+In the next module we will explore **Tool Use & Protocols**, covering how to design robust tools, define schemas, handle errors gracefully, and work with emerging standards.
+
+→ Continue to **[4.1 — Why Tools Make Agents Powerful](/agentic-ai/tool-use-protocols/why-tools)**

@@ -1,0 +1,463 @@
+---
+title: AI Engineering in Practice — A Complete Guide
+layout: ../../layouts/TutorialPage.astro
+---
+
+This guide covers the engineering discipline of building, deploying, and operating AI systems in the real world. Where ml-essentials teaches you the mathematics and algorithms, and the agentic-ai series teaches you how to build autonomous agents, this series covers everything in between and underneath — the infrastructure, data systems, APIs, product patterns, and responsible practices that make AI work at scale.
+
+The target reader is someone who understands ML fundamentals and wants to build production AI systems — not just run notebooks, but ship things that work reliably, efficiently, and responsibly.
+
+The guide is organized into five parts, each covering a distinct engineering discipline.
+
+> **This is a living roadmap.** Articles are written and published one by one. Items listed without a link are planned and coming. Linked items are published and ready to read.
+
+---
+
+## Part 1 — Hardware & Compute
+
+---
+
+## Module 1 — GPUs and the Hardware of AI
+
+Understanding the machines that run modern AI.
+
+- Why CPUs Are Not Enough — The Parallelism Problem
+- GPU Architecture — SMs, Warps, Threads, and Memory Hierarchy
+- VRAM, Bandwidth, and Why They Bottleneck Training
+- Tensor Cores and Mixed Precision Hardware Support
+- GPU Interconnects — NVLink, NVSwitch, PCIe
+- TPUs — Architecture and Differences from GPUs
+- AI Accelerators — Groq, Trainium, Inferentia, Gaudi (overview)
+- Choosing Hardware — A100 vs H100 vs Consumer GPUs
+- Cloud GPU Pricing and Cost Modeling
+- On-Premise vs Cloud — When Each Makes Sense
+
+**Project: GPU Profiling Baseline**
+Profile a simple matrix multiplication and a transformer forward pass using PyTorch Profiler and NVIDIA Nsight. Measure memory bandwidth utilization, SM occupancy, and compute throughput. Identify the bottleneck — compute-bound or memory-bound. Compare performance across batch sizes and sequence lengths.
+
+---
+
+## Module 2 — CUDA Programming for AI
+
+Writing code that runs directly on the GPU.
+
+- The CUDA Programming Model — Kernels, Blocks, Threads
+- Memory Types — Global, Shared, Registers, Constant
+- Thread Synchronization and Race Conditions
+- Memory Coalescing — Why Access Patterns Matter
+- Occupancy and Latency Hiding
+- Writing Your First CUDA Kernel — Vector Addition
+- Tiled Matrix Multiplication in CUDA
+- Reduction Kernels — Sum, Max, Softmax
+- Profiling CUDA Kernels with Nsight
+- Triton — Writing GPU Kernels in Python
+- Writing a Custom Attention Kernel in Triton
+- When to Write Custom Kernels vs Use Libraries
+
+**Project: Custom Softmax Kernel in Triton**
+Implement a numerically stable softmax kernel in Triton. Benchmark it against PyTorch's built-in softmax at various sequence lengths. Then implement a fused attention kernel (QK softmax V in one pass) and measure the memory bandwidth savings vs the unfused version.
+
+---
+
+## Module 3 — Distributed Training Infrastructure
+
+Training models across many machines.
+
+- Why Single-GPU Training Hits a Wall
+- Data Parallelism — DDP in PyTorch, Gradient Synchronization
+- Model Parallelism — Tensor, Pipeline, Sequence
+- The 3D Parallelism Strategy
+- ZeRO — Stages 1, 2, 3 and How They Reduce Memory
+- Gradient Checkpointing — Trading Compute for Memory
+- Communication Primitives — AllReduce, AllGather, ReduceScatter
+- NCCL and Collective Communication
+- Fault Tolerance — Checkpointing, Elastic Training
+- Setting Up a Multi-Node Training Job
+- Profiling Distributed Training — Finding Communication Bottlenecks
+
+**Project: Multi-GPU Training with DDP and ZeRO**
+Train a small transformer model using PyTorch DDP across multiple GPUs. Add ZeRO Stage 2 via DeepSpeed or FSDP. Profile communication overhead vs compute time. Measure scaling efficiency (how close to linear speedup you get) and identify where time is lost.
+
+---
+
+## Part 2 — AI Data Systems
+
+---
+
+## Module 4 — Data Pipelines for AI
+
+Building the data infrastructure that feeds models.
+
+- The AI Data Stack — Raw Storage, Processing, Feature Store, Training Store
+- Data Formats for ML — Parquet, Arrow, TFRecord, WebDataset
+- Streaming vs Batch Data Pipelines
+- Data Versioning — DVC, Delta Lake, Iceberg
+- Data Validation and Schema Enforcement
+- Handling Imbalanced and Long-Tail Distributions
+- Data Deduplication at Scale
+- Dataset Curation for LLM Pre-training — Quality Filtering, Dedup, Mixing
+- The DataLoader Bottleneck — Prefetching, Workers, Pin Memory
+- Building a High-Throughput Training Data Pipeline
+
+**Project: High-Throughput DataLoader**
+Build a data pipeline that saturates GPU utilization during training — no idle GPU time waiting for data. Use WebDataset or a custom iterable dataset with async prefetching. Profile the pipeline and show that the GPU is compute-bound, not I/O-bound. Handle multi-worker loading, shuffling, and on-the-fly augmentation.
+
+---
+
+## Module 5 — Vector Databases and Embedding Infrastructure
+
+The data layer for semantic search and retrieval.
+
+- [How Vector Search Works — Embeddings, Distance, and the ANN Problem](/ai-engineering/vector-databases/how-vector-search-works)
+- [HNSW and IVF-PQ — The Algorithms Behind Vector Search](/ai-engineering/vector-databases/hnsw-and-ivf-pq)
+- [Vector Database Storage and Ingestion — Segments, WAL, and Compaction](/ai-engineering/vector-databases/vector-db-storage-and-ingestion)
+- [Scaling Vector Search — Distributed Architecture and Metadata Filtering](/ai-engineering/vector-databases/scaling-vector-search)
+- Embedding Model Selection — Tradeoffs in Dimension, Speed, Quality
+- Keeping Embeddings Fresh — Incremental Indexing and Re-embedding
+
+**Project: Semantic Search Engine from Scratch**
+Build a semantic search engine over a large document corpus. Implement HNSW indexing from scratch in Python to understand the algorithm. Then benchmark it against a production vector DB (Qdrant or pgvector). Add hybrid search by combining dense retrieval with BM25 sparse scores. Measure recall@K and query latency at different index sizes.
+
+---
+
+## Module 6 — RAG Systems — Architecture and Engineering
+
+Building retrieval-augmented generation systems that work in production.
+
+*Note: This module covers RAG as a data and infrastructure problem. Agentic RAG — where retrieval is orchestrated by an agent — is covered in the Agentic AI series.*
+
+- Why RAG Exists — The Context Window Problem
+- The RAG Pipeline — Ingestion, Chunking, Embedding, Retrieval, Generation
+- Chunking Strategies — Fixed, Semantic, Hierarchical, Late Chunking
+- Retrieval Quality — Precision, Recall, MRR, NDCG
+- Re-ranking — Cross-Encoders, Cohere Rerank, ColBERT
+- Query Transformation — HyDE, Step-Back, Query Expansion
+- Context Assembly and Prompt Construction
+- Evaluating RAG — RAGAS, TruLens, Custom Evals
+- RAG Failure Modes and How to Debug Them
+- Production RAG — Caching, Latency, Cost Optimization
+
+**Project: Production-Grade RAG Pipeline**
+Build a complete RAG system over a technical documentation corpus. Implement semantic chunking, dense retrieval with a vector DB, and cross-encoder re-ranking. Evaluate retrieval quality with NDCG and answer quality with an LLM judge. Add query caching and measure the latency and cost reduction. Profile each stage of the pipeline and identify the bottleneck.
+
+---
+
+## Module 7 — Feature Stores and ML Data Infrastructure
+
+Managing features for training and serving.
+
+- What a Feature Store Is and Why It Exists
+- Online vs Offline Feature Stores
+- Point-in-Time Correct Feature Retrieval — Avoiding Data Leakage
+- Feature Engineering at Scale — Spark, Dask, Polars
+- Streaming Features — Kafka, Flink, Real-Time Aggregations
+- Feature Versioning and Lineage
+- Open-Source Feature Stores — Feast, Hopsworks
+- Embedding Stores as a Special Case
+- The Training-Serving Skew Problem
+- When You Need a Feature Store vs When You Don't
+
+**Project: Point-in-Time Feature Pipeline**
+Build a feature pipeline with point-in-time correct joins using Polars or DuckDB. Demonstrate how naive joins cause data leakage and how temporal joins fix it. Serve features online via a Redis-backed store and show that training and serving features are identical. Measure the latency of online feature retrieval.
+
+---
+
+## Part 3 — LLMs as a Platform
+
+---
+
+## Module 8 — Working with LLM APIs
+
+Building products on top of language model APIs.
+
+- The LLM API Landscape — OpenAI, Anthropic, Google, Open Models
+- Prompt Anatomy — System, User, Assistant, Context
+- Prompt Engineering Fundamentals — Clarity, Constraints, Examples
+- Few-Shot Prompting — When and How It Helps
+- Chain-of-Thought and Structured Reasoning Prompts
+- Output Formatting — JSON Mode, Structured Outputs, Tool Calls
+- Handling API Errors — Retries, Fallbacks, Rate Limits
+- Cost Management — Token Counting, Caching, Model Selection
+- Latency Optimization — Streaming, Parallel Calls, Prompt Compression
+- LLM Routers — Routing by Cost, Latency, and Capability
+
+**Project: Reliable LLM API Client**
+Build a production-grade LLM API client with exponential backoff retries, fallback to a secondary model, streaming support, token counting, cost tracking, and a local cache for repeated prompts. Benchmark latency with and without streaming. Implement a simple router that selects between a cheap fast model and an expensive capable model based on query complexity.
+
+---
+
+## Module 9 — Prompt Engineering in Depth
+
+Systematic approaches to getting reliable outputs from language models.
+
+- Why Prompt Engineering Is an Engineering Discipline
+- The Anatomy of a Good System Prompt
+- Instruction Following — Precision and Ambiguity
+- Role Prompting and Persona Design
+- Few-Shot Example Selection — Quality, Diversity, Order Effects
+- Chain-of-Thought — Zero-Shot vs Few-Shot CoT
+- Self-Consistency and Majority Voting
+- ReAct Prompting for Tool Use
+- Prompt Compression — LLMLingua, Selective Context
+- Prompt Injection and Defense Strategies
+- Systematic Prompt Testing — A/B Testing Prompts, Regression Suites
+- Prompt Versioning and Management
+
+**Project: Prompt Optimization Pipeline**
+Build a systematic prompt evaluation framework. Define a task, write 5 prompt variants, and evaluate them on 100 test cases using an LLM judge. Implement automatic prompt optimization using DSPy or a custom feedback loop. Show measurable improvement in task accuracy from the initial prompt to the optimized version.
+
+---
+
+## Module 10 — Structured Generation and Tool Use
+
+Making LLMs produce reliable, parseable outputs.
+
+- Why Free-Form Text Output Breaks Pipelines
+- JSON Schema and Structured Output APIs
+- Constrained Decoding — Outlines, Guidance, LMQL
+- Grammar-Based Generation
+- Function Calling — Schema Design, Parallel Calls, Error Handling
+- Tool Use Patterns — Single Tool, Tool Chains, Tool Selection
+- Validation and Retry Loops
+- Pydantic for LLM Output Validation
+- Building Reliable Extraction Pipelines
+- Testing Structured Generation — Edge Cases and Failure Modes
+
+**Project: Structured Extraction Pipeline**
+Build a document extraction pipeline that takes unstructured text (contracts, papers, reports) and extracts structured data into a typed schema. Use constrained decoding for guaranteed valid JSON. Add a validation layer with Pydantic and an automatic retry loop for failed extractions. Measure extraction accuracy and failure rate across document types.
+
+---
+
+## Module 11 — Evaluation in Production
+
+Measuring whether your AI system actually works.
+
+*Note: This module covers system-level evaluation. Model-level evaluation (benchmarks, interpretability) is covered in ml-essentials Module 21. Agent-specific evaluation is covered in the Agentic AI series Module 9.*
+
+- The Evaluation Problem — Why It's Hard in Production
+- Offline vs Online Evaluation
+- Building a Golden Dataset
+- LLM-as-a-Judge — Design, Calibration, Bias
+- Pairwise Evaluation vs Absolute Scoring
+- Evaluation Dimensions — Correctness, Faithfulness, Relevance, Safety
+- Regression Testing for AI Systems
+- Shadow Mode Evaluation
+- Human Evaluation — When and How
+- Continuous Evaluation Pipelines
+- Evaluation-Driven Development
+
+**Project: Evaluation Framework for an LLM Application**
+Build a complete evaluation framework for a question-answering system. Create a golden dataset of 200 question-answer pairs. Implement LLM-as-a-judge scoring with calibration against human labels. Build a regression test suite that runs on every prompt change. Add a dashboard showing evaluation metrics over time and alert on regressions.
+
+---
+
+## Part 4 — MLOps and Production Systems
+
+---
+
+## Module 12 — MLOps — Training Pipelines and Experiment Management
+
+Operationalizing the model development lifecycle.
+
+- What MLOps Is and Why It Exists
+- Experiment Tracking — MLflow, Weights & Biases, Neptune
+- Reproducibility — Seeds, Environments, Data Versioning
+- Training Pipeline Orchestration — Airflow, Prefect, Metaflow
+- Hyperparameter Optimization at Scale — Optuna, Ray Tune
+- Model Registry — Versioning, Staging, Promotion
+- Continuous Training — When to Retrain and How
+- Training Job Management on Kubernetes
+- Cost Optimization for Training — Spot Instances, Checkpointing
+- The ML Platform — Building vs Buying
+
+**Project: Reproducible Training Pipeline**
+Build a fully reproducible training pipeline: fixed seeds, pinned dependencies, versioned datasets, experiment tracking with W&B, and automatic hyperparameter search with Optuna. Run the same experiment twice and verify identical results. Add a model registry that promotes the best checkpoint to staging after each run.
+
+---
+
+## Module 13 — Model Serving and Inference Infrastructure
+
+Deploying models so they can serve real traffic.
+
+*Note: LLM-specific inference optimizations (KV cache, speculative decoding, quantization) are covered in ml-essentials Module 14. This module covers the serving infrastructure layer.*
+
+- Serving Patterns — Online, Batch, Streaming
+- REST vs gRPC for Model Serving
+- Dynamic Batching — How It Works and Why It Matters
+- Model Serving Frameworks — TorchServe, Triton Inference Server, BentoML
+- LLM Serving — vLLM, TGI, Ollama
+- Autoscaling — Metrics, Policies, Cold Start
+- GPU Sharing — MIG, Time-Slicing
+- Canary Deployments and Blue-Green for Models
+- SLOs for AI Systems — Latency, Throughput, Availability
+- Cost per Token — Modeling and Optimization
+
+**Project: Production LLM Serving Stack**
+Deploy a quantized open-source LLM using vLLM behind a FastAPI gateway. Add dynamic batching, request queuing, and autoscaling based on queue depth. Implement a canary deployment that routes 10% of traffic to a new model version. Load test with Locust and measure P50/P95/P99 latency and tokens-per-second throughput.
+
+---
+
+## Module 14 — Monitoring and Observability for AI Systems
+
+Knowing when your AI system is broken.
+
+- Why AI Systems Fail Silently
+- The Three Pillars — Metrics, Logs, Traces
+- What to Monitor — Latency, Throughput, Error Rate, Cost
+- Data Drift Detection — Statistical Tests, Distribution Shift
+- Concept Drift — When the World Changes
+- Output Quality Monitoring — LLM Judge in Production
+- Anomaly Detection for AI Pipelines
+- Tracing LLM Calls — LangSmith, Arize, Helicone
+- Alerting — What to Alert On, Avoiding Alert Fatigue
+- Incident Response for AI Systems
+- Building an AI Observability Dashboard
+
+**Project: AI System Observability Stack**
+Instrument an LLM application with full observability: trace every request end-to-end with OpenTelemetry, log inputs/outputs with sampling, track token cost per request, detect input distribution drift with a statistical test, and monitor output quality with an LLM judge. Build a Grafana dashboard showing all key metrics. Simulate a degradation event and show the alert firing.
+
+---
+
+## Module 15 — Model Optimization for Deployment
+
+Making models smaller, faster, and cheaper to run.
+
+*Note: The mathematical foundations of quantization are covered in ml-essentials Module 14. This module covers the engineering practice.*
+
+- The Optimization Tradeoff — Accuracy vs Speed vs Size
+- Post-Training Quantization — INT8, INT4, GPTQ, AWQ, GGUF
+- Quantization-Aware Training
+- Pruning — Unstructured, Structured, Magnitude-Based
+- Knowledge Distillation — Teacher-Student Training
+- Model Compilation — torch.compile, TensorRT, ONNX Export
+- Speculative Decoding in Practice
+- Edge Deployment — ONNX Runtime, CoreML, TFLite
+- Benchmarking Optimized Models — Accuracy, Latency, Memory
+- Choosing the Right Optimization for Your Constraint
+
+**Project: Optimize a Model for Edge Deployment**
+Take a mid-size transformer model and optimize it for CPU inference. Apply INT8 post-training quantization, structured pruning, and knowledge distillation sequentially. Export to ONNX and benchmark with ONNX Runtime. Measure accuracy degradation at each step. Target a 4x speedup with less than 2% accuracy drop.
+
+---
+
+## Part 5 — AI Safety, Ethics, and Responsible Deployment
+
+---
+
+## Module 16 — AI Safety Fundamentals
+
+The technical foundations of building safe AI systems.
+
+*Note: Agent-specific safety (prompt injection, sandboxing, tool permissions) is covered in the Agentic AI series Module 8. This module covers broader AI safety.*
+
+- What AI Safety Means — Alignment, Robustness, Reliability
+- Specification Gaming and Reward Hacking
+- Distributional Shift and Out-of-Distribution Failure
+- Adversarial Examples — Attacks and Defenses
+- Robustness Testing — Stress Testing, Fuzzing, Red-Teaming
+- Jailbreaking and Prompt Injection at Scale
+- Output Filtering — Classifiers, Rule-Based, LLM-Based
+- Constitutional AI and Self-Critique
+- Alignment Techniques — RLHF, DPO, RLAIF
+- The Alignment Tax — Safety vs Capability Tradeoffs
+- Catastrophic Forgetting and Alignment Stability
+
+**Project: Red-Teaming an LLM Application**
+Systematically red-team an LLM-powered application. Build an automated red-teaming pipeline that generates adversarial prompts across categories (jailbreaks, prompt injection, harmful content, PII extraction). Measure the attack success rate. Implement defenses — input filtering, output classifiers, system prompt hardening — and measure how much each reduces the attack surface.
+
+---
+
+## Module 17 — Bias, Fairness, and Representation
+
+Building AI systems that work equitably.
+
+- What Bias Means in ML — Sources and Types
+- Measurement Bias, Historical Bias, Representation Bias
+- Fairness Definitions — Demographic Parity, Equalized Odds, Calibration
+- Why Fairness Definitions Conflict — The Impossibility Theorems
+- Bias in Embeddings and Language Models
+- Bias in Computer Vision Systems
+- Auditing Models for Bias — Disaggregated Evaluation
+- Debiasing Techniques — Data, Model, Post-Processing
+- Fairness in Ranking and Recommendation
+- Intersectionality and Subgroup Analysis
+- Communicating Bias Findings to Stakeholders
+
+**Project: Bias Audit of a Classification System**
+Audit a text classification model for demographic bias. Compute performance metrics disaggregated by gender, race, and age proxies. Apply counterfactual data augmentation to reduce bias. Measure the fairness-accuracy tradeoff. Write a model card documenting the findings, limitations, and recommended use cases.
+
+---
+
+## Module 18 — Privacy and Data Governance
+
+Handling data responsibly in AI systems.
+
+- Privacy Risks in ML — Memorization, Extraction, Inference Attacks
+- Membership Inference Attacks
+- Training Data Extraction from LLMs
+- Differential Privacy — Formal Definition and Guarantees
+- DP-SGD — Training with Differential Privacy
+- Federated Learning — Training Without Centralizing Data
+- PII Detection and Redaction in Training Data
+- Data Minimization and Purpose Limitation
+- GDPR and AI — Right to Explanation, Right to Erasure
+- Data Governance Frameworks for AI Teams
+- Synthetic Data as a Privacy-Preserving Alternative
+
+**Project: PII Scrubbing Pipeline**
+Build a PII detection and redaction pipeline for a text dataset. Use a combination of regex rules, NER models, and an LLM-based classifier to detect names, emails, phone numbers, addresses, and other sensitive entities. Measure precision and recall of detection. Apply redaction and verify that a membership inference attack on the cleaned dataset has reduced success rate.
+
+---
+
+## Module 19 — AI Governance, Compliance, and Responsible Deployment
+
+Operating AI systems within legal and ethical constraints.
+
+- The AI Regulatory Landscape — EU AI Act, US Executive Orders, Sector Regulations
+- Risk Classification — High-Risk vs Low-Risk AI Systems
+- Model Cards and Datasheets — What They Are and How to Write Them
+- AI Incident Reporting and Post-Mortems
+- Explainability Requirements — When and Why
+- Human Oversight Requirements
+- Procurement and Third-Party AI Risk
+- Building an AI Review Process
+- Responsible Disclosure for AI Vulnerabilities
+- AI Ethics Committees and Governance Structures
+- Operationalizing Responsible AI — Checklists, Reviews, Red Lines
+
+**Project: AI System Documentation Package**
+Produce a complete responsible AI documentation package for a deployed model: a model card covering intended use, limitations, and bias evaluation; a datasheet for the training data; a risk assessment against the EU AI Act risk tiers; an incident response runbook; and a monitoring plan. This is the documentation a real AI team would produce before shipping a high-stakes system.
+
+---
+
+## Capstone Projects
+
+Three projects that integrate across the full engineering stack.
+
+**Capstone 1: Build and Deploy a Production RAG System**
+Build a complete RAG system from scratch: document ingestion pipeline, semantic chunking, embedding generation, vector DB indexing with hybrid search, re-ranking, LLM generation with structured output, evaluation framework with LLM judge, serving behind a FastAPI endpoint with dynamic batching, and a monitoring dashboard. Every component built and understood, not just wired together.
+
+**Capstone 2: Fine-Tune and Serve an Open-Source LLM**
+Fine-tune a 7B open-source model on a domain-specific task using QLoRA on a single GPU. Evaluate with a custom benchmark. Quantize to INT4 with GPTQ. Deploy with vLLM, add autoscaling, and instrument with full observability. Run a red-team evaluation and document findings in a model card. Measure cost-per-query and optimize to a target budget.
+
+**Capstone 3: AI System Audit**
+Take an existing AI system (a classifier, a RAG pipeline, or an LLM application) and perform a complete audit: bias evaluation across demographic subgroups, privacy risk assessment including a membership inference attack, red-team safety evaluation, performance profiling and optimization, and a full governance documentation package. The output is a written audit report with findings and recommendations.
+
+---
+
+## What You Will Be Able to Do
+
+By the end of this guide you will be able to:
+
+- Write CUDA kernels and profile GPU utilization
+- Build high-throughput data pipelines that saturate GPU compute
+- Design and operate vector search infrastructure at scale
+- Build production RAG systems with proper evaluation
+- Deploy and serve LLMs with autoscaling and observability
+- Optimize models for cost and latency without sacrificing accuracy
+- Red-team AI systems and implement defenses
+- Audit models for bias and document findings
+- Navigate AI governance and compliance requirements
+- Ship AI systems that are fast, reliable, and responsible
+
+This is a living document. Articles are added one by one, each written with production engineering in mind.

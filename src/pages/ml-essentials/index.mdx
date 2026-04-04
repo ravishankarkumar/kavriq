@@ -1,0 +1,532 @@
+---
+title: Mathematics & Machine Learning — A Complete Guide
+layout: ../../layouts/TutorialPage.astro
+---
+
+This guide is designed to be the single best resource for learning the mathematics and machine learning that powers modern AI — built from first principles, explained with depth, and written for people who want to truly understand what is happening under the hood.
+
+No hand-waving. No black boxes. Every algorithm derived. Every formula explained.
+
+The guide is split into two parts. Part 1 covers all the mathematics you need. Part 2 covers machine learning itself, building directly on that math.
+
+> **This is a living roadmap.** Articles are written and published one by one. Items listed without a link are planned and coming. Linked items are published and ready to read.
+
+---
+
+## Part 1 — Mathematics for Machine Learning
+
+---
+
+## Module 1 — Linear Algebra
+
+The language of data, transformations, and neural networks.
+
+- Vectors and Vector Spaces
+- Matrices and Matrix Operations
+- Matrix Multiplication — Geometry and Intuition
+- Dot Products, Norms, and Distance
+- Linear Transformations and Change of Basis
+- Orthogonality and Projections
+- Gram-Schmidt Orthogonalization
+- Systems of Linear Equations
+- Gaussian Elimination and Row Reduction
+- Matrix Rank, Null Space, and Column Space
+- Determinants
+- Eigenvalues and Eigenvectors
+- Eigendecomposition
+- Singular Value Decomposition (SVD) — Full Derivation
+- Principal Component Analysis (PCA) — from SVD
+- The Moore-Penrose Pseudoinverse
+- Positive Definite Matrices and the Cholesky Decomposition
+- The Trace and Its Properties
+- Matrix Calculus — Gradients, Jacobians, and Hessians of Matrix Expressions
+
+**Project: Image Compression with SVD**
+Implement SVD from scratch in NumPy and use it to compress grayscale images at varying rank approximations. Visualize how much information is retained at each rank and plot the singular value decay curve. No libraries beyond NumPy and Matplotlib.
+
+---
+
+## Module 2 — Calculus & Optimization
+
+How models learn — the mathematics of change and minimization.
+
+- Functions, Limits, and Continuity
+- Derivatives — Definition and Rules
+- The Chain Rule
+- Partial Derivatives and the Gradient
+- Directional Derivatives
+- The Jacobian Matrix
+- The Hessian Matrix
+- Vector Calculus — Gradient Fields, Divergence, Curl
+- The Implicit Function Theorem
+- Taylor Series and Local Approximations
+- Convexity — Convex Functions and Sets
+- Unconstrained Optimization — First and Second Order Conditions
+- Gradient Descent — Derivation and Geometry
+- Stochastic Gradient Descent — Convergence and Noise
+- Momentum, RMSProp, Adam — Full Derivations
+- Learning Rate Schedules — Warmup, Cosine, Linear Decay
+- Constrained Optimization and Lagrange Multipliers
+- The KKT Conditions
+- Automatic Differentiation — Forward Mode and Reverse Mode
+
+**Project: Optimizer Visualizer**
+Implement gradient descent, SGD with momentum, RMSProp, and Adam from scratch. Visualize their trajectories on classic 2D loss surfaces — Rosenbrock, saddle points, and a narrow valley. Animate convergence and compare how each optimizer behaves. Pure NumPy and Matplotlib.
+
+---
+
+## Module 3 — Probability & Statistics
+
+Uncertainty, inference, and the probabilistic view of learning.
+
+- Sample Spaces, Events, and Probability Axioms
+- Conditional Probability and Independence
+- Bayes' Theorem
+- Random Variables — Discrete and Continuous
+- Probability Mass Functions and Probability Density Functions
+- Cumulative Distribution Functions
+- Expectation, Variance, Covariance, and Correlation
+- Common Distributions — Bernoulli, Binomial, Gaussian, Poisson, Exponential, Beta, Dirichlet
+- The Exponential Family — Unified View of Distributions
+- Conjugate Priors
+- The Multivariate Gaussian — Geometry and Properties
+- Joint, Marginal, and Conditional Distributions
+- The Law of Large Numbers
+- The Central Limit Theorem
+- Maximum Likelihood Estimation (MLE)
+- Maximum A Posteriori Estimation (MAP)
+- Bayesian Inference — Full Posterior, Predictive Distribution
+- Variational Inference — ELBO and Mean Field
+- Monte Carlo Methods and Sampling — MCMC, Importance Sampling
+- Hypothesis Testing — p-values, Confidence Intervals, Power
+
+**Project: Bayesian Coin Flip Inference**
+Build a full Bayesian inference engine for estimating the bias of a coin. Start with a Beta prior, update it with observed flips, and visualize how the posterior sharpens with more data. Extend it to compare MLE vs MAP vs full posterior estimates. Implement your own Metropolis-Hastings sampler and verify it matches the analytical posterior.
+
+---
+
+## Module 4 — Information Theory
+
+The mathematics behind compression, uncertainty, and learning objectives.
+
+- Self-Information and Entropy
+- Joint and Conditional Entropy
+- Mutual Information
+- KL Divergence — Derivation, Asymmetry, and Meaning
+- Cross-Entropy as a Loss Function — Why It Works
+- The Data Processing Inequality
+- Fisher Information and the Cramér-Rao Bound
+- Minimum Description Length
+- Rate-Distortion Theory (overview)
+
+**Project: Entropy and Compression Explorer**
+Compute entropy, mutual information, and KL divergence for real text corpora. Build a minimal Huffman encoder and measure how close it gets to the theoretical entropy limit. Visualize KL divergence between distributions as one shifts relative to another. Show empirically why cross-entropy loss is equivalent to minimizing KL divergence from the data distribution.
+
+---
+
+## Module 5 — Matrix Calculus for Deep Learning
+
+The specific tools needed to derive backpropagation and understand modern architectures.
+
+- Scalar, Vector, and Matrix Derivatives — Notation and Layout Conventions
+- Gradient of a Loss with Respect to a Weight Matrix
+- Derivatives of Common Operations — Softmax, LayerNorm, Attention
+- The Chain Rule in Matrix Form
+- Computing Gradients Through Matrix Multiplications
+- Deriving Backpropagation from Scratch Using Matrix Calculus
+- Second-Order Methods and the Gauss-Newton Approximation
+
+**Project: Verify Your Gradients**
+Implement analytical gradients for softmax, cross-entropy, layer norm, and a two-layer MLP using matrix calculus. Verify every gradient against numerical finite-difference approximations. This is the exact process used when implementing new operations in deep learning frameworks.
+
+---
+
+## Module 6 — Numerical Methods
+
+Making the math work on a computer.
+
+- Floating Point Arithmetic and Numerical Stability
+- Condition Numbers and Ill-Conditioning
+- Numerical Differentiation — Finite Differences
+- Numerical Integration — Quadrature Methods
+- Solving Linear Systems Numerically — LU, Cholesky, QR
+- Iterative Solvers — Conjugate Gradient, GMRES
+- Numerical Optimization — Line Search, Trust Region
+- Stability in Deep Learning — Log-Sum-Exp, Safe Softmax
+
+**Project: Numerically Stable Softmax and Log-Sum-Exp**
+Demonstrate catastrophic cancellation and overflow in a naive softmax. Implement the numerically stable version. Benchmark both on extreme inputs. Then implement a stable log-sum-exp and use it to build a stable cross-entropy loss. Show the difference in precision on ill-conditioned inputs.
+
+---
+
+## Part 2 — Machine Learning
+
+---
+
+## Module 7 — Foundations of Learning
+
+What it means for a machine to learn.
+
+- The Learning Problem — Inputs, Outputs, Hypotheses, Loss
+- Supervised, Unsupervised, Self-Supervised, and Reinforcement Learning
+- The Bias-Variance Tradeoff — Derivation
+- Overfitting and Underfitting
+- Training, Validation, and Test Sets
+- Cross-Validation
+- Regularization — L1, L2, Elastic Net — Bayesian Interpretation
+- The No Free Lunch Theorem
+- PAC Learning and Sample Complexity
+- VC Dimension and Generalization Bounds
+- Double Descent and Modern Generalization Theory
+
+**Project: Bias-Variance Decomposition in Practice**
+Empirically decompose bias and variance for polynomial regression at varying degrees. Generate multiple datasets from the same distribution, train models on each, and measure bias and variance separately. Plot the double descent curve by increasing model capacity beyond interpolation. Reproduce the key figures from the double descent paper on a small dataset.
+
+---
+
+## Module 8 — Classical Machine Learning
+
+The algorithms that still matter — derived from scratch.
+
+- Linear Regression — Closed Form, Gradient Descent, Probabilistic View
+- Ridge and Lasso Regression
+- Logistic Regression — Derivation from MLE
+- Softmax Regression (Multiclass Logistic)
+- Naive Bayes — Generative vs Discriminative
+- k-Nearest Neighbors — Theory and Complexity
+- Decision Trees — ID3, CART, Information Gain
+- Random Forests — Bagging and Feature Randomness
+- Gradient Boosting — Derivation from Functional Gradient Descent
+- XGBoost and LightGBM — What Makes Them Fast
+- Support Vector Machines — Hard Margin, Soft Margin, Full Derivation
+- The Kernel Trick — Mercer's Theorem
+- k-Means Clustering — Lloyd's Algorithm and Convergence
+- Gaussian Mixture Models and the EM Algorithm — Full Derivation
+- Hierarchical Clustering
+- DBSCAN
+- Dimensionality Reduction — PCA, LDA, t-SNE, UMAP
+
+**Project: ML Algorithm Library from Scratch**
+Implement the following from scratch in NumPy — no scikit-learn: linear regression (closed form + gradient descent), logistic regression, decision tree (CART), k-means, and a Gaussian mixture model with EM. Validate each against scikit-learn on standard datasets. Then build a gradient boosting classifier from scratch and benchmark it against XGBoost on a tabular dataset.
+
+---
+
+## Module 9 — Neural Networks from Scratch
+
+Building the foundation of deep learning by hand.
+
+- The Perceptron and Its Limits
+- Multi-Layer Perceptrons (MLP)
+- Activation Functions — Sigmoid, Tanh, ReLU, Leaky ReLU, GELU, SiLU, Swish
+- Forward Pass
+- Loss Functions — MSE, Cross-Entropy, Hinge, Focal Loss
+- Backpropagation — Full Derivation Using Computational Graphs
+- Weight Initialization — Xavier, He, Why It Matters
+- Batch Normalization — Derivation, Training vs Inference
+- Layer Normalization
+- Dropout — Training and Inference Behavior
+- Residual Connections — Why They Solve Vanishing Gradients
+- Implementing a Neural Network in NumPy — No Frameworks
+
+**Project: Neural Network Framework in NumPy**
+Build a mini deep learning framework from scratch — layers, activations, loss functions, backpropagation, and optimizers — all in NumPy. It should support arbitrary layer stacking via a clean API. Train it on MNIST and reach >97% accuracy. Then add batch norm and dropout and show their effect on training stability and generalization.
+
+---
+
+## Module 10 — Optimization in Deep Learning
+
+Making training fast, stable, and scalable.
+
+- Loss Landscapes — Saddle Points, Local Minima, Flat Regions
+- SGD with Momentum — Derivation
+- Adam — Full Derivation and Why It Works
+- AdamW — Weight Decay vs L2 Regularization
+- Gradient Clipping
+- Mixed Precision Training — FP16, BF16, FP8
+- Gradient Accumulation
+- Distributed Training — Data Parallelism, Model Parallelism, Pipeline Parallelism, Tensor Parallelism
+- ZeRO Optimizer — Stages 1, 2, 3
+- Sharpness-Aware Minimization (SAM)
+- Second-Order Optimization — L-BFGS, K-FAC (overview)
+
+**Project: Train a Small Model with Mixed Precision and Gradient Accumulation**
+Train a small transformer on a character-level language modeling task using PyTorch. Implement the training loop manually — no Trainer abstractions. Add mixed precision (BF16), gradient accumulation, and gradient clipping by hand. Profile memory and throughput with and without each technique. Log loss curves and compare convergence of SGD, Adam, and AdamW.
+
+---
+
+## Module 11 — Convolutional Neural Networks
+
+Learning from spatial structure.
+
+- The Convolution Operation — Mathematical Definition
+- Filters, Stride, Padding, and Dilation
+- Pooling Layers
+- Receptive Fields
+- Classic Architectures — LeNet, AlexNet, VGG, ResNet, DenseNet
+- Depthwise Separable Convolutions — MobileNet
+- Transfer Learning and Fine-Tuning
+- Object Detection — YOLO, Faster R-CNN, DETR
+- Semantic Segmentation — FCN, U-Net
+- Instance Segmentation — Mask R-CNN
+
+**Project: ResNet from Scratch + Transfer Learning**
+Implement ResNet-18 from scratch in PyTorch — every block, skip connection, and downsampling layer. Train it on CIFAR-10 from random initialization. Then fine-tune a pretrained ResNet-50 on a small custom image dataset and compare convergence speed and final accuracy. Visualize learned filters in the first layer and class activation maps (CAM) for predictions.
+
+---
+
+## Module 12 — Sequence Models
+
+Learning from ordered data.
+
+- The Problem with Feedforward Networks for Sequences
+- Recurrent Neural Networks (RNN) — Derivation
+- Backpropagation Through Time (BPTT)
+- Vanishing and Exploding Gradients in RNNs
+- LSTMs — Cell State, Gates, Full Derivation
+- GRUs — Simplified Gating
+- Bidirectional RNNs
+- Sequence-to-Sequence Models
+- The Attention Mechanism — Original Bahdanau Formulation
+- Beam Search and Decoding Strategies
+
+**Project: Sequence-to-Sequence with Attention**
+Build a seq2seq model with Bahdanau attention in PyTorch for a simple translation or date-format conversion task. Implement beam search decoding. Visualize the attention weights as a heatmap over input tokens for each output step. Compare greedy decoding vs beam search on output quality.
+
+---
+
+## Module 13 — Transformers
+
+The architecture that changed everything.
+
+- Self-Attention — Derivation from Scratch
+- Scaled Dot-Product Attention — Why the Scaling Factor
+- Multi-Head Attention
+- Positional Encoding — Sinusoidal and Learned
+- The Transformer Block — Layer Norm, FFN, Residuals
+- Encoder-Only Models — BERT and Masked Language Modeling
+- Decoder-Only Models — GPT and Causal Language Modeling
+- Encoder-Decoder Models — T5 and Span Corruption
+- Tokenization — BPE, WordPiece, SentencePiece
+- Rotary Positional Embeddings (RoPE) — Full Derivation
+- ALiBi and Other Positional Schemes
+- Grouped Query Attention (GQA) and Multi-Query Attention (MQA)
+- Flash Attention — IO-Aware Exact Attention
+- Mixture of Experts (MoE) — Architecture and Routing
+- Scaling Laws — Chinchilla and Compute-Optimal Training
+
+**Project: GPT from Scratch**
+Implement a GPT-style decoder-only transformer from scratch in PyTorch — tokenizer (BPE), embedding, multi-head causal self-attention with RoPE, transformer blocks, and a language modeling head. Train it on a small text corpus (Shakespeare or similar). Generate text with temperature and top-p sampling. Then swap sinusoidal PE for RoPE and measure the difference in perplexity.
+
+---
+
+## Module 14 — LLM Internals & Efficient Inference
+
+What happens inside a large language model at runtime.
+
+- The KV Cache — Derivation and Memory Analysis
+- Speculative Decoding
+- Quantization — INT8, INT4, GPTQ, AWQ
+- Continuous Batching
+- PagedAttention and vLLM
+- Tensor Parallelism for Inference
+- Sampling Strategies — Temperature, Top-k, Top-p, Min-p
+- Structured Generation and Constrained Decoding
+- Prompt Caching
+
+**Project: KV Cache and Quantization from Scratch**
+Take the GPT model from Module 13. Add a KV cache and measure the speedup in tokens-per-second for long generations. Then implement post-training INT8 quantization (absmax and zero-point) on the weight matrices and measure the accuracy-vs-speed tradeoff. Profile memory usage before and after quantization. Implement top-p and min-p sampling and compare output diversity.
+
+---
+
+## Module 15 — Fine-Tuning & Parameter-Efficient Methods
+
+Adapting large models without retraining from scratch.
+
+- Full Fine-Tuning — When and How
+- Instruction Tuning and Chat Fine-Tuning
+- LoRA — Low-Rank Adaptation, Full Derivation
+- QLoRA — Quantized LoRA
+- Adapters and Prefix Tuning
+- Prompt Tuning and P-Tuning
+- RLHF — Reward Modeling, PPO in LLM Training
+- DPO — Direct Preference Optimization, Derivation
+- GRPO — Group Relative Policy Optimization
+- Constitutional AI and Self-Critique
+
+**Project: LoRA Fine-Tuning from Scratch**
+Implement LoRA weight decomposition from scratch — inject low-rank adapter matrices into a pretrained model's attention layers without modifying the original weights. Fine-tune a small pretrained model on a classification or instruction-following task. Compare trainable parameter count, memory usage, and final accuracy vs full fine-tuning. Then implement DPO training on a small preference dataset.
+
+---
+
+## Module 16 — Self-Supervised & Contrastive Learning
+
+Learning representations without labels.
+
+- The Self-Supervised Learning Paradigm
+- Contrastive Loss — InfoNCE Derivation
+- SimCLR — Data Augmentation and Projection Heads
+- MoCo — Momentum Contrast
+- BYOL — Bootstrap Without Negatives
+- DINO and DINOv2 — Self-Distillation
+- CLIP — Contrastive Language-Image Pretraining
+- Masked Autoencoders (MAE)
+- Self-Supervised Learning for Text — Word2Vec, GloVe, FastText
+
+**Project: SimCLR from Scratch**
+Implement SimCLR in PyTorch — data augmentation pipeline, encoder, projection head, and NT-Xent (InfoNCE) loss. Train on CIFAR-10 without any labels. Evaluate the learned representations by training a linear probe on top and compare accuracy to a fully supervised baseline. Visualize the embedding space with t-SNE before and after contrastive training.
+
+---
+
+## Module 17 — Generative Models
+
+Learning to generate data.
+
+- Autoencoders — Undercomplete and Overcomplete
+- Variational Autoencoders (VAE) — ELBO Derivation
+- Generative Adversarial Networks (GAN) — Minimax Objective and Training Dynamics
+- Conditional GANs and StyleGAN
+- Normalizing Flows — Change of Variables Formula
+- Energy-Based Models
+- Diffusion Models — Forward Process, Reverse Process, DDPM Full Derivation
+- Score Matching and Score-Based Generative Models
+- DDIM — Deterministic Sampling
+- Classifier-Free Guidance
+- Latent Diffusion Models — Stable Diffusion Architecture
+- Flow Matching
+
+**Project: DDPM from Scratch**
+Implement a Denoising Diffusion Probabilistic Model from scratch in PyTorch. Build the forward noising process, the U-Net denoising network, the DDPM training objective, and the reverse sampling loop. Train on MNIST or CIFAR-10. Then implement DDIM sampling and compare sample quality and speed at different numbers of denoising steps. Visualize the denoising trajectory.
+
+---
+
+## Module 18 — Graph Neural Networks
+
+Learning from relational and structured data.
+
+- Graphs as Data — Nodes, Edges, Adjacency
+- The Message Passing Framework
+- Graph Convolutional Networks (GCN) — Derivation
+- GraphSAGE — Inductive Learning
+- Graph Attention Networks (GAT)
+- Graph Isomorphism Networks (GIN) — Expressiveness
+- Spectral Graph Theory and Graph Laplacian
+- Applications — Molecules, Knowledge Graphs, Social Networks, Recommendation
+- Transformers as Fully Connected Graphs
+
+**Project: Molecular Property Prediction with GNN**
+Implement a message-passing GNN from scratch in PyTorch — no PyTorch Geometric. Represent molecules as graphs (atoms as nodes, bonds as edges). Train on a molecular property prediction task from the MoleculeNet benchmark. Compare GCN, GAT, and GIN architectures. Visualize learned atom embeddings and attention weights on molecular graphs.
+
+---
+
+## Module 19 — Multimodal Models
+
+Learning across vision, language, and audio.
+
+- Vision Encoders — ViT, CLIP Vision Tower
+- Language-Vision Alignment
+- CLIP — Architecture and Training
+- Flamingo and LLaVA — Visual Instruction Tuning
+- Image Generation with Language — Stable Diffusion, DALL-E
+- Audio Representations — Spectrograms, Mel Features
+- Speech Models — Whisper, wav2vec 2.0
+- Video Understanding — Temporal Modeling
+- Unified Multimodal Architectures
+
+**Project: Minimal CLIP from Scratch**
+Implement a small CLIP-style model — a vision encoder (ViT) and a text encoder (small transformer) trained with contrastive loss on image-caption pairs. Train on the MS-COCO captions dataset. Evaluate zero-shot image classification by comparing image embeddings to text class embeddings. Implement image-to-text and text-to-image retrieval and measure Recall@K.
+
+---
+
+## Module 20 — Reinforcement Learning
+
+Learning from interaction and reward.
+
+- The RL Framework — Agent, Environment, Reward, Policy, Value
+- Multi-Armed Bandits — Exploration vs Exploitation
+- Upper Confidence Bound (UCB) and Thompson Sampling
+- Markov Decision Processes (MDP)
+- Bellman Equations — Derivation
+- Dynamic Programming — Value Iteration, Policy Iteration
+- Monte Carlo Methods
+- Temporal Difference Learning — TD(0), TD(λ)
+- Q-Learning — Derivation and Convergence
+- Deep Q-Networks (DQN) — Experience Replay, Target Networks
+- Policy Gradient Methods — REINFORCE Derivation
+- Actor-Critic Methods — A2C, A3C
+- Proximal Policy Optimization (PPO) — Full Derivation
+- Model-Based RL — World Models, Dyna
+- AlphaGo and AlphaZero — MCTS + RL
+- RLHF — Reward Modeling and PPO for LLMs
+- GRPO — Group Relative Policy Optimization
+
+**Project: DQN and PPO from Scratch**
+Implement DQN from scratch — replay buffer, target network, epsilon-greedy exploration — and train it on CartPole and LunarLander. Then implement PPO from scratch — actor-critic network, GAE advantage estimation, clipped surrogate objective — and compare sample efficiency and stability against DQN. Finally, implement a minimal RLHF loop: train a reward model on preference pairs, then fine-tune a small language model with PPO using that reward signal.
+
+---
+
+## Module 21 — Evaluation, Experimentation & Interpretability
+
+Measuring what models actually do.
+
+- Evaluation Metrics — Accuracy, Precision, Recall, F1, AUC-ROC, MCC
+- Calibration — Reliability Diagrams, Platt Scaling
+- Statistical Significance and A/B Testing
+- Benchmarking LLMs — MMLU, HumanEval, BIG-Bench
+- Experiment Tracking and Reproducibility
+- Model Interpretability — SHAP, LIME
+- Attention Visualization and Probing Classifiers
+- Mechanistic Interpretability — Circuits, Superposition, Features
+- Evaluating Generative Models — FID, CLIP Score, Human Eval
+
+**Project: Interpretability Suite for a Trained Model**
+Take a trained classifier and build a full interpretability analysis: SHAP values, LIME explanations, attention rollout visualization, and probing classifiers on intermediate representations. Measure calibration with a reliability diagram and apply temperature scaling. Run a mechanistic interpretability experiment — identify which attention heads in a small transformer are responsible for a specific capability (e.g. induction heads).
+
+---
+
+## Module 22 — Production ML Engineering
+
+Taking models from research to real systems.
+
+- Data Pipelines and Feature Engineering
+- Handling Imbalanced Data
+- Hyperparameter Tuning — Grid Search, Random Search, Bayesian Optimization
+- Model Serving — REST, gRPC, Batching
+- Quantization for Deployment — Post-Training and QAT
+- Model Compilation — torch.compile, TensorRT, ONNX
+- Monitoring in Production — Data Drift, Model Degradation
+- ML System Design Patterns
+- The Full Training Pipeline — From Raw Data to Deployed Model
+
+**Project: End-to-End ML System**
+Build a complete ML system: raw data ingestion and preprocessing pipeline, model training with experiment tracking, hyperparameter search, model export to ONNX, a FastAPI serving endpoint with dynamic batching, and a monitoring dashboard that tracks prediction drift over time. The model itself is secondary — the point is the system around it. Document every design decision.
+
+---
+
+## Capstone Projects
+
+Three large projects that integrate everything across both parts of the guide.
+
+**Capstone 1: Build a GPT from Absolute Zero**
+Starting from NumPy only — no PyTorch, no frameworks — implement a complete autoregressive language model: BPE tokenizer, embedding layer, multi-head causal self-attention, transformer blocks with RoPE, training loop with AdamW and cosine schedule, and text generation with top-p sampling. Every line of code derived from the mathematics in this guide.
+
+**Capstone 2: Train a Diffusion Model and Fine-Tune It**
+Train a DDPM on a small image dataset from scratch. Implement classifier-free guidance. Then fine-tune the model on a new domain using LoRA-style low-rank adaptation on the U-Net attention layers. Compare full fine-tuning vs LoRA in terms of parameter count, training time, and sample quality.
+
+**Capstone 3: Minimal AlphaZero**
+Implement AlphaZero for a small board game (Connect Four or Othello) — the policy/value network, Monte Carlo Tree Search, self-play data generation, and the training loop. No game-specific heuristics. The agent should learn entirely from self-play. Analyze what the value network learns and visualize MCTS search trees.
+
+---
+
+## What You Will Be Able to Do
+
+By the end of this guide you will be able to:
+
+- Derive every classical ML algorithm from scratch
+- Implement neural networks without frameworks
+- Read and follow any modern ML research paper
+- Understand transformers, diffusion models, and RL at a mathematical level
+- Build and fine-tune large language models
+- Design and deploy production ML systems
+- Understand the internals of modern AI infrastructure
+
+This is a living document. Every article is written from first principles, with full derivations and no hand-waving. The goal is to be the single best resource for AI/ML on the internet.

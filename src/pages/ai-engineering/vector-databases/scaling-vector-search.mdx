@@ -1,0 +1,258 @@
+---
+title: Scaling Vector Search — Distributed Architecture and Metadata Filtering
+description: How vector databases scale horizontally through sharding and replication, execute distributed queries, and handle the hard problem of combining vector search with metadata filters.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+A single-node vector database can handle roughly 100M–500M vectors with HNSW, or a few billion with IVF-PQ. Beyond that — or when you need high availability and fault tolerance — you need a distributed architecture. This article covers how vector databases scale out, and how they handle one of the hardest problems in the field: combining ANN search with metadata filters.
+
+---
+
+## The Distributed Architecture
+
+Most production vector databases follow a similar high-level architecture:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Client                            │
+└─────────────────────┬───────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────┐
+│              Query Coordinator                      │
+│  - Receives queries                                 │
+│  - Determines which shards to search                │
+│  - Fans out sub-queries                             │
+│  - Merges partial results                           │
+└──────┬──────────────┬──────────────┬────────────────┘
+       │              │              │
+┌──────▼──────┐ ┌─────▼──────┐ ┌────▼───────┐
+│   Shard 1   │ │   Shard 2  │ │   Shard 3  │
+│  ~33M vecs  │ │  ~33M vecs │ │  ~33M vecs │
+│  HNSW index │ │  HNSW index│ │  HNSW index│
+│  replica x2 │ │  replica x2│ │  replica x2│
+└─────────────┘ └────────────┘ └────────────┘
+```
+
+**Coordinator**: Stateless query router. Receives the query vector, determines which shards are relevant, sends sub-queries in parallel, collects top-K results from each shard, and merges into a global top-K.
+
+**Shards**: Each shard is an independent vector database node holding a partition of the data. Shards are replicated for fault tolerance and read throughput.
+
+---
+
+## Sharding Strategies
+
+How you partition vectors across shards has significant implications for query efficiency and load balance.
+
+### Hash-Based Sharding
+
+Assign each vector to a shard based on a hash of its ID:
+
+```
+shard_id = hash(vector_id) % num_shards
+```
+
+**Pros**: Uniform distribution, simple, no coordination needed for writes.
+
+**Cons**: Every query must search all shards (no way to prune based on content). Scales linearly — doubling shards halves per-shard work but doubles coordinator fan-out.
+
+This is the most common approach. Used by Pinecone and most managed vector databases.
+
+### Cluster-Based Sharding (IVF-Aligned)
+
+Partition vectors by their IVF cluster assignment. Shard $i$ holds all vectors assigned to clusters $[i \cdot C/S, (i+1) \cdot C/S)$.
+
+```
+Global k-means → 10,000 clusters
+Shard 1: clusters 0–2,499
+Shard 2: clusters 2,500–4,999
+...
+```
+
+**Pros**: Queries can be routed only to shards containing relevant clusters — significant pruning for selective queries.
+
+**Cons**: Uneven data distribution (some clusters are denser), complex rebalancing, requires global cluster assignments.
+
+Used in some Milvus configurations and research systems.
+
+### Namespace/Tenant Sharding
+
+For multi-tenant systems, each tenant's data lives on dedicated shards. Queries are routed directly to the tenant's shard(s).
+
+**Pros**: Perfect isolation, no cross-tenant interference, simple routing.
+
+**Cons**: Uneven load if tenants vary in size, wasted capacity for small tenants.
+
+Used by Pinecone's namespace feature and Weaviate's multi-tenancy.
+
+---
+
+## Replication
+
+Each shard is replicated across multiple nodes for fault tolerance and read throughput.
+
+**Synchronous replication**: Write is acknowledged only after all replicas confirm. Strong consistency, higher write latency.
+
+**Asynchronous replication**: Write is acknowledged after the primary confirms; replicas catch up in the background. Lower write latency, eventual consistency.
+
+Most vector databases use asynchronous replication for the index (eventual consistency is acceptable — a newly indexed vector being temporarily unavailable on a replica is not catastrophic) and synchronous replication for the WAL (durability is non-negotiable).
+
+**Read routing**: Queries can be served by any replica. Load balancers distribute read traffic across replicas of each shard.
+
+---
+
+## Distributed Query Execution
+
+A distributed top-K query works as follows:
+
+1. **Coordinator receives** query vector $\mathbf{q}$ and $K$
+2. **Fan out**: Send $(\mathbf{q}, K' = K \times \text{oversample\_factor})$ to all shards in parallel. Oversample because each shard's local top-$K'$ may not contain the global top-$K$.
+3. **Each shard** runs its local ANN search and returns its top-$K'$ results with distances
+4. **Coordinator merges** all partial result sets and returns the global top-$K$
+
+The oversampling factor is typically 2–5x. With 10 shards and $K=10$, each shard returns top-50, giving the coordinator 500 candidates to select the global top-10 from.
+
+```python
+# Coordinator pseudocode
+def distributed_search(query, k, shards, oversample=3):
+    k_prime = k * oversample
+    # Fan out in parallel
+    partial_results = parallel_map(
+        lambda shard: shard.search(query, k_prime),
+        shards
+    )
+    # Merge and re-rank
+    all_candidates = flatten(partial_results)
+    all_candidates.sort(key=lambda x: x.distance)
+    return all_candidates[:k]
+```
+
+**Latency**: The query latency is determined by the slowest shard (tail latency). With 10 shards, the P99 latency of a distributed query is roughly the P99.9 latency of a single-shard query. This is why shard count should be minimized — more shards means worse tail latency.
+
+---
+
+## Metadata Filtering
+
+This is one of the hardest problems in vector search. Real queries almost always combine semantic similarity with structured filters:
+
+```
+Find products similar to [query embedding] where:
+  brand = "Nike"
+  price BETWEEN 2000 AND 4000
+  in_stock = true
+  category IN ["shoes", "sneakers"]
+```
+
+The challenge: ANN indexes are built for pure vector search. They have no concept of filters. Naively applying filters after ANN search (post-filtering) or before it (pre-filtering) both have serious problems.
+
+---
+
+### Approach 1: Post-Filtering (ANN → Filter)
+
+Run ANN search to get top-$K'$ candidates, then apply filters to get top-$K$ results.
+
+```
+ANN search → 1000 candidates → filter → 10 results
+```
+
+**Problem**: If the filter is selective (e.g. only 1% of vectors match), you need to oversample massively to get $K$ results after filtering. With 1% selectivity and $K=10$, you need to retrieve 1000 candidates from ANN — which means high latency and potentially poor recall if the true nearest filtered neighbors aren't in the top-1000.
+
+**When it works**: Filters with >10% selectivity. Fast and simple to implement.
+
+---
+
+### Approach 2: Pre-Filtering (Filter → ANN)
+
+Apply the filter first to get a candidate set, then run ANN search only within that set.
+
+```
+Filter → 10,000 matching vectors → ANN search within subset → 10 results
+```
+
+**Problem**: If the filtered subset is small, the ANN index is useless — you're doing brute-force search on the subset. If the subset is large, you need to build a separate index for each filter combination (impractical).
+
+**When it works**: Highly selective filters that reduce the candidate set to a manageable size (< 50K vectors), where brute-force search is fast enough.
+
+---
+
+### Approach 3: Hybrid Index (Inverted Index + Vector Index)
+
+Maintain a separate inverted index for metadata fields alongside the vector index. At query time, use both indexes together.
+
+This is how Weaviate works:
+
+```
+Query: similar to [q] where brand="Nike" AND price<4000
+
+1. Inverted index lookup: get all vector IDs where brand="Nike" AND price<4000
+   → bitmap of matching IDs (e.g. 500K out of 10M)
+
+2. HNSW search with filter: during graph traversal, skip nodes not in the bitmap
+   → only follow edges to nodes that pass the filter
+
+3. Return top-K from filtered traversal
+```
+
+The key insight is **filtered graph traversal** — the HNSW search is modified to only consider nodes that pass the filter. This avoids the recall problems of post-filtering and the scalability problems of pre-filtering.
+
+**Challenge**: If the filter is very selective (< 0.1% of vectors match), filtered graph traversal degrades — the graph becomes disconnected from the perspective of the filter, and greedy search can't find good neighbors. Systems fall back to brute-force search on the filtered set in this case.
+
+---
+
+### Approach 4: Sparse-Dense Hybrid (Pinecone)
+
+Represent each vector with both a dense embedding and a sparse vector (BM25-style keyword weights). Score is a weighted combination:
+
+$$\text{score}(\mathbf{q}, \mathbf{v}) = \alpha \cdot \text{dense\_sim}(\mathbf{q}_d, \mathbf{v}_d) + (1-\alpha) \cdot \text{sparse\_sim}(\mathbf{q}_s, \mathbf{v}_s)$$
+
+This isn't exactly metadata filtering — it's hybrid retrieval combining semantic and keyword signals. But it solves a related problem: queries where exact keyword matches matter alongside semantic similarity (e.g. product search where brand name must match exactly).
+
+---
+
+### Practical Guidance
+
+| Filter Selectivity | Recommended Approach |
+|---|---|
+| > 50% of vectors match | Post-filtering with small oversample |
+| 5–50% match | Hybrid index (filtered graph traversal) |
+| 1–5% match | Pre-filtering with brute-force on subset |
+| < 1% match | Brute-force on filtered subset |
+
+Most production systems implement multiple strategies and choose based on estimated selectivity at query time.
+
+---
+
+## Consistency in Distributed Vector Search
+
+Distributed vector databases face the standard distributed systems consistency tradeoffs:
+
+**Write consistency**: Most use quorum writes (write to majority of replicas before acknowledging). Ensures durability without requiring all replicas to be available.
+
+**Read consistency**: Queries typically use eventual consistency — a replica may be slightly behind the primary. For most search use cases this is acceptable.
+
+**Index consistency**: The ANN index on a replica may lag behind the primary by seconds to minutes (background indexing). Queries on lagging replicas may miss recently indexed vectors. Systems handle this by including the write buffer in all queries (brute-force search on recent writes is always consistent).
+
+---
+
+## Case Studies
+
+**Pinecone**: Hash-based sharding, proprietary segment management, HNSW-based index, sparse-dense hybrid retrieval. Fully managed — no operational overhead.
+
+**Milvus**: Most flexible open-source option. Supports HNSW, IVF-PQ, DiskANN. Separate query nodes, data nodes, and index nodes. Kafka-based write pipeline for high-throughput ingestion. Cluster-based or hash-based sharding.
+
+**Weaviate**: HNSW with filtered graph traversal for metadata. Strong hybrid search (vector + BM25). Good for enterprise use cases with complex filter requirements.
+
+**Qdrant**: HNSW with payload filtering. Written in Rust — very low latency. Good balance of performance and operational simplicity.
+
+**pgvector**: PostgreSQL extension. IVF-Flat or HNSW. Best for < 10M vectors where you want vector search integrated with relational data. Not suitable for large scale.
+
+---
+
+## Summary
+
+- Distributed vector databases use coordinator + shard architecture with hash-based or cluster-based sharding
+- Distributed queries fan out to all shards, oversample, and merge results at the coordinator
+- More shards = worse tail latency; minimize shard count
+- Metadata filtering is hard: post-filtering loses recall, pre-filtering loses scalability
+- Hybrid indexes (inverted index + filtered graph traversal) are the best general solution
+- Choose the filtering strategy based on estimated filter selectivity
+- Production systems (Milvus, Weaviate, Qdrant) implement multiple strategies and select at query time

@@ -1,14 +1,8 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "05 — Tool Use & Protocols"
+title: "Tool Use & Protocols"
 ---
 
-# 05 — Tool Use & Protocols
-
-a) [a — Why Tools Make Agents Powerful](./why-tools.mdx)
-
-b) [b — Designing Reliable Tools](./designing-reliable-tools.mdx)
-
-c) [c — The Model Context Protocol (MCP)](./mcp.mdx)
-
-d) [d — Building an MCP Server in Rust](./mcp-rust.mdx)
+- [Why Tools Make Agents Powerful](/agentic-ai/tool-use-protocols/why-tools)
+- [Designing Reliable Tools](/agentic-ai/tool-use-protocols/designing-reliable-tools)
+- [The Model Context Protocol (MCP)](/agentic-ai/tool-use-protocols/mcp)

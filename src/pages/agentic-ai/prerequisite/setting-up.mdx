@@ -1,8 +1,8 @@
 ---
-pubDatetime: 2026-03-14T15:00:00Z
-modDatetime: 2026-03-14T15:00:00Z
-title: "Setting Up Your Environment"
-description: Prepare your development environment for Agentic AI with full support for both Python and Rust.
+pubDatetime: 2026-03-14T08:00:00Z
+modDatetime: 2026-03-29T08:00:00Z
+title: "Setting Up Your Local Agentic AI Environment"
+description: Run everything locally with Ollama — no API keys, no rate limits, perfect for learning by trial and error.
 layout: ../../../layouts/TutorialPage.astro
 heroImage: /images/agentic-ai-setup.png
 ogImage: /images/agentic-ai-setup.png
@@ -11,269 +11,198 @@ ogImage: /images/agentic-ai-setup.png
 import { Tabs, TabItem, Steps, Aside, LinkButton } from '@astrojs/starlight/components';
 import { YouTube } from 'astro-embed';
 
+In this tutorial series, **every example** is provided in both **Python** and **Rust**.
 
-In this tutorial series, every example will be presented in both **Python** and **Rust**.
+We strongly recommend running **everything locally with Ollama**.  
+Cloud APIs (even free tiers like Gemini) quickly hit rate limits when you experiment, debug, or run many iterations. Ollama gives you **unlimited** local inference, zero cost, and full privacy — ideal for learning agentic AI by trial and error.
 
-This post will help you set up two aspects of AI development: **the programming language and tooling** and **the LLM API setup**.
+> **Note:** Local Ollama will be **significantly slower** than cloud APIs, especially on older hardware. If you need more speed, you can switch to a cloud API (like Gemini) at any time — just be mindful of rate limits and costs.
 
 ---
 
 ## 1. Programming Language Setup
 
-You can follow along entirely in one language or switch between them later. For now, however, I recommend choosing one path.
+Choose one path (you can switch later):
 
-- **Python Path:** Best for rapid prototyping, access to a vast library ecosystem, and strong community support.
-- **Rust Path:** Best for building production-grade, memory-safe, and memory-efficient agents, especially when high concurrency is important. The community is still smaller overall, but growing, and passionate.
+- **Python** → Fast prototyping and huge ecosystem.
+- **Rust** → Production-grade performance and memory safety.
 
->If you're unsure, choose Python.
+**If you're unsure, start with Python.**
 
-**Official language setup links:**
-- **Python:** [Official Python Installation Guide](https://www.python.org/downloads/) (version 3.10+ recommended)
-- **Rust:** [Rust Toolchain Setup (rustup)](https://rustup.rs/)
+**Official install links:**
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Rust (rustup)](https://rustup.rs/)
 
-<Aside type="note" title="Hardware Support">
-The code in these tutorials has been tested and optimized for **macOS (Apple Silicon)**.
+<Aside type="note" title="Tested On">
+All code in this series has been tested on **macOS Apple Silicon**. It also works great on Windows and Linux.
 </Aside>
-
-<img
-    src={"/images/agentic-ai-setup.png"}
-    alt={frontmatter.title}
-    width="1200"
-    height="630"
-  />
 
 ---
 
-## 2. API Key Setup for AI (LLMs)
+## 2. Install Ollama (Local LLM Runtime)
 
-Although our example code is designed to be **OpenAI-compatible**—so you can swap in GPT models or local models through Ollama—we use **Gemini** in this tutorial series because Google offers a **generous free tier** for developers.
+Ollama lets you run powerful open-source models (like Qwen 3.5) directly on your laptop.
 
-### Obtaining Your API Key
+### macOS (Recommended: Homebrew)
 
-You can generate your API key through Google AI Studio.
+```bash
+# Install Ollama via Homebrew (easiest way on macOS)
+brew install ollama
+
+# Start the Ollama service
+brew services start ollama
+```
+
+### Windows / Linux / Other macOS methods
+
+Visit the official download page → https://ollama.com/download
+
+<YouTube id="NuMan079fIs" />  
+**Best multi-platform video (Mac + Windows + Linux)** – “Install Ollama on Mac, Windows & Linux (Step-by-Step)” (Dec 2025)
+
+**Additional excellent videos:**
+- [Installing Ollama is EASY Everywhere (macOS, Windows, Linux)](https://www.youtube.com/watch?v=oI7VoTM9NKQ)
+- [How to Install Ollama on macOS (Apple Silicon)](https://www.youtube.com/watch?v=ucxtk-jUj6c) – great for M1–M5 Macs
+- [Ollama on Windows in 5 minutes](https://www.youtube.com/watch?v=WlMT_FDLhg4)
+
+---
+
+## 3. Pull the Model We Will Use
+
+```bash
+# Pull Qwen 3.5 (9B) — excellent balance of speed and reasoning
+ollama pull qwen3.5:9b
+```
+
+This model runs well on most recent laptops (8GB+ RAM recommended).
+
+---
+
+## 4. Quick Test – Is Ollama Working?
+
+Run the interactive chat:
+
+```bash
+ollama run qwen3.5:9b
+```
+
+Then type:
+
+```
+Explain how a ReAct agent works in one paragraph.
+```
+
+You should get a coherent answer instantly.
+
+---
+
+## 5. (Optional) Cloud Alternative – Gemini
+
+Only use this if you prefer a hosted model **and** accept occasional rate limits.
 
 <LinkButton 
   href="https://aistudio.google.com/" 
   variant="primary"
   target="_blank"
 >
-  Get your Gemini API Key →
+  Get Gemini API Key →
 </LinkButton>
-
-- Log in to **Google AI Studio** using the link above.
-- Click **"Get API key"** in the left-hand sidebar.
-- Select **"Create API key in new project."**
 
 <YouTube id="https://www.youtube.com/watch?v=BYBeQm_AsCI" />
 
----
+**SDK Installation**
 
-## 3. Tool Setup & SDK Integration
-
-### SDKs Used in These Tutorials
-
-| Language | SDK Package | Source |
-| --- | --- | --- |
-| **Python** | `google-genai` | [Official PyPI](https://pypi.org/project/google-genai/) |
-| **Rust** | `gemini-client-api` | [Community Crates.io](https://crates.io/crates/gemini-client-api) |
-
-### Installation
-
-#### **Python**
+<Tabs>
+<TabItem label="Python">
 
 ```bash
-pip install google-genai
-
+pip install google-genai python-dotenv
 ```
 
-#### **Rust**
-
-As there is currently no "official" Google-maintained crate for Rust, we have adopted `gemini-client-api`.
+</TabItem>
+<TabItem label="Rust">
 
 ```toml
-# Add to your Cargo.toml
+# Cargo.toml
 [dependencies]
-gemini-client-api = "7.4.5" 
-
+gemini-client-api = "7.4.5"
+tokio = { version = "1", features = ["full"] }
+dotenvy = "0.15"
 ```
 
-> **Note on Ecosystem Evolution:** The AI landscape moves fast. We continuously evaluate emerging libraries (such as potential official Vertex AI Rust SDKs) and will update our stack as more mature or feature-complete options become available.
+</TabItem>
+</Tabs>
+
+We will **not** use cloud APIs in the core tutorials — everything runs locally with Ollama.
 
 ---
-## 4. Verifying Your Setup
 
-Once you have your key, create a `.env` file in your project root to keep your credentials safe:
+## 6. Verifying Your Setup (Ollama + Python/Rust)
 
-```bash
-GEMINI_API_KEY=your_actual_key_here
-
-```
-
-### Quick Connection Test
-
-Test your environment by running the snippet for your chosen language:
-
+>Gemini based setup code is provided in the [sample code github repo](https://github.com/ravishankarkumar/aiunderthehood-sample-code) as well as in the first article of this series ([What is an Agent?](/agentic-ai/foundations/what-is-an-agent)).
 <Tabs>
 <TabItem label="Python" icon="seti:python">
 
-First, install the necessary libraries:
-
-```bash
-pip install -U google-genai python-dotenv
-
-```
-
-Then, run this script:
-
 ```python
-import os
-from dotenv import load_dotenv
-from google import genai
-from pathlib import Path
+from ollama import chat
+from pydantic import BaseModel
 
-env_path = Path(__file__).parent.parent.parent / ".env"
-# Replace the env_path with the actual path to your .env file if it's located elsewhere
-load_dotenv(dotenv_path=env_path)
+response = chat(
+    model="qwen3.5:9b",
+    messages=[{"role": "user", "content": "Say hello from Ollama!"}]
+)
 
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in environment variables. Please set it in the .env file.")
-
-try:
-    client = genai.Client(api_key=api_key)
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash", contents="Explain how AI works in a few words"
-    )
-    print(response.text)
-except Exception as e:
-    print(f"An error occurred: {e}")
-
+print(response.message.content)
 ```
 
 </TabItem>
 
 <TabItem label="Rust" icon="seti:rust">
 
-Add these to your `Cargo.toml`:
-
-```toml
-[dependencies]
-tokio = { version = "1", features = ["full"] }
-dotenv = "0.15"
-gemini-client-api = "7.4.5"
-```
-
-Run this in your `main.rs`:
-
 ```rust
-use dotenvy::dotenv_override;
-use std::env;
-
-use gemini_client_api::gemini::ask::Gemini;
-use gemini_client_api::gemini::types::sessions::Session;
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    Ollama,
+};
 
 #[tokio::main]
-async fn main() {
-    // Please ensure you are putting in the actual path of the .env file as mentioned in the README, and not the placeholder path shown below.
-    dotenvy::from_path("../.env").ok(); 
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Connecting to Ollama...");
 
-    let api_key = env::var("GEMINI_API_KEY")
-        .expect("GEMINI_API_KEY must be set in the workspace root .env");
-        
-    let mut session = Session::new(10); // Keep last 10 messages
-    let ai = Gemini::new(
-        api_key, 
-        "gemini-2.5-flash", 
-        None, // Optional system instruction
+    let ollama = Ollama::default();
+
+    let request = ChatMessageRequest::new(
+        "qwen3.5:9b".to_string(),
+        vec![ChatMessage::user("Say hello from Ollama and tell me you're ready for agent development!".to_string())],
     );
 
-    let response = ai.ask(session.ask("Hello, Gemini!")).await.unwrap();
-    println!("Gemini: {}", response.get_chat().get_text_no_think("\n"));
+    let response = ollama.send_chat_messages(request).await
+        .map_err(|e| format!("Failed to connect to Ollama. Is `ollama serve` running?\nError: {}", e))?;
+
+    println!("\n✅ Ollama is working!\n");
+    println!("Response:\n{}", response.message.content);
+
+    Ok(())
 }
 ```
 
 </TabItem>
 </Tabs>
 
+>Majority of the examples in this series will use Ollama (both Rust and Python). You can switch to Gemini or another API at any time — just be mindful of rate limits and costs.
+---
+
+## When to Use What
+
+| Use Case                    | Recommended Setup          | Reason |
+|-----------------------------|----------------------------|--------|
+| Learning / experimentation  | **Ollama (local)**         | Unlimited trials, no cost |
+| Production / high-scale     | OpenAI / Gemini            | Higher speed & scale |
+| Offline / privacy-first     | **Ollama**                 | Runs 100% locally |
 
 ---
 
+**You're now fully set up!**
 
-
-
-## 5 (Optional): Local LLM Setup with Ollama (Qwen 3.5)
-
-All examples in this series are OpenAI-compatible, which means you can also run them using **local models via Ollama** instead of cloud APIs.
-
-This is especially useful if you want:
-- offline development
-- zero API cost
-- full control over your models
-
-### Install Ollama
-
-Follow the official installation guide:
-
-- https://ollama.com/download
-
-After installation, start the Ollama server:
-
-```bash
-ollama serve
-````
-
----
-
-### Pull Qwen 3.5 (9B)
-
-We will use the `qwen3.5:9b` model for local inference:
-
-```bash
-ollama pull qwen3.5:9b
-```
-
->We can also use brew to install and run ollama
----
-
-### Quick Test
-
-Run:
-
-```bash
-ollama run qwen3.5:9b
-```
-
-Then try:
-
-```text
-Explain async programming in Rust.
-```
-
----
-
-### Notes
-
-* Unlike cloud APIs (OpenAI, Gemini), local models:
-
-  * do not require API keys
-  * do not expose explicit reasoning controls (like `reasoning_effort`)
-* Reasoning quality depends on:
-
-  * prompt design
-  * model size
-
----
-
-### When to use this
-
-| Use case               | Recommended setup  |
-| ---------------------- | ------------------ |
-| Learning / prototyping | Gemini (free tier) |
-| Production APIs        | OpenAI / Gemini    |
-| Local agents / offline | Ollama + Qwen      |
-
-
-
-→ **Next up**: [What is an agent?](/agentic-ai/foundations/what-is-an-agent)
+→ Next: [What is an Agent?](/agentic-ai/foundations/what-is-an-agent)
 

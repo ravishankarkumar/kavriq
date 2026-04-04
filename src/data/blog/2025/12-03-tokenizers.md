@@ -32,11 +32,7 @@ twitterDescription: A practical and comprehensive guide to tokenization in moder
 twitterCard: summary_large_image
 ---
 
-# Understanding Tokenizers in AI: A Deep Dive into ChatGPT, Grok, and Gemini
 
-## Checkout on Linkedin
-
-<iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7401844004210016256?collapsed=1" height="264" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
 
 ## Introduction
 
@@ -60,6 +56,10 @@ This article explores:
 - different tokenization methods,
 - and the specific tokenizers used in **ChatGPT (OpenAI)**, **Grok (xAI)**, and **Gemini (Google)** — based on official documentation and open-source releases.
 
+
+## Checkout on Linkedin
+
+<iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7401844004210016256?collapsed=1" height="264" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
 
 ## How Tokenization Works
 

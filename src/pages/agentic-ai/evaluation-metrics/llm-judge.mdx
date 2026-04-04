@@ -1,374 +1,119 @@
 ---
-
 title: LLM-as-a-Judge
-description: Using language models as evaluators to automatically assess agent outputs and reasoning quality
+description: Using language models to automatically evaluate agent outputs, reasoning quality, and trajectories at scale
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 9 — Evaluation & Trajectory Metrics**.
 
-In the previous article we explored **why evaluating AI agents is difficult**, especially due to non-deterministic outputs and complex reasoning trajectories.
+Evaluating AI agents at scale is difficult. Human review is accurate but slow and expensive. Traditional automated metrics (exact match, BLEU, etc.) work poorly for open-ended reasoning and multi-step agent behavior.
 
-In this article we examine **LLM-as-a-Judge**, a technique where language models themselves are used to evaluate the quality of agent outputs.
+**LLM-as-a-Judge** solves this by using a capable language model to automatically evaluate the outputs (and reasoning) of another model or agent.
 
-</Aside>
-
-# LLM-as-a-Judge
-
-Evaluating AI systems traditionally required **human reviewers**.
-
-Example workflow:
-
-```text
-Agent generates answer
-        ↓
-Human reviewer reads answer
-        ↓
-Human assigns quality score
-```
-
-This approach works well for small experiments.
-
-However, modern AI systems generate **millions of outputs**, making manual evaluation impractical.
-
-To address this challenge, researchers introduced **LLM-as-a-Judge**.
-
-In this approach, a language model evaluates the output of another model.
-
-Conceptually:
-
-```text
-Student Model → generates answer
-Judge Model   → evaluates answer
-```
-
-This allows evaluation to scale automatically.
+Instead of relying solely on humans, we turn the LLM itself into an evaluator — a "judge" that can score answers, critique reasoning, and compare trajectories.
 
 ---
 
-# Teacher–Student Evaluation
+## Why LLM-as-a-Judge Works
 
-LLM-as-a-Judge systems are often structured as **teacher–student architectures**.
+Large language models have strong capabilities in:
+- Understanding natural language
+- Applying evaluation rubrics
+- Providing detailed reasoning for their judgments
+- Comparing multiple answers consistently
 
-Example setup:
-
-| Role          | Function         |
-| ------------- | ---------------- |
-| Student model | produces output  |
-| Teacher model | evaluates output |
-
-Example workflow:
-
-```text
-Question
-   ↓
-Student model generates answer
-   ↓
-Teacher model evaluates correctness
-```
-
-The teacher model acts as a **grader**.
+When properly prompted, a strong judge model can approximate human-level evaluation for many tasks while scaling to millions of examples.
 
 ---
 
-# Example Evaluation Prompt
+## Basic Architectures
 
-A judge model receives both the **question and the answer**.
+### 1. Single-Answer Scoring
+The judge receives a question + answer and assigns a score + explanation.
 
-Example prompt:
+### 2. Pairwise Comparison (often more reliable)
+The judge receives two answers and decides which is better (and why).
 
-```text
-Question:
-Explain why GPUs accelerate deep learning.
-
-Answer:
-GPUs accelerate deep learning because they perform many matrix operations in parallel.
-
-Evaluate the correctness of the answer on a scale from 1 to 5.
-```
-
-The judge model returns a score.
-
-Example output:
-
-```text
-Score: 5
-Reason: Correct explanation of GPU parallelism.
-```
-
-This score can be used to evaluate system performance.
+### 3. Trajectory Evaluation
+The judge reviews the full sequence of thoughts, tool calls, and observations — not just the final answer.
 
 ---
 
-# Automatic Grading Systems
+## Example Judge Prompt (Structured)
 
-LLM-as-a-Judge enables **automatic grading pipelines**.
+A good judge prompt in 2026 typically includes:
 
-Example architecture:
-
-```text
-Dataset of questions
-        ↓
-Agent generates answers
-        ↓
-Judge model evaluates answers
-        ↓
-Scores stored in evaluation database
-```
-
-This allows developers to measure performance across **thousands of tasks**.
-
----
-
-# Scoring Formats
-
-Judge models often return structured evaluation results.
-
-Example JSON output:
-
-```json
-{
-  "score": 4,
-  "reasoning": "The answer is mostly correct but lacks detail about matrix multiplication."
-}
-```
-
-This structured format makes evaluation results easy to analyze.
-
----
-
-# Pairwise Comparison
-
-Another common evaluation technique is **pairwise comparison**.
-
-Instead of assigning scores, the judge model compares two answers.
+- Clear evaluation criteria (rubric)
+- Few-shot examples
+- Structured output format (JSON)
+- Instructions to explain reasoning
 
 Example:
 
 ```text
-Question:
-Explain transformer models.
+You are an expert evaluator.
 
-Answer A: explanation from model A
-Answer B: explanation from model B
+Question: {question}
+Answer: {answer}
 
-Which answer is better?
+Evaluate on these dimensions (1-5 scale):
+1. Factual correctness
+2. Reasoning quality
+3. Completeness
+4. Relevance
+
+Return your evaluation in JSON format.
 ```
 
-Output:
-
-```text
-Answer A is better because it explains self-attention more clearly.
-```
-
-Pairwise evaluation is often more reliable than numerical scoring.
+The judge then returns structured output that can be parsed and aggregated.
 
 ---
 
-# Example Implementation
+## Advantages of LLM-as-a-Judge
 
-<Tabs>
-
-<TabItem label="Python" icon="seti:python">
-
-```python
-def evaluate_answer(question, answer, judge_model):
-
-    prompt = f"""
-    Question: {question}
-    Answer: {answer}
-
-    Evaluate the answer on a scale of 1-5 and explain your reasoning.
-    """
-
-    return judge_model.generate(prompt)
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn evaluate_answer(question: &str, answer: &str, judge: &LLMClient) -> String {
-
-    let prompt = format!(
-        "Question: {}\nAnswer: {}\nScore the answer from 1-5.",
-        question, answer
-    );
-
-    judge.generate(&prompt)
-}
-```
-
-</TabItem>
-
-</Tabs>
-
-The judge model returns an evaluation score.
+- **Scalability** — Can evaluate thousands or millions of agent runs automatically.
+- **Consistency** — Applies the same rubric across evaluations (when using the same judge model and temperature).
+- **Rich feedback** — Provides natural language explanations, not just scores.
+- **Trajectory awareness** — Can evaluate the full reasoning path, tool usage, and efficiency.
 
 ---
 
-# Evaluating Reasoning Quality
+## Limitations and Known Issues
 
-LLM judges can evaluate more than just correctness.
+LLM judges are not perfect:
 
-They can also assess:
+- **Bias** — Judges may favor longer answers, their own style, or outputs that resemble their training data (self-preference bias).
+- **Position bias** — When doing pairwise comparison, the order of answers can influence the result.
+- **Evaluation errors** — Judges can make mistakes on complex reasoning or domain-specific tasks.
+- **Cost** — Running a strong judge model on every output adds significant expense.
 
-* reasoning clarity
-* factual accuracy
-* completeness
-* relevance
-
-Example evaluation prompt:
-
-```text
-Evaluate the following response for:
-
-1. correctness
-2. reasoning quality
-3. completeness
-```
-
-This enables **multi-dimensional evaluation**.
+**Best practices in 2026**:
+- Use structured rubrics with clear scoring criteria.
+- Run multiple judges and aggregate results (ensemble judging).
+- Use reference-based evaluation when possible.
+- Combine LLM judges with human review for high-stakes or ambiguous cases.
+- Monitor judge agreement rates and calibrate against human baselines.
 
 ---
 
-# LLM Judges for Trajectory Evaluation
+## LLM Judges for Trajectory Evaluation
 
-LLM-as-a-Judge can also evaluate **agent trajectories**.
+One of the most powerful applications is evaluating full **agent trajectories**:
 
-Example trajectory:
+- Was the reasoning logical?
+- Were tools used appropriately?
+- Did the agent recover from errors?
+- Was the process efficient?
 
-```text
-Thought: search for benchmarks
-Action: web_search("GPU benchmarks")
-Observation: retrieved results
-Final Answer: explanation of GPU performance
-```
-
-The judge model can analyze whether the reasoning process was logical.
-
-Example evaluation:
-
-```text
-Score: 4
-Reason: Appropriate use of search tool and relevant reasoning steps.
-```
-
-This approach evaluates the **decision process**, not just the final answer.
+This goes far beyond final-answer scoring and helps identify systemic weaknesses in agent design.
 
 ---
 
-# Advantages of LLM Judges
+## Looking Ahead
 
-LLM-as-a-Judge offers several advantages.
+In this article we explored **LLM-as-a-Judge** — a scalable technique for automatically evaluating agent outputs and reasoning using language models themselves.
 
-### Scalability
+In the next article we will dive deeper into **Trajectory Evaluation**, focusing on how to measure the quality and efficiency of an agent’s full reasoning path and decision process.
 
-Millions of outputs can be evaluated automatically.
-
----
-
-### Consistency
-
-Automated judges apply the same criteria across evaluations.
-
----
-
-### Rich Feedback
-
-Models can generate detailed explanations for their scores.
-
----
-
-# Limitations of LLM Judges
-
-Despite their usefulness, LLM judges have limitations.
-
-### Bias
-
-Judge models may favor outputs that resemble their own training data.
-
----
-
-### Evaluation Errors
-
-The judge model may occasionally assign incorrect scores.
-
----
-
-### Model Alignment
-
-Judge models must be carefully instructed to follow consistent evaluation criteria.
-
-Because of these limitations, many systems combine **automated evaluation with human review**.
-
----
-
-# Using Multiple Judges
-
-To improve reliability, systems may use **multiple judge models**.
-
-Example architecture:
-
-```text
-Answer
-   ↓
-Judge Model A
-Judge Model B
-Judge Model C
-   ↓
-Aggregate scores
-```
-
-This approach reduces the impact of individual model bias.
-
----
-
-# LLM Judges in Modern AI Systems
-
-Many modern AI systems rely heavily on LLM-based evaluation.
-
-Examples include:
-
-| Application          | Usage                 |
-| -------------------- | --------------------- |
-| RLHF pipelines       | grading model outputs |
-| agent evaluation     | scoring trajectories  |
-| benchmarking systems | comparing models      |
-| automated testing    | validating responses  |
-
-LLM-as-a-Judge has become a **standard tool for evaluating language model systems**.
-
----
-
-# Evaluation as a Feedback Loop
-
-Evaluation systems often feed results back into training pipelines.
-
-Conceptually:
-
-```text
-Agent output
-      ↓
-LLM judge evaluation
-      ↓
-Score recorded
-      ↓
-Model improvements
-```
-
-This creates a **continuous improvement cycle**.
-
----
-
-# Looking Ahead
-
-In this article we explored **LLM-as-a-Judge**, a powerful technique for automatically evaluating agent outputs using language models.
-
-In the next article we will examine **Trajectory Evaluation**, which focuses on measuring the efficiency and quality of agent reasoning paths.
-
-→ Continue to **9.3 — Trajectory Evaluation**
+→ Continue to **[9.3 — Trajectory Evaluation](/agentic-ai/evaluation-metrics/trajectory-eval)**

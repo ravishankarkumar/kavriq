@@ -1,473 +1,144 @@
 ---
-
 title: Visual Grounding
-description: How AI agents detect interface elements, fill forms, and extract information from screenshots
+description: How AI agents accurately detect, locate, and understand interface elements from screenshots to enable reliable GUI interaction
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 7 — Computer Use & Vision**.
 
-In the previous article we explored **GUI Navigation**, including mouse control, keyboard input, and browser automation.
+For computer-use agents to navigate interfaces effectively, they must first **understand what they are seeing**. 
 
-In this article we examine **Visual Grounding**, which allows agents to understand graphical interfaces by detecting elements directly from screenshots.
+Humans instantly recognize buttons, text fields, menus, and charts on a screen. AI agents need an equivalent capability called **visual grounding** — the ability to connect regions in a screenshot (pixels) with their semantic meaning and interactive purpose.
 
-</Aside>
-
-# Visual Grounding
-
-When humans interact with computers, they rely heavily on **visual perception**.
-
-We look at the screen and identify:
-
-* buttons
-* input fields
-* menus
-* charts
-* icons
-* text
-
-AI agents must develop similar capabilities.
-
-This process is called **visual grounding**.
-
-Visual grounding refers to the ability of an AI system to **connect visual elements on a screen with their semantic meaning**.
-
-Example:
-
-```text
-Pixel region → "Search Button"
-Pixel region → "Email Input Field"
-Pixel region → "Download Icon"
-```
-
-Once elements are identified, the agent can interact with them.
+Good visual grounding is what turns raw pixels into **actionable interface elements**.
 
 ---
 
-# The Visual Grounding Pipeline
+## The Visual Grounding Pipeline
 
-Computer-use agents typically follow a perception pipeline.
+A typical grounding pipeline in 2026 systems looks like this:
 
 ```text
-Screenshot
-   ↓
-Vision Model
-   ↓
-UI Element Detection
-   ↓
-Semantic Understanding
-   ↓
-Action Selection
+Screenshot / Screen Capture
+       ↓
+Multimodal Vision Model (e.g. GPT-4o, Claude-3.5/4, Qwen2-VL, Florence-2)
+       ↓
+UI Element Detection + OCR + Semantic Understanding
+       ↓
+Structured Representation (bounding boxes + labels + confidence)
+       ↓
+Action Planning (combined with reasoning model)
 ```
 
-This pipeline converts raw pixels into **actionable interface elements**.
+The output is usually a list of detected elements with coordinates, types, and text content.
 
 ---
 
-# Detecting UI Elements
+## Core Tasks in Visual Grounding
 
-One of the primary tasks of visual grounding is **detecting interface elements**.
+Modern visual grounding systems handle several interrelated tasks:
 
-Examples include:
+1. **UI Element Detection** — Finding interactive components (buttons, inputs, dropdowns, checkboxes).
+2. **Text Recognition (OCR)** — Extracting readable text from labels, placeholders, and content.
+3. **Semantic Understanding** — Inferring purpose (e.g., "this is a Submit button", "this is a password field").
+4. **Chart & Data Visualization Interpretation** — Extracting values from graphs and dashboards.
 
-* buttons
-* text fields
-* dropdown menus
-* checkboxes
-* icons
+---
 
-Example screen:
+## Detecting Interface Elements
 
-```text
-[ Search Bar ]   [ Search Button ]
-```
+State-of-the-art systems use specialized vision models fine-tuned for UI understanding or general multimodal models with strong prompting techniques (e.g., Set-of-Mark or bounding box prediction).
 
-The vision model must identify the coordinates of these elements.
-
-Example detection output:
+Example output format:
 
 ```json
 {
-  "element": "search_button",
-  "bounding_box": [520, 210, 640, 260]
+  "elements": [
+    {
+      "type": "button",
+      "label": "Search",
+      "bbox": [520, 210, 640, 260],
+      "confidence": 0.94
+    },
+    {
+      "type": "input",
+      "label": "Email",
+      "bbox": [420, 180, 680, 220],
+      "placeholder": "user@example.com"
+    }
+  ]
 }
 ```
 
-This bounding box allows the agent to perform a click.
+Accurate bounding boxes allow the agent to generate precise click or type actions.
 
 ---
 
-# Object Detection for Interfaces
+## Form Filling and Interaction
 
-UI element detection often relies on **object detection models**.
+Visual grounding is especially important for form-heavy tasks (login, registration, data entry). The agent must:
 
-Conceptually:
+- Locate the correct input field
+- Understand its type and purpose
+- Click to focus
+- Type the appropriate value
+- Submit the form
 
-```text
-Screenshot
-   ↓
-Object Detection Model
-   ↓
-List of UI elements
-```
-
-Example output:
-
-```text
-Detected Elements:
-• Search Bar
-• Submit Button
-• Navigation Menu
-• Login Form
-```
-
-These elements become part of the agent’s **environment representation**.
+Robust systems combine vision grounding with DOM access (when available) or accessibility trees for higher reliability.
 
 ---
 
-# Example UI Detection Pipeline
+## Chart and Dashboard Understanding
 
-<Tabs>
+Many enterprise tools display critical information visually. Agents need to extract structured data from charts, graphs, and tables shown on screen.
 
-<TabItem label="Python" icon="seti:python">
+A good vision grounding system can detect:
+- Chart type (bar, line, pie)
+- Axis labels and scales
+- Data points and legends
+- Key values and trends
 
-```python
-from PIL import Image
-
-image = Image.open("screen.png")
-
-elements = vision_model.detect(image)
-
-for element in elements:
-    print(element["label"], element["bbox"])
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let image = load_image("screen.png");
-
-let elements = vision_model.detect(&image);
-
-for element in elements {
-    println!("{:?}", element);
-}
-```
-
-</TabItem>
-
-</Tabs>
-
-The detection results allow the agent to locate **interactive components**.
+This turns visual dashboards into structured data the agent can reason over.
 
 ---
 
-# Detecting Text on Screens
+## Challenges in Visual Grounding
 
-Many interfaces rely on text labels.
+Visual grounding remains one of the hardest parts of computer use:
 
-Examples:
+- **Interface variability** — Different apps, themes, resolutions, and updates change layouts.
+- **Ambiguity** — Similar-looking elements (multiple "Save" buttons).
+- **Low-contrast or custom-rendered UIs** — Hard for vision models to parse.
+- **Occlusion and partial visibility** — Elements hidden behind modals or scroll areas.
+- **Temporal consistency** — Understanding how the screen changes after an action.
 
-* "Search"
-* "Submit"
-* "Login"
-* "Download"
-
-To interpret these elements, agents use **Optical Character Recognition (OCR)**.
-
-OCR converts screen text into machine-readable data.
-
-Example:
-
-```text
-Screenshot Text → OCR → Extracted Text
-```
-
-Example OCR output:
-
-```text
-Detected text:
-Search
-Enter email
-Password
-Sign in
-```
-
-The agent can now reason about these interface elements.
+Best practices include:
+- Hybrid grounding (vision + DOM + accessibility tree)
+- High-resolution screenshots and multi-scale analysis
+- Episodic memory of previously successful groundings on similar interfaces
+- Reflection and retry mechanisms when confidence is low
 
 ---
 
-# Form Filling
+## Visual Grounding as the Agent’s Eyes
 
-Many tasks require filling forms in applications or web pages.
+In the full computer-use stack:
 
-Examples include:
+- **Vision models** provide perception and grounding (the "eyes")
+- **Reasoning models** provide planning and decision making
+- **Action models** execute precise interactions
 
-* login forms
-* registration forms
-* data entry systems
-* online applications
-
-Visual grounding allows agents to locate form fields.
-
-Example detection:
-
-```text
-Email Input Field → coordinates (420, 180)
-Password Field → coordinates (420, 240)
-```
-
-The agent can then input text into these fields.
+Strong visual grounding is what makes the difference between brittle, coordinate-based automation and robust, adaptable computer-use agents.
 
 ---
 
-# Example Form Filling Workflow
+## Looking Ahead
 
-```text
-Locate "Email" input field
-Click input field
-Type email address
+In this article we explored **Visual Grounding** — the perception capability that allows agents to detect and understand interface elements from screenshots, enabling reliable form filling, chart interpretation, and GUI navigation.
 
-Locate "Password" field
-Click input field
-Type password
+With this article, **Module 7 — Computer Use & Vision Agents** is complete.
 
-Locate "Submit" button
-Click button
-```
+In the next module we will explore **Guardrails & Safety** for agent systems, focusing on protecting against attacks, unsafe behaviors, and unintended consequences.
 
-Each step requires accurate visual detection.
-
----
-
-# Example Implementation
-
-<Tabs>
-
-<TabItem label="Python" icon="seti:python">
-
-```python
-field = find_element("Email")
-
-click(field["x"], field["y"])
-
-type_text("user@example.com")
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let field = find_element("Email");
-
-click(field.x, field.y);
-
-type_text("user@example.com");
-```
-
-</TabItem>
-
-</Tabs>
-
-These actions allow agents to complete **structured tasks in graphical interfaces**.
-
----
-
-# Chart Extraction From Screenshots
-
-Another powerful capability of visual grounding is extracting **data from charts and dashboards**.
-
-Many enterprise systems present information visually rather than as structured data.
-
-Examples include:
-
-* financial dashboards
-* performance charts
-* analytics reports
-* monitoring systems
-
-Agents must interpret these visual elements.
-
----
-
-# Understanding Charts
-
-Charts often contain:
-
-* axes
-* labels
-* data points
-* legends
-
-Example:
-
-```text
-Chart:
-AI Chip Market Share
-NVIDIA → 80%
-AMD → 15%
-Intel → 5%
-```
-
-A vision model can extract this information from the screenshot.
-
----
-
-# Chart Extraction Pipeline
-
-```text
-Screenshot
-   ↓
-Vision Model
-   ↓
-Chart Detection
-   ↓
-Text Extraction
-   ↓
-Structured Data
-```
-
-Example output:
-
-```json
-{
-  "chart": "market_share",
-  "data": {
-    "NVIDIA": 80,
-    "AMD": 15,
-    "Intel": 5
-  }
-}
-```
-
-This allows agents to reason about **visual data**.
-
----
-
-# Example Chart Extraction
-
-<Tabs>
-
-<TabItem label="Python" icon="seti:python">
-
-```python
-chart = vision_model.detect_chart(image)
-
-data = extract_chart_values(chart)
-
-print(data)
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let chart = vision_model.detect_chart(&image);
-
-let data = extract_chart_values(chart);
-
-println!("{:?}", data);
-```
-
-</TabItem>
-
-</Tabs>
-
-This enables agents to analyze **dashboard screenshots automatically**.
-
----
-
-# Visual Grounding in Modern AI Systems
-
-Several modern AI systems rely heavily on visual grounding.
-
-Examples include:
-
-| Application           | Example                             |
-| --------------------- | ----------------------------------- |
-| computer-use agents   | navigating applications             |
-| research assistants   | extracting chart data               |
-| enterprise automation | interacting with dashboards         |
-| robotic systems       | understanding physical environments |
-
-These systems integrate **vision and reasoning**.
-
----
-
-# Challenges of Visual Grounding
-
-Visual grounding remains an active research area.
-
-Key challenges include:
-
-### Interface Variability
-
-Different applications use different UI designs.
-
----
-
-### Visual Ambiguity
-
-Some elements look similar but have different meanings.
-
----
-
-### Dynamic Interfaces
-
-Screens may change during interaction.
-
----
-
-### Precision
-
-Agents must accurately detect element coordinates.
-
-Robust grounding requires **high-quality vision models and careful system design**.
-
----
-
-# Vision as the Agent's Eyes
-
-In computer-use agents, vision models act as the agent’s **perception system**.
-
-Conceptually:
-
-```text
-Vision Model → perception
-LLM → reasoning
-Action Model → interaction
-```
-
-Together, these components allow agents to:
-
-* see
-* think
-* act
-
-This combination is what enables **autonomous software interaction**.
-
----
-
-# Looking Ahead
-
-In this article we explored **Visual Grounding**, including UI element detection, form filling, and chart extraction from screenshots.
-
-With this article, **Module 7 — Computer Use & Vision is complete**.
-
-In the next module we will explore **Guardrails & Safety**, which focuses on protecting agent systems from attacks and unsafe behaviors.
-
-Topics include:
-
-* prompt injection attacks
-* tool permission systems
-* human-in-the-loop oversight
-* sandboxing agent execution
-
-→ Continue to **8.1 — Prompt Injection Attacks**
+→ Continue to **[8.1 — Prompt Injection Attacks](/agentic-ai/guardrails-safety/prompt-injection)**

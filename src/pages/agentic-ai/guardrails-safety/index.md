@@ -1,14 +1,9 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "09 — Guardrails & Safety"
+title: "Guardrails & Safety"
 ---
 
-# 09 — Guardrails & Safety
-
-a) [a — Prompt Injection Attacks](./prompt-injection.mdx)
-
-b) [b — Tool Permission Systems](./tool-permissions.mdx)
-
-c) [c — Human-in-the-Loop (HITL)](./human-in-the-loop.mdx)
-
-d) [d — Sandboxing Agent Execution](./sandboxing.mdx)
+- [Prompt Injection Attacks](/agentic-ai/guardrails-safety/prompt-injection)
+- [Tool Permission Systems](/agentic-ai/guardrails-safety/tool-permissions)
+- [Human-in-the-Loop (HITL)](/agentic-ai/guardrails-safety/human-in-the-loop)
+- [Sandboxing Agent Execution](/agentic-ai/guardrails-safety/sandboxing)

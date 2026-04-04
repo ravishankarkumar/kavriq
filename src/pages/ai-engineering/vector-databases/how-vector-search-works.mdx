@@ -1,0 +1,169 @@
+---
+title: How Vector Search Works — Embeddings, Distance, and the ANN Problem
+description: The conceptual foundation of vector search — what embeddings are, why exact nearest neighbor search breaks at scale, and the three families of approximate indexes that solve it.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+Before you can understand HNSW or IVF-PQ, you need to understand the problem they solve. This article builds that foundation — from what an embedding actually is, to why searching billions of them is hard, to the three broad strategies that make it tractable.
+
+---
+
+## What Is an Embedding?
+
+An embedding is a fixed-length vector of floating point numbers that encodes the *meaning* of something — a sentence, an image, a product, a piece of code — in a way that preserves semantic relationships.
+
+```
+"The dog ran fast"  →  [0.12, -0.83, 0.44, 0.71, ...]   (768 dims)
+"The puppy sprinted" →  [0.14, -0.81, 0.46, 0.69, ...]   (768 dims)
+"Quantum mechanics"  →  [-0.92, 0.33, -0.11, 0.05, ...]  (768 dims)
+```
+
+The first two are close in vector space. The third is far away. This is the core property: **geometric proximity encodes semantic similarity**.
+
+Common embedding dimensions:
+
+| Model | Dimensions |
+|---|---|
+| MiniLM | 384 |
+| BERT, text-embedding-ada-002 | 768 |
+| OpenAI text-embedding-3-large | 3072 |
+| Llama, large vision models | 4096+ |
+
+Embeddings are produced by encoder models — the same transformer architecture covered in ml-essentials, but used in retrieval mode rather than generation mode.
+
+---
+
+## Distance Metrics
+
+Given two vectors $\mathbf{q}$ and $\mathbf{v}$ in $\mathbb{R}^d$, there are three common ways to measure how close they are.
+
+**Cosine similarity** measures the angle between vectors, ignoring magnitude:
+
+$$\text{cosine}(\mathbf{q}, \mathbf{v}) = \frac{\mathbf{q} \cdot \mathbf{v}}{\|\mathbf{q}\| \|\mathbf{v}\|}$$
+
+This is the most common metric for text embeddings. If both vectors are L2-normalized (unit length), cosine similarity reduces to a dot product, which is fast to compute.
+
+**Euclidean distance** (L2) measures straight-line distance:
+
+$$d(\mathbf{q}, \mathbf{v}) = \|\mathbf{q} - \mathbf{v}\|_2 = \sqrt{\sum_{i=1}^{d}(q_i - v_i)^2}$$
+
+Sensitive to vector magnitude. Used when absolute position in space matters, common in image embeddings.
+
+**Inner product** (dot product) is the unnormalized version of cosine:
+
+$$\text{ip}(\mathbf{q}, \mathbf{v}) = \mathbf{q} \cdot \mathbf{v} = \sum_{i=1}^{d} q_i v_i$$
+
+Used in recommendation systems where magnitude encodes relevance strength (e.g. popularity-weighted embeddings).
+
+**Practical rule**: normalize your embeddings and use dot product. You get cosine similarity semantics with maximum compute efficiency.
+
+---
+
+## The Nearest Neighbor Search Problem
+
+Given a query vector $\mathbf{q}$ and a database of $N$ vectors $\{\mathbf{v}_1, \mathbf{v}_2, \ldots, \mathbf{v}_N\}$, find the $K$ vectors closest to $\mathbf{q}$.
+
+The naive approach — compute the distance from $\mathbf{q}$ to every vector and return the top $K$ — is called **exact search** or a flat index.
+
+```python
+def exact_search(query, vectors, k):
+    distances = [(i, distance(query, v)) for i, v in enumerate(vectors)]
+    distances.sort(key=lambda x: x[1])
+    return distances[:k]
+```
+
+This is $O(N \cdot d)$ per query. For $N = 10^8$ vectors at $d = 768$ dimensions, that's $7.68 \times 10^{10}$ floating point operations per query. At 10 GFLOPS on a CPU, that's about 7 seconds per query. Completely unusable.
+
+---
+
+## The Curse of Dimensionality
+
+The problem gets worse as dimensions increase, not just because of compute cost but because of a deeper geometric phenomenon.
+
+In low dimensions, most of the volume of a sphere is near the center. In high dimensions, almost all the volume concentrates in a thin shell near the surface. This means:
+
+- All points become roughly equidistant from each other
+- The ratio of the nearest to farthest neighbor approaches 1
+- Spatial partitioning structures (KD-trees, ball trees) stop working — they degenerate to linear scan above ~20 dimensions
+
+This is why classical spatial indexes fail for ML embeddings. You need fundamentally different approaches.
+
+---
+
+## Exact vs Approximate Search
+
+The solution is to accept a small accuracy tradeoff in exchange for orders-of-magnitude speedup.
+
+**Approximate Nearest Neighbor (ANN)** search returns results that are *very likely* to be the true nearest neighbors, but not guaranteed.
+
+| Property | Exact Search | ANN |
+|---|---|---|
+| Recall | 100% | 90–99% |
+| Latency | Seconds at scale | Milliseconds |
+| Memory | Vectors only | Vectors + index |
+| Scalability | ~1M vectors | Billions of vectors |
+
+For most applications — RAG, semantic search, recommendation — 95% recall is indistinguishable from 100% in practice. The user doesn't notice if the 4th result is slightly suboptimal.
+
+**Recall@K** is the standard metric: what fraction of the true top-K nearest neighbors appear in the returned top-K results.
+
+---
+
+## The Three Families of ANN Indexes
+
+All ANN indexes trade some accuracy for speed, but they do it in fundamentally different ways.
+
+### Graph-Based Indexes
+
+Build a proximity graph where each node (vector) is connected to its approximate nearest neighbors. Search by navigating the graph greedily toward the query.
+
+- **Best for**: High recall, low latency, moderate dataset size
+- **Key algorithm**: HNSW (Hierarchical Navigable Small Worlds)
+- **Weakness**: Memory-heavy, slow inserts, hard to scale to billions
+
+### Cluster-Based Indexes (IVF)
+
+Partition vectors into clusters using k-means. At query time, only search the nearest clusters.
+
+- **Best for**: Large datasets, memory-constrained environments
+- **Key algorithm**: IVF (Inverted File Index), IVF-PQ
+- **Weakness**: Recall depends on how many clusters you search
+
+### Quantization-Based Compression
+
+Compress vectors into compact codes using learned codebooks. Reduces memory by 10–100x, enabling billion-scale search on a single machine.
+
+- **Best for**: Massive scale, memory-limited deployments
+- **Key algorithm**: Product Quantization (PQ), Scalar Quantization (SQ)
+- **Weakness**: Lossy compression reduces recall
+
+In practice, production systems combine these — HNSW over PQ-compressed vectors, or IVF with HNSW refinement. The next articles cover each family in depth.
+
+---
+
+## Why Vector Databases Exist as a Separate Category
+
+You might ask: why not just use PostgreSQL with a vector extension, or Elasticsearch?
+
+The answer is that vector search has fundamentally different access patterns and data structures than relational or inverted-index databases:
+
+- **No schema** — vectors are opaque blobs of floats
+- **No exact match** — every query is approximate
+- **Index structure is the product** — the ANN index is the core engineering challenge
+- **Memory layout matters enormously** — cache-aware graph traversal, SIMD distance computation
+- **Ingestion and indexing are coupled** — you can't just append rows; the index must be updated
+
+Dedicated vector databases (Pinecone, Qdrant, Weaviate, Milvus) are built around these constraints from the ground up. General-purpose databases with vector extensions (pgvector, OpenSearch KNN) are useful for smaller scale but hit walls at hundreds of millions of vectors.
+
+---
+
+## Summary
+
+- Embeddings encode semantic meaning as vectors; geometric proximity = semantic similarity
+- Exact nearest neighbor search is $O(N \cdot d)$ — unusable beyond ~1M vectors
+- The curse of dimensionality makes classical spatial indexes fail above ~20 dimensions
+- ANN trades a small recall loss for orders-of-magnitude speedup
+- Three index families: graph-based (HNSW), cluster-based (IVF), quantization-based (PQ)
+- Production systems combine these families
+
+The next article covers HNSW and IVF-PQ in depth — the two algorithms you need to understand to work with vector databases seriously.

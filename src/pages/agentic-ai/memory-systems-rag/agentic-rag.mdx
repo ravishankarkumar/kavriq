@@ -1,269 +1,167 @@
 ---
-
 title: Agentic RAG
-description: How modern agents control retrieval through iterative search, self-evaluation, and retrieval critique
+description: How modern agents actively control retrieval through iterative search, query refinement, self-evaluation, and retrieval critique
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 5 — Memory Systems & RAG 2.0**.
-
-In the previous articles we explored the different types of memory used by AI agents, including episodic memory, semantic memory, and procedural memory.
-
-In this article we examine **Agentic Retrieval-Augmented Generation (Agentic RAG)** — an approach where agents actively control how knowledge is retrieved, evaluated, and refined.
-
-</Aside>
-
-# Agentic RAG
-
-Retrieval-Augmented Generation (RAG) has become one of the most widely used techniques for improving language models.
-
-The traditional RAG pipeline looks like this:
+Traditional Retrieval-Augmented Generation (RAG) dramatically improved LLM reliability by injecting external knowledge into the prompt. However, classic RAG performs retrieval **only once**, before reasoning begins.
 
 ```text
 User Query
    ↓
 Embedding
    ↓
-Vector Search
+Vector / Hybrid Search
    ↓
 Retrieve Documents
    ↓
 LLM Generates Answer
 ```
 
-This architecture works well for many applications.
+This single-pass approach works well for simple queries but falls short on complex, multi-step, or ambiguous tasks.
 
-However, it has an important limitation:
-
-> Retrieval happens **only once**, before the model begins reasoning.
-
-In complex tasks, the model may need to **search for additional information during reasoning**.
-
-Agentic RAG solves this problem.
+**Agentic RAG** (also called adaptive or iterative retrieval) turns retrieval into a dynamic part of the agent’s reasoning loop. The agent actively controls when and how to search, critiques results, and decides whether more information is needed.
 
 ---
 
-# From Static RAG to Agentic RAG
+## From Static RAG to Agentic RAG
 
-Traditional RAG follows a **single retrieval step**.
+| Aspect                  | Traditional RAG                  | Agentic RAG                              |
+|-------------------------|----------------------------------|------------------------------------------|
+| Retrieval timing        | One-time, before reasoning       | Iterative, inside the reasoning loop     |
+| Query control           | Fixed user query                 | Agent can rewrite, decompose, or refine  |
+| Evaluation              | Blind use of retrieved docs      | Self-critique and relevance scoring      |
+| Stopping condition      | Always one pass                  | Agent decides when enough context exists |
 
-```text
-Query → Retrieve → Generate
-```
-
-Agentic RAG introduces **iterative retrieval**.
-
-```text
-Query
- ↓
-Retrieve
- ↓
-Reason
- ↓
-Retrieve Again
- ↓
-Reason
- ↓
-Answer
-```
-
-Instead of treating retrieval as a preprocessing step, the agent integrates retrieval into its **reasoning loop**.
+This shift makes retrieval a **procedural skill** the agent can learn and improve over time.
 
 ---
 
-# Iterative Retrieval
+## Iterative Retrieval
 
-Iterative retrieval allows agents to refine their understanding step by step.
-
-Example query:
-
-> “Explain how Nvidia's H100 architecture improved transformer training.”
-
-A traditional RAG system might retrieve a few documents and answer immediately.
-
-An agentic system might reason like this:
+In Agentic RAG, the agent interleaves reasoning and retrieval:
 
 ```text
-Thought: I should retrieve documents about H100 architecture.
+Thought: I need information about Nvidia H100 architecture.
+Action: Search vector database
+Observation: H100 includes a Transformer Engine.
 
-Action: search("Nvidia H100 architecture")
-
-Observation: H100 includes transformer engine.
-
-Thought: I should understand transformer engine details.
-
-Action: search("Nvidia transformer engine architecture")
+Thought: I still need details on how the Transformer Engine accelerates training.
+Action: Refine query → "Nvidia H100 Transformer Engine architecture 2026"
 ```
 
-Each retrieval step builds **additional context**.
+Each iteration builds richer, more targeted context.
 
 ---
 
-# Why Iterative Retrieval Is Powerful
+## Self-Reflection and Retrieval Critique
 
-Iterative retrieval allows agents to:
+Modern Agentic RAG systems include explicit **self-evaluation** steps (inspired by Self-RAG and later frameworks). The agent asks itself:
 
-* refine search queries
-* gather missing information
-* verify previous answers
-* connect multiple knowledge sources
+- Is the retrieved context relevant and sufficient?
+- Are there gaps or contradictions?
+- Should I retrieve more specific information?
 
-This approach is especially useful for:
+Example critique:
 
-| Task               | Example                        |
-| ------------------ | ------------------------------ |
-| Research tasks     | multi-step knowledge gathering |
-| debugging problems | retrieving documentation       |
-| technical analysis | connecting multiple concepts   |
+```text
+Retrieved: General GPU overview article
+Critique: Too broad. Missing specifics on Transformer Engine.
+Decision: Generate refined query and retrieve again.
+```
 
-Iterative retrieval enables agents to **reason over large knowledge spaces**.
+This critique step is guided by procedural memory (the agent’s learned retrieval strategy) and dramatically improves answer quality.
 
 ---
 
-# Self-RAG
-
-One of the most interesting developments in RAG research is **Self-RAG**.
-
-Self-RAG introduces **self-evaluation during retrieval**.
-
-Instead of blindly using retrieved documents, the agent asks:
-
-```text
-Is this information relevant?
-Is more retrieval needed?
-```
-
-Example reasoning:
-
-```text
-Observation: Retrieved documents are not specific enough.
-
-Thought: I should refine the query.
-```
-
-This allows the system to **improve retrieval quality dynamically**.
-
----
-
-# Retrieval Critique
-
-Retrieval critique is the process of evaluating whether retrieved documents are useful.
-
-Example reasoning:
-
-```text
-Retrieved document:
-General article about GPUs
-
-Critique:
-This document is too broad.
-Need documents about transformer acceleration.
-```
-
-The agent can then generate a **more specific query**.
-
-Example:
-
-```text
-New search query:
-"Nvidia H100 transformer engine architecture"
-```
-
-This improves the relevance of retrieved knowledge.
-
----
-
-# Example Agentic RAG Loop
-
-An Agentic RAG workflow might look like this:
+## Example Agentic RAG Loop
 
 ```text
 User Question
    ↓
-Retrieve Documents
+Initial Hybrid Search (vector + keyword + metadata)
    ↓
-Evaluate Relevance
+Retrieve & Rerank Documents
    ↓
-Retrieve Additional Documents
+Agent Critiques Relevance
    ↓
-Combine Knowledge
+If insufficient → Refine query / Decompose / Retrieve again
+   ↓
+Synthesize Final Context
    ↓
 Generate Answer
 ```
 
-This loop may repeat multiple times.
+The loop repeats until the agent is confident or a maximum iteration limit is reached.
 
 ---
 
-# Example Implementation
+## Example Implementation
 
 <Tabs>
 
-<TabItem label="Python" icon="seti:python">
+<TabItem label="Python (LangGraph-style loop)" icon="seti:python">
 
 ```python
-def agentic_rag(query, retriever, llm):
+from langgraph.graph import StateGraph, END
 
-    context = []
+def agentic_rag(state):
+    query = state["query"]
+    context = state.get("context", [])
 
-    for _ in range(3):
+    # Step 1: Retrieve
+    docs = retriever.hybrid_search(query)  # vector + BM25 + metadata
+    context.extend(docs)
 
-        docs = retriever.search(query)
+    # Step 2: Critique
+    critique_prompt = f"Question: {query}\nContext: {context}\nIs this enough? Yes/No + reason."
+    critique = llm.invoke(critique_prompt)
 
-        context.extend(docs)
+    if "yes" in critique.lower():
+        state["context"] = context
+        return state  # enough information
 
-        prompt = f"""
-        Question: {query}
+    # Step 3: Refine and loop
+    state["query"] = llm.invoke(f"Refine this query: {query}\nCritique: {critique}")
+    return state
 
-        Context:
-        {context}
-
-        Is more information needed?
-        """
-
-        response = llm.generate(prompt)
-
-        if "enough information" in response:
-            break
-
-        query = llm.generate("Refine the search query.")
-    
-    return llm.generate(f"Answer using: {context}")
+# The graph runs the loop until the stopping condition is met
 ```
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
+<TabItem label="Rust (async loop pattern)" icon="seti:rust">
 
 ```rust
-fn agentic_rag(query: &str, retriever: &Retriever, llm: &LLMClient) -> String {
+async fn agentic_rag(
+    mut query: String,
+    retriever: &dyn Retriever,
+    llm: &LLMClient,
+    max_iterations: usize,
+) -> String {
+    let mut context = vec![];
 
-    let mut context = Vec::new();
-    let mut current_query = query.to_string();
-
-    for _ in 0..3 {
-
-        let docs = retriever.search(&current_query);
+    for _ in 0..max_iterations {
+        let docs = retriever.hybrid_search(&query).await;
         context.extend(docs);
 
-        let prompt = format!(
-            "Question: {}\nContext: {:?}\nNeed more info?",
-            query, context
-        );
+        let critique: String = llm
+            .invoke(format!("Question: {}\nContext: {:?}\nEnough? Yes/No + reason", query, context))
+            .await;
 
-        let response = llm.generate(&prompt);
-
-        if response.contains("enough") {
+        if critique.to_lowercase().contains("yes") {
             break;
         }
 
-        current_query = llm.generate("Refine the search query");
+        // Refine query
+        query = llm
+            .invoke(format!("Refine query. Critique: {}", critique))
+            .await;
     }
 
-    llm.generate(&format!("Answer using: {:?}", context))
+    llm.invoke(format!("Answer using this context: {:?}", context)).await
 }
 ```
 
@@ -271,109 +169,48 @@ fn agentic_rag(query: &str, retriever: &Retriever, llm: &LLMClient) -> String {
 
 </Tabs>
 
-This demonstrates **retrieval integrated with reasoning**.
+These patterns integrate seamlessly with the procedural memory layer (the retrieval strategy) and semantic memory (the knowledge being retrieved).
 
 ---
 
-# Benefits of Agentic RAG
+## Benefits of Agentic RAG
 
-Agentic RAG offers several advantages over traditional RAG.
-
-### Improved Retrieval Quality
-
-The agent can refine queries dynamically.
-
----
-
-### Better Knowledge Coverage
-
-Multiple retrieval steps gather more complete information.
+- **Higher retrieval quality** — dynamic query refinement and critique dramatically improve relevance.
+- **Better coverage of complex topics** — multi-step research becomes possible.
+- **Reduced hallucinations** — the agent verifies and expands context as needed.
+- **Adaptive behavior** — the same agent can handle both simple and deeply technical queries effectively.
 
 ---
 
-### Reduced Hallucination
+## Challenges and Best Practices
 
-Agents can verify facts across multiple sources.
+Agentic RAG introduces new trade-offs:
 
----
+- **Increased latency and cost** — multiple retrieval + LLM calls add overhead.
+- **Risk of retrieval loops** — the agent may keep searching indefinitely without good stopping criteria.
+- **Evaluation difficulty** — measuring whether the final context is “good enough” requires careful prompt design.
 
-### Complex Reasoning
-
-Iterative retrieval supports **multi-step research tasks**.
-
----
-
-# Challenges of Agentic RAG
-
-Agentic retrieval also introduces several challenges.
-
-### Higher Latency
-
-Multiple retrieval steps increase response time.
+**Best practices in 2026**:
+- Use hybrid search (vector + keyword + metadata) as the default retriever.
+- Set hard limits on iterations and token budget.
+- Combine with procedural memory to encode reliable stopping rules and critique templates.
+- Add reflection steps that update episodic memory so the agent improves its retrieval strategy over time.
+- Monitor retrieval effectiveness with metrics (relevance score, coverage, user feedback).
 
 ---
 
-### Increased Cost
+## Agentic RAG as Intelligent Knowledge Exploration
 
-Each iteration may involve additional model calls.
+Agentic RAG transforms retrieval from a static preprocessing step into an active, agent-driven exploration process — exactly how a skilled human researcher would gather information.
 
----
-
-### Retrieval Control
-
-Agents must learn when to **stop retrieving**.
-
-Balancing retrieval depth and efficiency is an active area of research.
+It perfectly illustrates how **semantic memory** (the knowledge) and **procedural memory** (the retrieval strategy) work together inside the agent’s reasoning loop.
 
 ---
 
-# Agentic RAG in Modern Systems
+## Looking Ahead
 
-Many modern AI systems now use agentic retrieval techniques.
+In this article we explored **Agentic RAG**, where agents actively control, critique, and iterate on retrieval to achieve higher-quality, more reliable answers.
 
-Examples include:
+In the next article we will examine **Multi-Hop Retrieval**, a powerful extension that allows agents to connect and synthesize information across multiple related documents and knowledge sources.
 
-* research assistants
-* coding copilots
-* enterprise knowledge agents
-* scientific literature analysis systems
-
-These systems rely on **dynamic retrieval rather than static knowledge injection**.
-
----
-
-# Agentic RAG as a Knowledge Exploration Process
-
-Agentic retrieval turns knowledge access into a **search process**.
-
-Conceptually:
-
-```text
-Question
-   ↓
-Search
-   ↓
-Evaluate
-   ↓
-Search Again
-   ↓
-Synthesize Knowledge
-```
-
-This mirrors how human researchers explore information.
-
----
-
-# Looking Ahead
-
-In this article we explored **Agentic RAG**, where agents actively control retrieval through iterative search and self-evaluation.
-
-We examined:
-
-* iterative retrieval loops
-* Self-RAG mechanisms
-* retrieval critique
-
-In the next article we will explore **Multi-Hop Retrieval**, a technique that allows agents to connect information across multiple documents and knowledge sources.
-
-→ Continue to **5.6 — Multi-Hop Retrieval**
+→ Continue to **[5.6 — Multi-Hop Retrieval](/agentic-ai/memory-systems-rag/multi-hop)**

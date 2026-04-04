@@ -1,10 +1,9 @@
 ---
-title: Top-k vs. Nucleus Sampling
+title: Top-k vs. Nucleus Sampling - Decoding the Secrets of AI Text Generation
 description: Decoding the Secrets of AI Text Generation
 pubDatetime: 2022-09-25T15:20:35Z
 modDatetime: 2026-01-09T15:00:15.170Z
 ---
-# Top-k vs. Nucleus Sampling: Decoding the Secrets of AI Text Generation
 
 In the fascinating world of artificial intelligence, large language models (LLMs) like GPT-4 or Grok have revolutionized how we interact with machines. But have you ever wondered how these models decide what word comes next in a sentence? It's not just magic—it's a carefully orchestrated process called decoding. Among the many strategies, top-k and nucleus sampling stand out as powerful techniques for generating diverse and coherent text. These methods help avoid the pitfalls of repetitive or nonsensical outputs that plagued early AI generations.
 

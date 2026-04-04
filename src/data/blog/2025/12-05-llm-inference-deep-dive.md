@@ -20,8 +20,6 @@ modDatetime: 2026-01-09T15:00:15.170Z
 
 
 
-# What LLMs Do at Inference: A Deep Dive Under the Hood
-
 In the rapidly evolving world of artificial intelligence, Large Language Models (LLMs) like GPT-4, Llama 3, and Grok have become the backbone of everything from chatbots to content creation tools. But while we marvel at their ability to generate human-like text, code, or even creative stories, few stop to wonder: what exactly happens when you hit "send" on that prompt? This is the magic of *inference*—the phase where a trained LLM springs into action to produce outputs. Unlike training, which involves massive datasets and weeks of computation to learn patterns, inference is all about real-time application. It's efficient, forward-only, and powers the AI experiences we interact with daily.
 
 In this article, we'll peel back the layers of LLM inference, exploring the step-by-step process, the underlying mechanics, challenges, and cutting-edge optimizations. Whether you're an AI enthusiast building your knowledge base or a developer optimizing models for production, understanding inference is key to unlocking AI's full potential. We'll draw from reliable sources in the AI community to ensure accuracy, and by the end, you'll have a clear picture of what's happening "under the hood." Let's dive in.

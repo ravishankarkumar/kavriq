@@ -1,6 +1,6 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "02 — Agent Architecture"
+title: "Agent Architecture"
 ---
 
 In this module, we break down an AI agent into its core components — from perception to reasoning, execution, and reflection.

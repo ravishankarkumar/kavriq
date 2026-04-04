@@ -1,403 +1,206 @@
 ---
-
 title: Building Agents with LangGraph
-description: Implementing graph-based agent architectures with cycles, branches, and checkpoints
+description: Implementing stateful, graph-based agent architectures with cycles, branches, and checkpoints
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article concludes **Module 3 — Planning Systems**.
+<Aside type="tip" title="Dual-Track Tutorial">
+This article focuses on the **Python track** using LangGraph.
 
-In the previous article we explored **Execution Graphs**, which model agent workflows as directed graphs rather than simple loops.
-
-In this article we examine **LangGraph**, a popular framework for implementing graph-based agent architectures in production systems.
-
+If you are following the **Rust track**, go to **[3.7 — Building Agents with Rig and Custom Graphs](/agentic-ai/planning-systems/rig)** instead.
 </Aside>
 
-# Building Agents with LangGraph
+As agents grew more sophisticated, the limitations of simple control loops became clear. Traditional loops (`observe → reason → act`) work for basic tasks but struggle with conditional logic, long-running workflows, parallel execution, and maintaining reliable state over many steps.
 
-As AI agents became more complex, developers began encountering limitations with traditional agent frameworks.
+**LangGraph** solves these problems by letting developers build agents as **stateful, graph-based workflows** instead of implicit loops.
 
-Early frameworks often relied on **simple loops**:
+---
 
-```text
-observe → reason → act → observe
+## What Is LangGraph?
+
+LangGraph is a framework for constructing **directed graph-based AI agents**. It makes the agent’s workflow **explicit, controllable, and composable** by modeling it as a graph of nodes and edges.
+
+- **Nodes** = discrete steps (reasoning, tool calling, observation processing, reflection, etc.)
+- **Edges** = transitions between nodes (including conditional branching)
+- **State** = shared data that flows through the entire graph
+
+This design gives developers precise control while still allowing the LLM to drive intelligent decisions inside each node.
+
+---
+
+## Core Concepts
+
+### Agent State
+Everything in LangGraph revolves around a shared state object. It carries the goal, conversation history, tool results, intermediate findings, and final output.
+
+```python
+from typing import TypedDict, Annotated
+from typing_extensions import TypedDict
+
+class AgentState(TypedDict):
+    goal: str
+    messages: Annotated[list[dict], "add_messages"]
+    tool_results: list[dict]
+    final_report: str | None
 ```
 
-While this pattern works for basic agents, it becomes difficult to manage when systems require:
-
-* multiple tools
-* conditional execution paths
-* long-running workflows
-* stateful reasoning
-
-To address these challenges, a new approach emerged:
-
-> **Graph-based agent architectures**
-
-LangGraph is one of the most influential frameworks implementing this idea.
+Each node reads from and updates this state.
 
 ---
 
-# What Is LangGraph?
+## Typical LangGraph Workflow
 
-LangGraph is a framework designed to build **stateful, graph-based AI agents**.
-
-Instead of describing an agent as a loop, LangGraph represents the system as a **directed graph of nodes**.
-
-Each node performs a specific task, such as:
-
-* reasoning with an LLM
-* executing a tool
-* updating agent state
-* generating output
-
-The runtime then moves through the graph according to **state transitions**.
-
----
-
-# The Core LangGraph Concept
-
-A LangGraph workflow consists of three key components.
-
-| Component | Description                           |
-| --------- | ------------------------------------- |
-| Nodes     | individual computation steps          |
-| Edges     | transitions between nodes             |
-| State     | shared data flowing through the graph |
-
-Conceptually:
-
-```text
-Start
-  ↓
-Reasoning Node
-  ↓
-Tool Node
-  ↓
-Observation Node
-  ↓
-Reflection Node
-  ↓
-End
-```
-
-Each node modifies the **agent state**.
-
----
-
-# Agent State
-
-In LangGraph, the entire system revolves around a shared **state object**.
-
-Example:
-
-```json
-{
-  "goal": "Compare RTX 4090 and H100",
-  "messages": [],
-  "tool_results": [],
-  "final_answer": null
-}
-```
-
-Each node reads and updates this state.
-
-This approach allows the agent to maintain **long-running context**.
-
----
-
-# Graph-Based Agent Workflow
-
-A simple LangGraph-style workflow might look like this:
+A common agent graph often mirrors the architecture we studied in Module 2:
 
 ```text
 User Input
    ↓
-Planner
+Reasoning (Planner)
    ↓
-Tool Selection
-   ↓
-Tool Execution
+Tool Selection & Execution
    ↓
 Observation Processing
    ↓
 Reflection
-   ↓
-Final Output
+   ↓ (cycle back if needed)
+Final Answer
 ```
 
-This workflow mirrors the **agent architecture we studied in Module 2**.
-
-However, the graph structure makes the workflow **explicit and controllable**.
+The graph supports **cycles** (for repeated reasoning) and **conditional branches** (for adaptive behavior).
 
 ---
 
-# Example Graph Structure
+## Complete LangGraph Example
 
-```text
-            Start
-              |
-          Reasoning
-           /     \
-          /       \
-    Tool Call   Final Answer
-          |
-      Observation
-          |
-       Reasoning
-```
+Here is a realistic, compilable example that implements a ReAct-style agent for comparing GPUs (RTX 4090 vs H100):
 
-This graph includes:
+``` python
+from typing import Literal, Annotated
+from typing_extensions import TypedDict
+from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langgraph.checkpoint.memory import MemorySaver
 
-* **branches** (multiple possible paths)
-* **cycles** (repeated reasoning loops)
+MODEL = "qwen3.5:9b"
 
-Both are essential for realistic agent systems.
+llm = ChatOllama(model=MODEL, temperature=0.2)
 
----
+# 1. Define the state
+class AgentState(TypedDict):
+    goal: str
+    messages: Annotated[list, add_messages]
+    next: Literal["tools", "final_answer"]
+    final_report: str | None
 
-# Cycles in Agent Graphs
+# 2. Define nodes
+def reasoning_node(state: AgentState) -> dict:
+    prompt = (
+        f"Goal: {state['goal']}\n\n"
+        "Decide the next action. If you need to look something up, say 'use tool'. "
+        "Otherwise provide a final_answer."
+    )
+    messages = [SystemMessage(content="You are a GPU expert.")] + list(state["messages"]) + [HumanMessage(content=prompt)]
+    response: AIMessage = llm.invoke(messages)
+    next_action = "tools" if "tool" in response.content.lower() else "final_answer"
+    return {
+        "messages": [response],
+        "next": next_action,
+    }
 
-Cycles allow agents to **repeat reasoning steps**.
+def tool_node(state: AgentState) -> dict:
+    # Simulated tool result
+    result = "H100 outperforms RTX 4090 in training throughput by 2-3x."
+    return {
+        "messages": [HumanMessage(content=f"Tool result: {result}")],
+    }
 
-Example:
+def final_answer_node(state: AgentState) -> dict:
+    history = "\n".join(m.content for m in state["messages"])
+    messages = [
+        SystemMessage(content="You are a GPU expert."),
+        HumanMessage(content=f"Summarize a clear final answer based on:\n{history}"),
+    ]
+    response: AIMessage = llm.invoke(messages)
+    return {
+        "messages": [response],
+        "final_report": response.content,
+    }
 
-```text
-Reason
-   ↓
-Use Tool
-   ↓
-Observe Result
-   ↓
-Reason Again
-```
+# 3. Build the graph
+workflow = StateGraph(AgentState)
+workflow.add_node("reasoning", reasoning_node)
+workflow.add_node("tools", tool_node)
+workflow.add_node("final_answer", final_answer_node)
 
-This creates a **reasoning loop inside the graph**.
+# 4. Define edges
+workflow.add_edge(START, "reasoning")
 
-Without cycles, agents would only execute a fixed pipeline.
+def route_after_reasoning(state: AgentState) -> Literal["tools", "final_answer"]:
+    return state["next"]
 
----
+workflow.add_conditional_edges(
+    "reasoning",
+    route_after_reasoning,
+    {"tools": "tools", "final_answer": "final_answer"},
+)
+workflow.add_edge("tools", "reasoning")   # ReAct cycle
+workflow.add_edge("final_answer", END)
 
-# Branching Logic
+# 5. Compile with checkpointing
+graph = workflow.compile(checkpointer=MemorySaver())
 
-Graphs also allow **conditional branching**.
-
-Example:
-
-```text
-If information is sufficient → generate answer
-Else → search for more data
-```
-
-Graph representation:
-
-```text
-           Analyze Data
-            /       \
-           /         \
-  Need More Data   Answer Ready
-```
-
-This makes agent behavior **adaptive and dynamic**.
-
----
-
-# Checkpoints and State Persistence
-
-One of the most powerful features of LangGraph is **checkpointing**.
-
-Checkpointing allows the agent to **save its state during execution**.
-
-Example:
-
-```text
-Step 1 complete → save state
-Step 2 complete → save state
-```
-
-If the system crashes or restarts, the workflow can resume from the last checkpoint.
-
-This is critical for **long-running agents**.
-
----
-
-# Why Checkpoints Matter
-
-Consider an agent performing a complex research task.
-
-Example workflow:
-
-```text
-Collect data
-Analyze results
-Write summary
-Generate report
-```
-
-If execution fails halfway through, restarting the entire workflow would be inefficient.
-
-Checkpointing allows the agent to **resume from the previous step**.
-
----
-
-# Example LangGraph Node
-
-<Tabs>
-
-<TabItem label="Python" icon="seti:python">
-
-```python
-def reasoning_node(state, llm):
-
-    goal = state["goal"]
-
-    prompt = f"""
-    Given the goal:
-
-    {goal}
-
-    Decide the next step.
-    """
-
-    decision = llm.generate(prompt)
-
-    state["decision"] = decision
-
-    return state
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn reasoning_node(state: &mut State, llm: &LLMClient) {
-
-    let prompt = format!(
-        "Given the goal: {}\nDecide next step.",
-        state.goal
-    );
-
-    let decision = llm.generate(&prompt);
-
-    state.decision = decision;
+# 6. Run
+initial_state: AgentState = {
+    "goal": "Compare RTX 4090 and H100 for machine learning workloads",
+    "messages": [],
+    "next": "final_answer",
+    "final_report": None,
 }
+
+result = graph.invoke(initial_state, config={"configurable": {"thread_id": "1"}})
+
+print("\n=== FINAL REPORT ===")
+print(result["final_report"])
 ```
 
-</TabItem>
-
-</Tabs>
-
-Each node reads and modifies the **shared agent state**.
-
----
-
-# Example Graph Definition (Conceptual)
-
-A simplified graph definition might look like this:
-
-```text
-nodes:
-  - planner
-  - tool_executor
-  - observation_processor
-  - reflection
-
-edges:
-  planner → tool_executor
-  tool_executor → observation_processor
-  observation_processor → reflection
-  reflection → planner
-```
-
-This cycle implements the **ReAct reasoning loop** using a graph.
+This example shows a **full, production-ready pattern**:
+- Shared typed state
+- Multiple nodes
+- Conditional routing
+- Cycle (ReAct loop)
+- Checkpointing via `MemorySaver` (or a persistent store in production)
 
 ---
 
-# Advantages of Graph-Based Agents
+## Key Features of LangGraph
 
-Graph architectures provide several advantages.
-
-### Explicit Workflow Structure
-
-Developers can clearly see how the agent operates.
-
----
-
-### Better Debugging
-
-Each node can be inspected independently.
+- **Cycles** — Enable repeated reasoning/tool loops inside a structured graph.
+- **Conditional Branching** — Dynamic path selection based on current state.
+- **Checkpointing** — Automatically saves state after each node, allowing resume, debugging, and human-in-the-loop.
+- **Persistence** — Works with Redis, Postgres, or in-memory stores for long-running agents.
 
 ---
 
-### Deterministic Control
+## Advantages of Graph-Based Agents
 
-The system follows well-defined transitions.
+- Explicit and readable workflow
+- Precise control and deterministic behavior
+- Excellent debuggability (inspect any node/state)
+- Built-in reliability through checkpointing
+- Scalable composition of complex behaviors
 
----
-
-### Scalable Architecture
-
-Complex workflows can be composed from smaller nodes.
-
----
-
-# LangGraph vs Traditional Agent Frameworks
-
-| Approach     | Architecture           |
-| ------------ | ---------------------- |
-| Early agents | reasoning loops        |
-| ReAct agents | reasoning + tool loops |
-| LangGraph    | graph-based workflows  |
-
-LangGraph therefore represents a **shift from prompt engineering to workflow engineering**.
+LangGraph represents the shift from **prompt engineering** to **workflow engineering**.
 
 ---
 
-# LangGraph and the Future of Agents
+## Looking Ahead
 
-As AI systems become more complex, developers increasingly require:
+LangGraph shows how graph-based architectures overcome the limitations of traditional loops, making agents more reliable, observable, and production-ready.
 
-* structured workflows
-* state persistence
-* robust debugging tools
-* deterministic execution
+In the next module we will explore **Tool Use & Protocols**, covering how to design robust tools, define schemas, handle errors, and work with emerging standards like the Model Context Protocol (MCP).
 
-Graph-based frameworks like LangGraph provide the infrastructure necessary for **production-grade agent systems**.
-
----
-
-# Summary of Module 3
-
-In this module we explored the **planning systems that power modern AI agents**.
-
-| Topic                | Concept                            |
-| -------------------- | ---------------------------------- |
-| Why Planning Matters | limitations of simple loops        |
-| ReAct                | reasoning + tool interaction       |
-| Chain-of-Thought     | linear reasoning                   |
-| Tree-of-Thought      | exploring multiple reasoning paths |
-| Execution Graphs     | modeling workflows as graphs       |
-| LangGraph            | production implementation          |
-
-Together, these techniques form the **planning layer of modern agent architectures**.
-
----
-
-# Looking Ahead
-
-In the next module we will explore **Tool Use & Protocols**, which define how agents interact with external systems.
-
-Topics include:
-
-* designing reliable tools
-* tool schemas
-* error handling
-* the **Model Context Protocol (MCP)**
-
-These concepts are essential for building agents that can interact safely with real-world software systems.
-
-→ Continue to **4.1 — Why Tools Make Agents Powerful**
+→ Continue to **[4.1 — Why Tools Make Agents Powerful](/agentic-ai/tool-use-protocols/why-tools)**

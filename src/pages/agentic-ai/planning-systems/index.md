@@ -1,18 +1,18 @@
 ---
 layout: ../../../layouts/TutorialPage.astro
-title: "04 — Planning Systems"
+title: "Planning Systems"
 ---
 
-# 04 — Planning Systems
+- [Why Planning Matters](/agentic-ai/planning-systems/why-planning-matters)
 
-a) [a — Why Planning Matters](./why-planning-matters.mdx)
+- [ReAct: Reason + Act](/agentic-ai/planning-systems/react)
 
-b) [b — ReAct: Reason + Act](./react.mdx)
+- [Chain-of-Thought Planning](/agentic-ai/planning-systems/chain-of-thought)
 
-c) [c — Chain-of-Thought Planning](./chain-of-thought.mdx)
+- [Tree-of-Thought and Algorithm-of-Thought](/agentic-ai/planning-systems/tree-of-thought)
 
-d) [d — Tree-of-Thought and Algorithm-of-Thought](./tree-of-thought.mdx)
+- [Execution Graphs](/agentic-ai/planning-systems/execution-graphs)
 
-e) [e — Execution Graphs](./execution-graphs.mdx)
+- [Building Agents with LangGraph (Python)](/agentic-ai/planning-systems/langgraph)
 
-f) [f — Building Agents with LangGraph](./langgraph.mdx)
+- [Building Agents with Rig (Rust)](/agentic-ai/planning-systems/rig)

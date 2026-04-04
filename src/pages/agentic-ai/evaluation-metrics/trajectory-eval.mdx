@@ -1,399 +1,124 @@
 ---
-
 title: Trajectory Evaluation
-description: Measuring agent performance by analyzing reasoning paths, tool usage efficiency, and decision quality
+description: Measuring agent performance by analyzing full reasoning paths, tool usage, and decision quality rather than just final outcomes
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 9 — Evaluation & Trajectory Metrics**.
+Two agents can produce the same final answer but follow dramatically different reasoning paths.
 
-In the previous article we explored **LLM-as-a-Judge**, where language models evaluate the quality of agent outputs.
+**Trajectory evaluation** analyzes the full sequence of steps an agent takes — its thoughts, tool calls, observations, and decisions — rather than judging only the final output.
 
-However, evaluating only the final answer is often insufficient.
+This approach reveals critical insights about reasoning quality, efficiency, tool usage, and reliability that outcome-only evaluation misses.
 
-Agents may arrive at the correct answer through poor reasoning, inefficient tool usage, or accidental guesses.
+---
 
-To properly evaluate agent systems we must analyze the **trajectory** — the sequence of reasoning steps and actions taken during problem solving.
+## Why Trajectories Matter More Than Outcomes
 
-</Aside>
+Consider this scenario:
 
-# Trajectory Evaluation
+- **Agent A**: Performs a targeted search → retrieves relevant sources → logically analyzes data → produces correct answer.
+- **Agent B**: Makes multiple irrelevant searches → hallucinates facts → makes a lucky guess → produces the same correct answer.
 
-An **agent trajectory** represents the sequence of steps taken by an agent while solving a task.
+Both agents have the same **outcome**, but only Agent A demonstrates reliable, trustworthy reasoning. Evaluating only the final answer would hide serious flaws in Agent B’s process.
 
-Example trajectory:
+Trajectory evaluation helps identify these differences and guides meaningful improvements.
+
+---
+
+## What Is an Agent Trajectory?
+
+An agent trajectory is the complete record of an agent’s decision-making process:
 
 ```text
 User Question
    ↓
-Thought: search for GPU benchmarks
+Thought: I need current GPU benchmarks
    ↓
-Action: web_search("H100 vs RTX 4090 benchmarks")
+Action: web_search("H100 vs RTX 5090 benchmarks 2026")
    ↓
-Observation: benchmark results
+Observation: Retrieved benchmark data
    ↓
-Thought: compare training throughput
+Thought: Compare training throughput and cost
+   ↓
+Action: calculate_price_performance_ratio()
    ↓
 Final Answer
 ```
 
-Each step contains valuable information about **how the agent reasoned**.
-
-Trajectory evaluation measures the **quality and efficiency of these steps**.
+Each step (thought, action, observation) provides valuable signal for evaluation.
 
 ---
 
-# Why Trajectories Matter
+## Key Dimensions of Trajectory Evaluation
 
-Two agents may produce the same final answer but follow very different reasoning paths.
+Modern trajectory evaluation typically measures several dimensions:
 
-Example:
+| Dimension              | What It Measures                              | Why It Matters                          |
+|------------------------|-----------------------------------------------|-----------------------------------------|
+| Efficiency             | Number of steps, tool calls, tokens used      | Resource usage and speed                |
+| Tool Selection Quality | Was the right tool chosen at each step?       | Appropriate tool usage                  |
+| Reasoning Quality      | Logical consistency and soundness             | Reliability of thought process          |
+| Error Recovery         | How well the agent handles mistakes           | Robustness                              |
+| Safety & Compliance    | Did the agent respect constraints?            | Security and policy adherence           |
 
-Agent A:
-
-```text
-Search → retrieve relevant source → answer
-```
-
-Agent B:
-
-```text
-Search → search again → random guess → answer
-```
-
-Both agents produce the correct answer.
-
-However, Agent A demonstrates **strong reasoning**, while Agent B appears unreliable.
-
-Trajectory evaluation helps identify these differences.
+A comprehensive evaluation combines these into a balanced score.
 
 ---
 
-# Dimensions of Trajectory Evaluation
+## Efficiency Metrics
 
-Several metrics can be used to evaluate trajectories.
+Common efficiency metrics include:
+- **Trajectory length** — total number of reasoning + action steps
+- **Tool call count** — how many external tools were invoked
+- **Token efficiency** — total tokens consumed
+- **Wall-clock time** — actual time to completion
 
-Common dimensions include:
-
-| Metric Category   | Purpose                    |
-| ----------------- | -------------------------- |
-| efficiency        | measure number of steps    |
-| tool selection    | evaluate tool usage        |
-| reasoning quality | assess logical consistency |
-
-These metrics provide insight into **how the agent solves problems**, not just whether it succeeds.
+Shorter, more direct trajectories are generally better, but extremely short ones may indicate guessing rather than reasoning.
 
 ---
 
-# Efficiency Metrics
+## Tool Usage Quality
 
-Efficiency metrics measure how effectively an agent solves tasks.
+Evaluate whether the agent:
+- Chose the most appropriate tool for each subtask
+- Used tools correctly (right parameters, proper error handling)
+- Avoided redundant or unnecessary tool calls
 
-Example questions:
-
-* How many steps were required?
-* How many tool calls were made?
-* How long did the task take?
-
-Example trajectories:
-
-Efficient agent:
-
-```text
-Search → analyze → answer
-```
-
-Inefficient agent:
-
-```text
-Search → search again → search again → analyze → answer
-```
-
-Even if both succeed, the second agent wastes resources.
+Example poor tool usage: Using a calculator for a web search task.
 
 ---
 
-# Measuring Step Count
+## Reasoning Quality
 
-A simple efficiency metric is **trajectory length**.
+Assess whether the agent’s thoughts show:
+- Logical consistency
+- Proper use of retrieved information
+- Avoidance of hallucinations
+- Clear step-by-step progression
 
-Example:
-
-```text
-Trajectory length = number of reasoning + action steps
-```
-
-Example comparison:
-
-| Agent   | Steps |
-| ------- | ----- |
-| Agent A | 3     |
-| Agent B | 7     |
-
-Shorter trajectories often indicate **more efficient reasoning**.
-
-However, extremely short trajectories may indicate **guessing**, so efficiency must be interpreted carefully.
+LLM-as-a-Judge is frequently used here, with structured rubrics that score individual reasoning steps.
 
 ---
 
-# Tool Selection Metrics
+## Example Trajectory Evaluation Pipeline
 
-Agents often rely on tools such as:
+A practical pipeline usually includes:
 
-* web search
-* databases
-* APIs
-* code execution environments
+1. Logging the full trajectory (thoughts, actions, observations)
+2. Applying automated metrics (efficiency, tool accuracy)
+3. Using LLM judges for qualitative assessment of reasoning
+4. Aggregating results into dashboards and reports
 
-Evaluating tool usage helps determine whether the agent used **appropriate tools**.
-
-Example scenario:
-
-Question:
-
-```text
-What is the market share of NVIDIA GPUs?
-```
-
-Correct tool usage:
-
-```text
-web_search("NVIDIA GPU market share")
-```
-
-Incorrect tool usage:
-
-```text
-calculator(80 + 15)
-```
-
-Tool selection metrics measure whether the agent chose **the correct tool for the task**.
+This combination provides both quantitative metrics and qualitative insights.
 
 ---
 
-# Tool Usage Efficiency
+## Looking Ahead
 
-Agents sometimes overuse tools.
+In this article we explored **Trajectory Evaluation** — why analyzing the full reasoning path is essential for understanding agent performance beyond simple outcome scoring.
 
-Example trajectory:
+In the next article we will examine **Building Evaluation Pipelines**, which covers how to automate large-scale agent testing using benchmarks, regression suites, and continuous evaluation systems.
 
-```text
-Search → search again → search again → answer
-```
-
-Evaluation metric:
-
-```text
-tool_calls_per_task
-```
-
-Lower values often indicate **better planning**.
-
-However, complex tasks may legitimately require multiple tool calls.
-
----
-
-# Tool Accuracy
-
-Another important metric is **tool accuracy**.
-
-Example evaluation:
-
-```text
-Correct tool selected: web_search
-Incorrect tool selected: database_query
-```
-
-Tool accuracy measures how often the agent chooses **the appropriate tool**.
-
----
-
-# Reasoning Quality Metrics
-
-Trajectory evaluation also measures the **quality of reasoning steps**.
-
-Example reasoning step:
-
-```text
-Thought: GPUs accelerate training because they perform parallel matrix operations.
-```
-
-Evaluation criteria may include:
-
-* logical consistency
-* factual correctness
-* clarity of reasoning
-
-Poor reasoning example:
-
-```text
-Thought: GPUs are faster because they are expensive.
-```
-
-This reasoning is incorrect.
-
----
-
-# Evaluating Reasoning with LLM Judges
-
-Reasoning quality is often evaluated using **LLM judges**.
-
-Example prompt:
-
-```text
-Evaluate the reasoning step:
-
-"GPUs accelerate deep learning because they perform parallel matrix operations."
-
-Is this reasoning correct?
-```
-
-Example output:
-
-```text
-Score: 5
-Reason: Accurate explanation of GPU parallelism.
-```
-
-This approach allows reasoning quality to be evaluated automatically.
-
----
-
-# Error Detection in Trajectories
-
-Trajectory evaluation also helps identify **failure modes**.
-
-Example issues include:
-
-| Failure Type           | Description            |
-| ---------------------- | ---------------------- |
-| hallucinated reasoning | incorrect assumptions  |
-| tool misuse            | calling the wrong tool |
-| redundant actions      | repeated tool calls    |
-| incomplete reasoning   | missing logical steps  |
-
-Identifying these patterns helps developers improve agent design.
-
----
-
-# Example Trajectory Evaluation Pipeline
-
-Conceptually:
-
-```text
-Agent execution
-      ↓
-Trajectory logging
-      ↓
-Evaluation metrics
-      ↓
-Performance report
-```
-
-Each trajectory is analyzed to produce evaluation scores.
-
----
-
-# Example Implementation
-
-<Tabs>
-
-<TabItem label="Python" icon="seti:python">
-
-```python
-def evaluate_trajectory(trajectory):
-
-    steps = len(trajectory)
-
-    tool_calls = sum(1 for s in trajectory if s["type"] == "tool")
-
-    return {
-        "trajectory_length": steps,
-        "tool_calls": tool_calls
-    }
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn evaluate_trajectory(traj: &Vec<Step>) -> Metrics {
-
-    let steps = traj.len();
-
-    let tool_calls = traj.iter()
-        .filter(|s| s.kind == StepKind::Tool)
-        .count();
-
-    Metrics { steps, tool_calls }
-}
-```
-
-</TabItem>
-
-</Tabs>
-
-This provides basic efficiency metrics.
-
----
-
-# Combining Multiple Metrics
-
-In practice, systems combine several metrics into an overall evaluation score.
-
-Example:
-
-```text
-Final Score =
-0.4 × task success
-0.3 × reasoning quality
-0.2 × tool accuracy
-0.1 × efficiency
-```
-
-This weighted scoring approach provides a **balanced evaluation**.
-
----
-
-# Trajectory Evaluation in Production Systems
-
-Many production AI systems track trajectory metrics.
-
-Examples include:
-
-| System             | Metrics Tracked          |
-| ------------------ | ------------------------ |
-| research agents    | search efficiency        |
-| coding agents      | tool usage accuracy      |
-| enterprise agents  | workflow completion rate |
-| autonomous systems | decision correctness     |
-
-These metrics help teams continuously **improve agent behavior**.
-
----
-
-# Trajectory Evaluation as Observability
-
-Trajectory analysis also functions as **observability for agents**.
-
-Developers can inspect trajectories to understand:
-
-* why an agent failed
-* where reasoning broke down
-* which tools were misused
-
-This is similar to **debugging logs in traditional software**.
-
----
-
-# Looking Ahead
-
-In this article we explored **Trajectory Evaluation**, including efficiency metrics, tool selection metrics, and reasoning quality metrics.
-
-In the next article we will examine **Evaluation Pipelines**, which automate large-scale testing using benchmark datasets and regression testing.
-
-→ Continue to **9.4 — Building Evaluation Pipelines**
+→ Continue to **[9.4 — Building Evaluation Pipelines](/agentic-ai/evaluation-metrics/building-eval-pipelines)**

@@ -43,7 +43,7 @@ const recentPosts = sortedPosts.filter(p => !(p.data as unknown as BlogData).fea
         <span class="sr-only">RSS Feed</span>
       </a> -->
 
-      <p>Instead of chasing the noise, we focus on the foundational concepts of AI. That is the mission of <strong>AI Under the Hood (AUTH)</strong>.</p>
+      <p>Stop chasing the AI noise. <strong>AI Under the Hood (AUTH)</strong> is a deep-dive resource dedicated to the foundational concepts and full-stack architecture of AI. Learn to build with first-principles reasoning and gain the advantage of hindsight in an evolving field.</p>
       <br/>
 
       <p>AI is a multi-layer, full-stack system. While each layer is deep enough to define an entire career, this guide is designed to look at them as a single, connected architecture.</p>
@@ -106,7 +106,7 @@ const recentPosts = sortedPosts.filter(p => !(p.data as unknown as BlogData).fea
     {
       recentPosts.length > 0 && (
         <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">Recent Posts</h2>
+          <h2 class="text-2xl font-semibold tracking-wide">Recent Blogs</h2>
           <ul>
             {recentPosts.map(
               (data, index) =>
@@ -118,8 +118,8 @@ const recentPosts = sortedPosts.filter(p => !(p.data as unknown as BlogData).fea
     }
 
     <div class="my-8 text-center">
-      <LinkButton href="/posts/">
-        All Posts
+      <LinkButton href="/blogs">
+        All Blogs
         <IconArrowRight class="inline-block rtl:-rotate-180" />
       </LinkButton>
     </div>

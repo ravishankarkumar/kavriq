@@ -96,23 +96,9 @@ This creates a simple but useful environment for demonstrating agent behavior.
   <TabItem label="Python" icon="seti:python">
 
 ```python
-import os
+import json
 from pathlib import Path
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
-
-# -----------------------------
-# Load environment variables
-# -----------------------------
-env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
-
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in environment variables.")
-
-client = genai.Client(api_key=api_key)
+import ollama
 
 # -----------------------------
 # Hidden game world
@@ -124,84 +110,143 @@ SECRET_NUMBER = 12
 # Tools
 # -----------------------------
 def greater_than(n: int) -> str:
-    """Return whether the secret number is greater than n."""
     return f"Is the secret number greater than {n}? {'yes' if SECRET_NUMBER > n else 'no'}"
 
 
 def is_divisible_by(n: int) -> str:
-    """Return whether the secret number is divisible by n."""
     if n == 0:
         return "Error: division by zero is not allowed."
     return f"Is the secret number divisible by {n}? {'yes' if SECRET_NUMBER % n == 0 else 'no'}"
 
 
 def guess_number(n: int) -> str:
-    """Make a final guess for the secret number."""
     if SECRET_NUMBER == n:
         return f"Correct! The secret number is {n}."
     return f"Incorrect guess: {n} is not the secret number."
 
 
 # -----------------------------
-# Agent loop
+# Agent loop (Ollama version)
 # -----------------------------
 def run_hidden_number_agent(goal: str, max_iterations: int = 8) -> str:
-    chat = client.chats.create(
-        model="gemini-2.5-flash",
-        config=types.GenerateContentConfig(
-            tools=[greater_than, is_divisible_by, guess_number],
-            temperature=0.1,
-            system_instruction=(
-                "You are an autonomous puzzle-solving agent.\n"
-                "A secret integer exists between 1 and 20.\n"
-                "Your job is to discover it by calling tools strategically.\n"
-                "Do not guess too early.\n"
-                "Use previous observations to narrow the possibilities.\n"
-                "When you are confident, call guess_number.\n"
-                "Think step by step and solve the task carefully."
-            ),
-        ),
-    )
+    model = "qwen3.5:9b"
+
+    system_prompt = """
+You are an autonomous puzzle-solving agent.
+
+A secret integer exists between 1 and 20.
+Your job is to discover it using tools strategically.
+
+Rules:
+- Do NOT guess too early
+- Use previous observations
+- Think step by step
+- Call ONE tool per step
+
+Available tools:
+1. greater_than(n)
+2. is_divisible_by(n)
+3. guess_number(n)
+
+To call a tool, respond ONLY in JSON:
+
+{
+  "tool": "tool_name",
+  "arguments": { "n": number }
+}
+
+After receiving tool results, continue reasoning.
+"""
 
     history = []
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+    ]
+
     current_prompt = (
         f"Goal: {goal}\n"
-        f"The secret number is between 1 and 20.\n"
+        "The secret number is between 1 and 20.\n"
         "Start by choosing the best first tool call."
     )
 
     for iteration in range(1, max_iterations + 1):
         print(f"\n=== Iteration {iteration} ===")
-        print("Prompt to agent:")
-        print(current_prompt)
+        print("Prompt to agent:\n", current_prompt)
 
-        response = chat.send_message(current_prompt)
+        messages.append({"role": "user", "content": current_prompt})
 
-        text = response.text if response.text else ""
-        print("\nAgent response:")
-        print(text)
+        response = ollama.chat(
+            model=model,
+            messages=messages,
+        )
 
-        history.append(f"Iteration {iteration}: {text}")
+        content = response["message"]["content"]
+        print("\nAgent response:\n", content)
 
-        # Stop if the model clearly found the answer
-        if "Correct! The secret number is" in text:
-            return text
+        # -----------------------------
+        # Try parsing tool call
+        # -----------------------------
+        try:
+            parsed = json.loads(content)
 
-        # Build the next prompt using accumulated observations
+            tool = parsed.get("tool")
+            n = parsed.get("arguments", {}).get("n")
+
+            if tool and n is not None:
+                if tool == "greater_than":
+                    result = greater_than(int(n))
+                elif tool == "is_divisible_by":
+                    result = is_divisible_by(int(n))
+                elif tool == "guess_number":
+                    result = guess_number(int(n))
+                else:
+                    result = "Error: unknown tool"
+
+                print("\n📦 Tool result:", result)
+
+                history.append(f"Iteration {iteration}: {result}")
+
+                # Add assistant + tool result
+                messages.append({"role": "assistant", "content": content})
+                messages.append({
+                    "role": "user",
+                    "content": f"Tool result: {result}"
+                })
+
+                # Stop if solved
+                if "Correct! The secret number is" in result:
+                    return result
+
+                continue
+
+        except json.JSONDecodeError:
+            pass
+
+        # If model didn't call tool properly → treat as final answer
+        history.append(f"Iteration {iteration}: {content}")
+
+        if "Correct! The secret number is" in content:
+            return content
+
+        # Build next prompt
         observation_block = "\n".join(history)
+
         current_prompt = (
             f"Goal: {goal}\n"
             f"Iteration: {iteration}/{max_iterations}\n"
-            "Here are the observations so far:\n"
+            "Observations so far:\n"
             f"{observation_block}\n\n"
-            "Based on these observations, choose the single best next step.\n"
-            "If you are confident, use guess_number.\n"
-            "Otherwise, call one of the clue tools."
+            "Choose the best next tool call.\n"
+            "If confident, use guess_number."
         )
 
-    return "Maximum iterations reached before the agent found the secret number."
+    return "Maximum iterations reached before solving."
 
 
+# -----------------------------
+# Main
+# -----------------------------
 if __name__ == "__main__":
     goal = "Find the secret number."
     answer = run_hidden_number_agent(goal)
@@ -215,131 +260,60 @@ if __name__ == "__main__":
   <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-use dotenvy::from_path;
-use gemini_client_api::gemini::ask::Gemini;
-use gemini_client_api::gemini::types::request::Tool;
-use gemini_client_api::gemini::types::sessions::Session;
-use gemini_client_api::gemini::utils::execute_function_calls;
-use gemini_client_api::serde_json::{json, Value};
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    Ollama,
+};
+use serde_json::{json, Value};
 
-use std::env;
-
+// -----------------------------
+// Secret
+// -----------------------------
 const SECRET_NUMBER: i32 = 12;
 
-#[allow(non_camel_case_types)]
-pub struct greater_than;
-
-impl greater_than {
-    pub async fn execute(input: Value) -> Result<Value, String> {
-        let n = input
-            .get("n")
-            .and_then(|v| v.as_i64())
-            .ok_or("Missing or invalid 'n'")? as i32;
-
-        Ok(json!({
-            "tool": "greater_than",
-            "input": n,
-            "result": SECRET_NUMBER > n
-        }))
-    }
+// -----------------------------
+// Tools
+// -----------------------------
+fn greater_than(n: i32) -> Value {
+    json!({
+        "tool": "greater_than",
+        "input": n,
+        "result": SECRET_NUMBER > n
+    })
 }
 
-#[allow(non_camel_case_types)]
-pub struct is_divisible_by;
-
-impl is_divisible_by {
-    pub async fn execute(input: Value) -> Result<Value, String> {
-        let n = input
-            .get("n")
-            .and_then(|v| v.as_i64())
-            .ok_or("Missing or invalid 'n'")? as i32;
-
-        if n == 0 {
-            return Ok(json!({
-                "tool": "is_divisible_by",
-                "input": n,
-                "error": "Division by zero is not allowed"
-            }));
-        }
-
-        Ok(json!({
+fn is_divisible_by(n: i32) -> Value {
+    if n == 0 {
+        return json!({
             "tool": "is_divisible_by",
             "input": n,
-            "result": SECRET_NUMBER % n == 0
-        }))
+            "error": "Division by zero"
+        });
     }
+
+    json!({
+        "tool": "is_divisible_by",
+        "input": n,
+        "result": SECRET_NUMBER % n == 0
+    })
 }
 
-#[allow(non_camel_case_types)]
-pub struct guess_number;
-
-impl guess_number {
-    pub async fn execute(input: Value) -> Result<Value, String> {
-        let n = input
-            .get("n")
-            .and_then(|v| v.as_i64())
-            .ok_or("Missing or invalid 'n'")? as i32;
-
-        Ok(json!({
-            "tool": "guess_number",
-            "input": n,
-            "correct": SECRET_NUMBER == n,
-            "message": if SECRET_NUMBER == n {
-                "Correct! You found the secret number."
-            } else {
-                "Incorrect guess."
-            }
-        }))
-    }
+fn guess_number(n: i32) -> Value {
+    json!({
+        "tool": "guess_number",
+        "input": n,
+        "correct": SECRET_NUMBER == n,
+        "message": if SECRET_NUMBER == n {
+            "Correct! You found the secret number."
+        } else {
+            "Incorrect guess."
+        }
+    })
 }
 
-fn get_tool_schemas() -> Vec<Value> {
-    vec![
-        json!({
-            "name": "greater_than",
-            "description": "Check whether the secret number is greater than n.",
-            "parameters": {
-                "type": "OBJECT",
-                "properties": {
-                    "n": {
-                        "type": "NUMBER",
-                        "description": "A number to compare against the secret number."
-                    }
-                },
-                "required": ["n"]
-            }
-        }),
-        json!({
-            "name": "is_divisible_by",
-            "description": "Check whether the secret number is divisible by n.",
-            "parameters": {
-                "type": "OBJECT",
-                "properties": {
-                    "n": {
-                        "type": "NUMBER",
-                        "description": "A divisor to test against the secret number."
-                    }
-                },
-                "required": ["n"]
-            }
-        }),
-        json!({
-            "name": "guess_number",
-            "description": "Make a final guess for the secret number.",
-            "parameters": {
-                "type": "OBJECT",
-                "properties": {
-                    "n": {
-                        "type": "NUMBER",
-                        "description": "Your guess for the secret number."
-                    }
-                },
-                "required": ["n"]
-            }
-        }),
-    ]
-}
-
+// -----------------------------
+// Agent State
+// -----------------------------
 struct AgentState {
     goal: String,
     observations: Vec<String>,
@@ -351,7 +325,7 @@ impl AgentState {
     fn new(goal: &str, max_iterations: usize) -> Self {
         Self {
             goal: goal.to_string(),
-            observations: Vec::new(),
+            observations: vec![],
             iteration: 0,
             max_iterations,
         }
@@ -362,113 +336,120 @@ impl AgentState {
             "You are a careful puzzle-solving agent.\n\
              Goal: {}\n\
              Iteration: {}/{}\n\
-             The secret number is an integer between 1 and 20.\n\
-             You must discover it by using tools strategically.\n\
-             Do not guess too early.\n\
-             Use the observations you already have to narrow the possibilities.\n\
-             When you are confident enough, call guess_number.\n\n",
+             The secret number is between 1 and 20.\n\
+             Use tools strategically. Do not guess early.\n\n",
             self.goal, self.iteration, self.max_iterations
         );
 
         if self.observations.is_empty() {
-            prompt.push_str("Observations so far: none.\n");
+            prompt.push_str("Observations: none\n");
         } else {
-            prompt.push_str("Observations so far:\n");
+            prompt.push_str("Observations:\n");
             for (i, obs) in self.observations.iter().enumerate() {
                 prompt.push_str(&format!("{}. {}\n", i + 1, obs));
             }
         }
 
         prompt.push_str(
-            "\nThink step by step.\n\
-             Choose the single best next tool call.\n\
-             If you already have enough evidence, use guess_number.\n",
+            "\nAvailable tools:\n\
+            1. greater_than(n)\n\
+            2. is_divisible_by(n)\n\
+            3. guess_number(n)\n\n\
+            Respond ONLY with JSON:\n\
+            { \"tool\": \"name\", \"arguments\": { \"n\": number } }\n"
         );
 
         prompt
     }
 }
 
+// -----------------------------
+// Main
+// -----------------------------
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    from_path("../.env").ok();
+    let ollama = Ollama::default();
+    let model = "qwen3.5:9b".to_string();
 
-    let api_key = env::var("GEMINI_API_KEY")
-        .expect("GEMINI_API_KEY must be set in the workspace root .env");
+    let mut state = AgentState::new(
+        "Find the secret number between 1 and 20.",
+        8,
+    );
 
-    let ai = Gemini::new(
-        api_key,
-        "gemini-2.5-flash",
-        Some(
-            "You are an autonomous puzzle-solving agent. \
-             Solve the hidden number game by calling tools one step at a time. \
-             Be systematic, avoid random guessing, and stop once the number is found."
-                .into(),
+    let mut messages = vec![
+        ChatMessage::system(
+            "You are an autonomous puzzle-solving agent. Use tools step by step.".into(),
         ),
-    )
-    .set_tools(vec![Tool::FunctionDeclarations(get_tool_schemas())]);
-
-    let mut session = Session::new(30);
-    let mut state = AgentState::new("Find the secret number between 1 and 20.", 8);
+    ];
 
     loop {
         if state.iteration >= state.max_iterations {
-            println!("\nStopped: maximum iterations reached.");
-            println!("Observations collected:");
-            for obs in &state.observations {
-                println!("- {}", obs);
-            }
+            println!("❌ Max iterations reached");
             break;
         }
 
         state.iteration += 1;
+
         println!("\n=== Iteration {} ===", state.iteration);
 
         let prompt = state.build_prompt();
-        println!("Agent prompt:\n{}\n", prompt);
+        println!("Prompt:\n{}\n", prompt);
 
-        let mut response = ai.ask(session.ask(prompt)).await?;
+        messages.push(ChatMessage::user(prompt));
 
-        let mut made_tool_call = false;
+        let request = ChatMessageRequest::new(model.clone(), messages.clone());
+        let res = ollama.send_chat_messages(request).await?;
 
-        loop {
-            if response.get_chat().has_function_call() {
-                made_tool_call = true;
-                println!("Gemini requested a function call...");
+        let msg = res.message;
+        let content = msg.content.clone();
 
-                let results = execute_function_calls!(
-                    session,
-                    greater_than,
-                    is_divisible_by,
-                    guess_number
-                );
+        println!("Model:\n{}\n", content);
 
-                for (idx, res) in results.iter().enumerate() {
-                    if let Some(r) = res {
-                        let observation = format!("Tool result {}: {:?}", idx + 1, r);
-                        println!("{}", observation);
-                        state.observations.push(observation.clone());
+        // -----------------------------
+        // Parse tool call
+        // -----------------------------
+        let parsed: Result<Value, _> = serde_json::from_str(&content);
 
-                        if observation.contains("\"correct\":true") {
-                            println!("\nAgent solved the game!");
-                            println!("Final observation: {}", observation);
+        if let Ok(json) = parsed {
+            if let Some(tool) = json.get("tool").and_then(|t| t.as_str()) {
+                let n = json["arguments"]["n"].as_i64().unwrap_or(0) as i32;
+
+                let result = match tool {
+                    "greater_than" => greater_than(n),
+                    "is_divisible_by" => is_divisible_by(n),
+                    "guess_number" => {
+                        let res = guess_number(n);
+
+                        let observation = format!("{}", res);
+                        println!("🎯 {}", observation);
+
+                        if res["correct"] == true {
+                            println!("✅ Solved!");
                             return Ok(());
                         }
-                    }
-                }
 
-                response = ai.ask(&mut session).await?;
-            } else {
-                let text = response.get_chat().get_text_no_think("\n");
-                println!("Agent says:\n{}", text);
-                break;
+                        res
+                    }
+                    _ => json!({"error": "unknown tool"}),
+                };
+
+                let observation = format!("{}", result);
+                println!("📦 {}", observation);
+
+                state.observations.push(observation.clone());
+
+                messages.push(ChatMessage::assistant(content));
+                messages.push(ChatMessage::user(format!(
+                    "Tool result: {}",
+                    observation
+                )));
+
+                continue;
             }
         }
 
-        if !made_tool_call {
-            println!("No tool was called in this iteration. Stopping.");
-            break;
-        }
+        println!("⚠️ No valid tool call. Stopping.");
+        break;
     }
 
     Ok(())

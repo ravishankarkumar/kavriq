@@ -1,394 +1,119 @@
 ---
-
 title: Tree-of-Thought and Algorithm-of-Thought
-description: Exploring multiple reasoning paths with structured planning strategies
+description: How branching reasoning strategies overcome the limitations of linear Chain-of-Thought
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 3 — Planning Systems**.
+Chain-of-Thought (CoT) showed that LLMs reason better when they generate explicit intermediate steps. However, CoT is limited to a **single linear path**. If an early step is wrong, the entire chain often fails.
 
-In the previous article we explored **Chain-of-Thought Planning**, where language models generate a linear sequence of reasoning steps.
-
-However, many real-world problems cannot be solved with a single reasoning path.
-
-In this article we explore **Tree-of-Thought (ToT)** and **Algorithm-of-Thought (AoT)** — techniques that allow agents to explore multiple reasoning strategies before deciding on a solution.
-
-</Aside>
-
-# Tree-of-Thought and Algorithm-of-Thought
-
-Chain-of-Thought reasoning introduced an important insight:
-
-> LLMs perform better when they **explicitly reason through intermediate steps**.
-
-However, Chain-of-Thought follows a **single linear path**.
-
-```text
-Problem
-  ↓
-Step 1
-  ↓
-Step 2
-  ↓
-Step 3
-  ↓
-Answer
-```
-
-If the reasoning goes wrong at any step, the final answer may also be incorrect.
-
-Many problems require exploring **multiple possible reasoning paths**.
-
-This idea led to the development of **Tree-of-Thought (ToT)** reasoning.
+Many complex problems require exploring **multiple possible reasoning paths** rather than committing to one. This insight led to **Tree-of-Thought (ToT)** and **Algorithm-of-Thought (AoT)** — two powerful extensions of Chain-of-Thought.
 
 ---
 
-# Tree-of-Thought Reasoning
+## Tree-of-Thought (ToT) Reasoning
 
-Tree-of-Thought extends Chain-of-Thought by allowing the model to explore **multiple reasoning branches**.
+Tree-of-Thought turns reasoning into a **search process**. Instead of following one chain, the model generates, evaluates, and expands multiple reasoning branches, much like a search tree in classical AI.
 
 Conceptually:
 
 ```text
-            Start
-             |
-      -----------------
-      |               |
-   Thought A      Thought B
-      |               |
-   Step A1         Step B1
-      |               |
-   Step A2         Step B2
+                    Problem
+                       │
+         ┌─────────────┼─────────────┐
+     Thought A     Thought B     Thought C
+         │             │             │
+      Step A1       Step B1       Step C1
 ```
 
-Instead of committing to a single path, the agent evaluates several possibilities.
-
-This approach resembles **search algorithms used in classical AI**.
-
----
-
-# Why Multiple Reasoning Paths Matter
-
-Consider the following problem:
-
-> “Arrange the numbers 1–9 to form a magic square.”
-
-A single reasoning path may fail.
-
-However, exploring multiple possibilities increases the probability of success.
-
-Tree-of-Thought enables the model to:
-
-* propose multiple candidate steps
-* evaluate their quality
-* explore promising directions
-
-This dramatically improves performance on **complex reasoning tasks**.
+This branching structure allows the agent to:
+- Explore several promising directions
+- Evaluate and prune weak paths
+- Recover from early mistakes
 
 ---
 
-# The Tree-of-Thought Process
+## Why Multiple Paths Matter
 
-Tree-of-Thought reasoning typically follows four stages.
+Consider the classic problem:
+
+> “Arrange numbers 1–9 into a 3×3 magic square where each row, column, and diagonal sums to 15.”
+
+A single linear Chain-of-Thought often gets stuck or produces invalid solutions.  
+Tree-of-Thought allows the model to propose multiple partial arrangements, evaluate their potential, and focus on the most promising ones — dramatically increasing success rates on search-heavy or creative reasoning tasks.
+
+---
+
+## The Tree-of-Thought Process
+
+A typical ToT loop follows these stages:
+
+1. **Generate** — Produce multiple candidate next steps or thoughts
+2. **Evaluate** — Score each candidate (using the LLM itself or a critic model)
+3. **Select** — Keep the top-k most promising branches (beam search)
+4. **Expand** — Continue exploring the best branches
+
+This process repeats until a high-quality solution is found or a depth limit is reached.
+
+---
+
+## Search Strategies
+
+| Strategy       | Description                              | Best For                     |
+|----------------|------------------------------------------|------------------------------|
+| Breadth-First  | Explore all branches evenly              | Thorough but expensive       |
+| Depth-First    | Go deep on one branch                    | Fast but can miss solutions  |
+| Beam Search    | Keep only the top-k best branches        | Balanced efficiency & quality (most common) |
+
+Beam search is widely used because it prevents exponential explosion while still exploring diverse ideas.
+
+---
+
+## Algorithm-of-Thought (AoT)
+
+Algorithm-of-Thought takes a different but complementary approach. Instead of free-form branching, it forces the model to follow a **structured algorithmic template**.
+
+Example AoT structure for a math/problem-solving task:
 
 ```text
-Generate → Evaluate → Select → Expand
+Step 1: Identify all relevant variables and constraints
+Step 2: Break the problem into smaller sub-problems
+Step 3: Solve each sub-problem independently
+Step 4: Combine results and verify consistency
+Step 5: Check for edge cases and correctness
 ```
 
-1. **Generate candidate thoughts**
-2. **Evaluate the quality of each thought**
-3. **Select promising branches**
-4. **Expand the search tree**
-
-This process continues until a solution is found.
+By enforcing this disciplined procedure, AoT reduces ambiguity and produces more consistent, debuggable reasoning — especially useful for programming, scientific reasoning, and formal logic.
 
 ---
 
-# Example Tree-of-Thought Reasoning
+## Tree-of-Thought vs Chain-of-Thought
 
-Consider the task:
+| Method               | Reasoning Structure       | Strength                          | Weakness                        |
+|----------------------|---------------------------|-----------------------------------|---------------------------------|
+| Chain-of-Thought     | Single linear path        | Simple, fast, low cost            | Prone to early errors           |
+| Tree-of-Thought      | Branching search tree     | Explores alternatives, more robust| Higher computational cost       |
+| Algorithm-of-Thought | Structured algorithm      | Consistent, systematic            | Less flexible for open problems |
 
-> “Find the best strategy to reduce energy consumption in a building.”
-
-A Tree-of-Thought reasoning process might look like this:
-
-```text
-Thought A: Improve insulation
-Thought B: Install solar panels
-Thought C: Optimize HVAC system
-```
-
-Each branch can be expanded further:
-
-```text
-Improve insulation
-   → wall insulation
-   → roof insulation
-
-Optimize HVAC
-   → smart thermostats
-   → heat recovery systems
-```
-
-The agent then evaluates which strategy is most promising.
+In practice, modern agents often **combine** these techniques: using CoT or AoT for local reasoning and ToT-style branching for high-stakes or complex planning.
 
 ---
 
-# Evaluating Reasoning Paths
+## Limitations
 
-Tree-of-Thought systems typically evaluate candidate thoughts using the language model itself.
+- **Cost** — Multiple model calls per step make ToT significantly more expensive than CoT.
+- **Search explosion** — Without good pruning (beam search, scoring), the number of branches grows exponentially.
+- **Evaluation quality** — The model’s own self-evaluation can be noisy or biased.
 
-Example evaluation prompt:
-
-```text
-Rate the quality of the following reasoning step
-on a scale from 1–10.
-```
-
-The model then selects the **best reasoning paths** to continue exploring.
-
-This approach effectively turns the model into both:
-
-* a **generator of ideas**
-* a **critic of those ideas**
+Because of these trade-offs, pure Tree-of-Thought is still used selectively, often as part of hybrid planning systems rather than as the default loop.
 
 ---
 
-# Example Implementation
+## Looking Ahead
 
-Below is a simplified Tree-of-Thought loop.
+Tree-of-Thought and Algorithm-of-Thought represent an important evolution: moving from linear reasoning to structured exploration.
 
-<Tabs>
+The next step in this progression is to move beyond trees entirely and model agent workflows as **graphs** — allowing cycles, revisiting states, and complex dependencies.
 
-<TabItem label="Python" icon="seti:python">
-
-```python
-def generate_thoughts(state, llm):
-
-    prompt = f"""
-    Given the current state:
-
-    {state}
-
-    Generate three possible next reasoning steps.
-    """
-
-    return llm.generate(prompt)
-```
-
-```python
-def evaluate_thoughts(thoughts, llm):
-
-    scores = []
-
-    for thought in thoughts:
-
-        prompt = f"Rate this reasoning step: {thought}"
-
-        score = llm.generate(prompt)
-
-        scores.append(score)
-
-    return scores
-```
-
-</TabItem>
-
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn generate_thoughts(state: &str, llm: &LLMClient) -> String {
-
-    let prompt = format!(
-        "Generate three reasoning steps:\n{}",
-        state
-    );
-
-    llm.generate(&prompt)
-}
-```
-
-```rust
-fn evaluate_thought(thought: &str, llm: &LLMClient) -> String {
-
-    let prompt = format!(
-        "Evaluate this reasoning step:\n{}",
-        thought
-    );
-
-    llm.generate(&prompt)
-}
-```
-
-</TabItem>
-
-</Tabs>
-
-In practice, this process builds a **search tree of reasoning paths**.
-
----
-
-# Search Strategies in Tree-of-Thought
-
-Several search strategies can be used to explore the reasoning tree.
-
-| Strategy             | Description                 |
-| -------------------- | --------------------------- |
-| Breadth-first search | explore all branches evenly |
-| Depth-first search   | explore one branch deeply   |
-| Beam search          | keep top-k best branches    |
-
-Beam search is commonly used because it balances **exploration and efficiency**.
-
-Example:
-
-```text
-Keep top 3 reasoning branches at each step
-```
-
----
-
-# Algorithm-of-Thought (AoT)
-
-Algorithm-of-Thought takes the idea further.
-
-Instead of free-form reasoning, the model follows a **structured algorithmic process**.
-
-Example:
-
-```text
-Step 1: Identify relevant variables
-Step 2: Apply formula
-Step 3: Evaluate result
-Step 4: Verify correctness
-```
-
-This encourages the model to behave more like a **program executing an algorithm**.
-
----
-
-# Why Algorithm-of-Thought Works
-
-Algorithm-of-Thought reduces ambiguity by enforcing **structured reasoning procedures**.
-
-Benefits include:
-
-* fewer reasoning errors
-* more consistent outputs
-* easier debugging
-
-This approach is particularly useful for:
-
-* mathematics
-* programming tasks
-* scientific reasoning
-
----
-
-# Tree-of-Thought vs Chain-of-Thought
-
-These methods differ in how they explore reasoning.
-
-| Method           | Structure                |
-| ---------------- | ------------------------ |
-| Chain-of-Thought | single reasoning path    |
-| Tree-of-Thought  | multiple reasoning paths |
-
-Example:
-
-Chain-of-Thought:
-
-```text
-Step 1 → Step 2 → Step 3
-```
-
-Tree-of-Thought:
-
-```text
-Step 1
- ├─ Step 2A
- ├─ Step 2B
- └─ Step 2C
-```
-
-Tree-of-Thought therefore provides **greater flexibility**.
-
----
-
-# Limitations of Tree-of-Thought
-
-Despite its power, Tree-of-Thought introduces new challenges.
-
-### Computational Cost
-
-Exploring multiple reasoning paths requires **more model calls**.
-
----
-
-### Search Explosion
-
-The number of branches may grow exponentially.
-
-Example:
-
-```text
-3 branches per step
-5 steps
-= 243 reasoning paths
-```
-
-Efficient pruning strategies are therefore essential.
-
----
-
-# Tree-of-Thought in Modern Agent Systems
-
-Tree-of-Thought ideas influence many modern frameworks.
-
-Examples include:
-
-* reasoning models with **deliberate search**
-* multi-agent debate systems
-* planning graphs
-* reinforcement learning planning systems
-
-Although most production agents still use **ReAct-style loops**, Tree-of-Thought techniques are becoming increasingly important for **complex reasoning tasks**.
-
----
-
-# From Trees to Graphs
-
-One final observation:
-
-Real-world planning problems often involve **revisiting states**.
-
-This turns the reasoning structure from a tree into a **graph**.
-
-Example:
-
-```text
-State A → State B → State C
-      ↘
-        State D
-```
-
-This idea leads directly to the next topic.
-
----
-
-# Looking Ahead
-
-In this article we explored **Tree-of-Thought and Algorithm-of-Thought**, two techniques that extend Chain-of-Thought reasoning by enabling structured exploration of multiple reasoning paths.
-
-We examined:
-
-* how Tree-of-Thought expands reasoning into search trees
-* how models evaluate candidate reasoning paths
-* how Algorithm-of-Thought introduces structured reasoning procedures
-
-In the next article we will explore **Execution Graphs**, which represent agent workflows as **state machines and graphs rather than simple loops**.
-
-→ Continue to **3.5 — Execution Graphs**
+→ Continue to **3.5 — [Execution Graphs](/agentic-ai/planning-systems/execution-graphs)**

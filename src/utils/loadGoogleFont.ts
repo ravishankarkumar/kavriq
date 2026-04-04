@@ -15,7 +15,7 @@ async function loadGoogleFont(
   ).text();
 
   const resource = css.match(
-    /src: url\((.+?)\) format\('(opentype|truetype)'\)/
+    /src: url$(.+?)$ format$'(opentype|truetype)'$/
   );
 
   if (!resource) throw new Error("Failed to download dynamic font");

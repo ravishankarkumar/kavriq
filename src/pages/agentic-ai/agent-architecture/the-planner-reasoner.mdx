@@ -1,237 +1,197 @@
 ---
-
 title: The Planner / Reasoner
-description: How AI agents turn goals into executable plans
+description: How AI agents turn high-level goals into executable plans
 layout: ../../../layouts/TutorialPage.astro
--------------------------------------------
+---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<Aside type="note" title="Module Context">
-This article is part of **Module 2 — Internal Agent Architecture**.
+**Planner = Strategy**  
+**Reasoning = Thinking**  
+**Acting = Execution**
 
-In the previous article we explored **Working Memory and the Scratchpad**, which allow agents to maintain short-term reasoning state.
+When a user gives an agent a high-level task, they rarely specify the exact steps. Examples include:
 
-Now we examine the **Planner / Reasoner**, the component responsible for transforming high-level goals into concrete actions.
+- “Summarize the latest research on fusion energy.”
+- “Find the cheapest flights to Tokyo next month.”
+- “Compare the performance of RTX 4090 and H100 for machine learning.”
 
-</Aside>
-
-# The Planner / Reasoner
-
-When a user gives an agent a task, the instruction is usually **high level**.
-
-Examples:
-
-* “Summarize the latest research on fusion energy.”
-* “Find the cheapest flights to Tokyo next month.”
-* “Compare the performance of RTX 4090 and H100 for machine learning.”
-
-These instructions do **not specify how the task should be performed**.
-
-The agent must determine the steps required to complete the task.
-
-This is the responsibility of the **planner / reasoner**.
+The **planner / reasoner** (or reasoning-driven planning) converts such vague goals into structured, executable sequences of actions. In modern systems, planning often **emerges from structured reasoning** produced by the LLM rather than from a separate module.
 
 ---
 
 # What the Planner Does
 
-The planner converts a **goal** into a **sequence of actions**.
-
-Conceptually:
+The reasoning + planning process acts as the agent’s **decision engine**:
 
 ```
-Goal
- ↓
-Reasoning
- ↓
-Plan
- ↓
-Actions
+Goal → Reasoning → Plan → Actions
 ```
 
-For example:
+**Example:**
 
-```
-Goal: Compare GPUs for machine learning
+**Goal:** Compare GPUs for machine learning
 
-Plan:
-1. Search for benchmark data
-2. Extract key metrics
-3. Compare training performance
-4. Summarize results
-```
-
-The planner therefore acts like the **decision engine** of the agent.
+**Plan:**
+1. Search for recent benchmark data
+2. Extract key performance metrics (training/inference speed, memory, cost)
+3. Compare results across workloads
+4. Summarize findings and trade-offs
 
 ---
 
-# The Difference Between Reasoning and Planning
+# Reasoning vs Planning
 
-The terms **reasoning** and **planning** are often used interchangeably, but they refer to different concepts.
+| Concept       | Description                                      |
+|---------------|--------------------------------------------------|
+| **Reasoning** | LLM inference that generates thoughts and insights |
+| **Planning**  | Constructing a concrete sequence of actions (may be explicit or implicit) |
 
-| Concept   | Description                        |
-| --------- | ---------------------------------- |
-| Reasoning | Thinking about the problem         |
-| Planning  | Constructing a sequence of actions |
+Reasoning produces understanding.  
+Planning produces structure and coordination.
 
-Example:
-
-```
-Reasoning:
-"I need benchmark data to compare GPUs."
-
-Planning:
-Step 1 → Search benchmark results  
-Step 2 → Extract metrics  
-Step 3 → Compare GPUs
-```
-
-Reasoning generates **insight**.
-
-Planning generates **structure**.
-
-Both are necessary for intelligent agents.
+In practice, planning is often **interleaved with reasoning**. This pattern is closely related to **ReAct-style agents**, where thinking and tool use alternate in a tight loop.
 
 ---
 
-# Where Planning Happens in the Agent Loop
+# Where Planning Fits in the Agent Loop
 
-Recall the full agent loop:
+A common idealized loop is `observe → reason → plan → act → reflect`.  
 
-```
-observe → reason → plan → act → reflect
-```
-
-The planner sits between **reasoning and execution**.
+In real systems it usually looks more like:
 
 ```
-Observation
-   ↓
-Reasoning (LLM)
-   ↓
-Planning
-   ↓
-Tool Execution
+while not done:
+    observe
+    reason (LLM)
+    decide / plan next action(s)
+    act (tool calls)
+    reflect & update
 ```
 
-Without planning, an agent may jump directly from reasoning to action.
-
-This often leads to **inefficient or chaotic behavior**.
-
----
-
-# Turning Goals Into Plans
-
-Let us examine a simple planning example.
-
-User request:
-
-> “Research the economic impact of electric vehicles.”
-
-A reasonable plan might look like this:
-
-```
-1. Search for EV market statistics
-2. Identify economic indicators
-3. Analyze industry trends
-4. Summarize findings
-```
-
-This decomposition allows the agent to solve the problem **step by step**.
-
----
-
-# Planning Depth
-
-Planning strategies vary in complexity.
-
-Agents may use:
-
-| Planning Type         | Description                      |
-| --------------------- | -------------------------------- |
-| Single-step planning  | Decide next action only          |
-| Linear planning       | Create sequential plan           |
-| Hierarchical planning | Break tasks into sub-tasks       |
-| Tree search planning  | Explore multiple reasoning paths |
-
-Most modern agents combine **linear planning with iterative reasoning**.
+Most production agents use a **hybrid** approach: a high-level plan with reactive execution and dynamic re-planning.
 
 ---
 
 # Task Decomposition
 
-Task decomposition is the process of splitting a complex goal into smaller tasks.
+Effective planning relies on **task decomposition** — breaking complex goals into smaller, actionable subtasks.
 
-```
-Goal
- ↓
-Subtasks
- ↓
-Actions
-```
+**Example:**
 
-Example:
+**Goal:** Research the economic impact of electric vehicles
 
-```
-Goal: Write report on AI chip market
+**Decomposed Plan:**
+1. Gather recent EV market statistics and adoption trends
+2. Identify key economic indicators (jobs, investment, costs)
+3. Analyze industry and supply chain impacts
+4. Summarize findings with supporting data
 
-Subtasks:
-• Identify major companies
-• Gather market size data
-• Compare architectures
-• Summarize trends
-```
+**What poor planning looks like:**
 
-This approach improves:
+**Goal:** Find the cheapest flights to Tokyo
 
-* reasoning accuracy
-* tool usage
-* reliability of the agent
+**Weak Plan:**
+1. Search for flights
+2. Book the cheapest one
+
+**Problem:** This ignores baggage fees, layover duration, airline reliability, and travel time — common real-world failure modes when planning doesn’t account for tool constraints and full requirements.
+
+Plans are always **constrained by the tools available** to the agent and their interfaces (schemas, limitations, and reliability).
 
 ---
 
-# Example Decomposition
+# Planning Strategies & Trade-offs
 
-Below is a possible decomposition produced by an LLM.
+| Planning Type              | Description                              | Trade-off                          |
+|----------------------------|------------------------------------------|------------------------------------|
+| Single-step / Reactive     | Decide only the immediate next action    | Fast, flexible, but prone to repetition |
+| Linear planning            | Fixed sequence of steps                  | Simple, but brittle                |
+| Hierarchical               | Break into subtasks and sub-subtasks     | Better for complex goals           |
+| Tree search / Multi-path   | Explore multiple reasoning paths         | More robust, higher compute cost   |
+
+**Key real-world trade-off:**  
+Deeper planning improves accuracy but increases **latency, token usage, and cost**. Many systems use selective or dynamic planning depth.
+
+---
+
+# Execution Feedback & Re-Planning
+
+Modern agents treat plans as **provisional**. After acting, the agent observes results, reflects, and **re-plans** if needed:
 
 ```
-Goal: Compare Python and Rust for AI systems
-
-Plan:
-
-1. Identify performance benchmarks
-2. Compare ecosystem maturity
-3. Analyze developer productivity
-4. Summarize tradeoffs
+Plan → Act → Observe → Reflect → Update / Re-plan
 ```
 
-Each step becomes an **actionable unit** for the runtime.
+This feedback loop is essential for handling tool failures, missing data, ambiguous goals, and changing conditions.
+
+---
+
+# Reactive vs Planning Agents
+
+**Reactive agents** rely on local, step-by-step decisions.  
+**Planning agents** generate more global structure upfront.  
+
+Most production systems are **hybrid**: they begin with high-level reasoning/planning, execute reactively, and re-plan dynamically when necessary.
 
 ---
 
 # Implementing a Simple Planner
 
-Let us implement a minimal planner that generates a plan using an LLM.
+Here’s a minimal planner. In practice, plans are often returned as **structured output** (JSON, graphs, or tool-call sequences) rather than plain text.
 
 <Tabs>
 
 <TabItem label="Python" icon="seti:python">
 
 ```python
-def generate_plan(goal, llm):
+from __future__ import annotations
+from pydantic import BaseModel
+from typing import List
+from ollama import chat
 
-    prompt = f"""
-    Break the following goal into a sequence of steps.
+MODEL = "qwen3.5:9b"
 
-    Goal: {goal}
+class Step(BaseModel):
+    number: int
+    description: str
 
-    Return a numbered plan.
-    """
+class Plan(BaseModel):
+    steps: List[Step]
 
-    response = llm.generate(prompt)
+def generate_plan(goal: str) -> Plan:
+    prompt = f"""You are an agent planner.
+Break the following goal into a clear, numbered sequence of steps.
+Consider tool constraints and potential uncertainties.
 
-    return response
+Goal: {goal}
+
+Return ONLY valid JSON matching this schema:
+{{
+  "steps": [
+    {{"number": 1, "description": "..."}},
+    ...
+  ]
+}}
+"""
+
+    response = chat(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        format=Plan.model_json_schema(),   # forces structured JSON
+        options={"temperature": 0.2},
+    )
+
+    return Plan.model_validate_json(response.message.content)
+
+if __name__ == "__main__":
+    goal = "Find the best laptop GPU choice for local ML and explain why."
+    plan = generate_plan(goal)
+
+    print("\n=== GENERATED PLAN ===\n")
+    for step in plan.steps:
+        print(f"{step.number}. {step.description}")
+    print("\n=== END OF PLAN ===\n")
 ```
 
 </TabItem>
@@ -239,14 +199,74 @@ def generate_plan(goal, llm):
 <TabItem label="Rust" icon="seti:rust">
 
 ```rust
-fn generate_plan(goal: &str, llm: &LLMClient) -> String {
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    generation::parameters::FormatType,
+    Ollama,
+};
+use serde::{Deserialize, Serialize};
+
+const MODEL: &str = "qwen3.5:9b";
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Step {
+    number: usize,
+    description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Plan {
+    steps: Vec<Step>,
+}
+
+async fn generate_plan(goal: &str) -> Result<Plan, Box<dyn std::error::Error>> {
+    let ollama = Ollama::default();
 
     let prompt = format!(
-        "Break the goal into steps:\nGoal: {}",
+        r#"You are an expert agent planner.
+Break the GOAL into a clear, logical, numbered sequence of steps.
+Consider available tools, constraints, and possible uncertainties.
+
+Goal: {}
+
+Return **ONLY** valid JSON in this exact format (no extra text):
+{{
+  "steps": [
+    {{"number": 1, "description": "First step description here"}},
+    {{"number": 2, "description": "Second step description here"}}
+  ]
+}}"#,
         goal
     );
 
-    llm.generate(&prompt)
+    let request = ChatMessageRequest::new(MODEL.to_string(), vec![ChatMessage::user(prompt)])
+        .format(FormatType::Json);
+
+    let response = ollama.send_chat_messages(request).await?;
+    let content = response.message.content.trim();
+
+    // Robust parsing
+    let plan: Plan = serde_json::from_str(content)
+        .map_err(|e| format!("Failed to parse plan JSON: {}. Raw output: {}", e, content))?;
+
+    Ok(plan)
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let goal = "Find the best laptop GPU choice for local ML and explain why.";
+
+    println!("Generating plan with Ollama (model: {})...\n", MODEL);
+
+    let plan = generate_plan(goal).await?;
+
+    println!("=== GENERATED PLAN ===\n");
+    for step in &plan.steps {
+        println!("{}. {}", step.number, step.description);
+    }
+    println!("\n=== END OF PLAN ===");
+
+    Ok(())
 }
 ```
 
@@ -254,195 +274,38 @@ fn generate_plan(goal: &str, llm: &LLMClient) -> String {
 
 </Tabs>
 
-The plan then becomes part of the **agent's working memory**.
-
----
-
-# Reactive Agents vs Planning Agents
-
-Not all agents explicitly generate plans.
-
-There are two common approaches.
-
----
-
-# Reactive Agents
-
-Reactive agents operate using **local decision making**.
-
-```
-Observation → Action
-```
-
-They decide only the **next step**, not the entire plan.
-
-Example loop:
-
-```
-observe
-reason
-act
-observe
-reason
-act
-```
-
-Advantages:
-
-* simple architecture
-* low latency
-* flexible behavior
-
-Disadvantages:
-
-* inefficient for complex tasks
-* may repeat steps
-* harder to control
-
----
-
-# Planning Agents
-
-Planning agents generate a **global plan** before execution.
-
-```
-Goal
- ↓
-Plan
- ↓
-Execute Steps
-```
-
-Advantages:
-
-* structured problem solving
-* more predictable behavior
-* easier debugging
-
-Disadvantages:
-
-* planning may be expensive
-* plans may become outdated
-
----
-
-# Hybrid Planning
-
-Most modern agents combine both approaches.
-
-```
-High-level plan
-     ↓
-Reactive execution
-     ↓
-Re-plan if necessary
-```
-
-Example:
-
-```
-Plan:
-1. Search papers
-2. Read top 3 papers
-3. Summarize findings
-```
-
-If the search fails, the agent may **re-plan** dynamically.
+The plan is stored and updated in the agent’s **working memory** (short-term scratchpad + long-term context), allowing progress tracking and adaptation over time.
 
 ---
 
 # Planning in Modern Agent Frameworks
 
-Many agent frameworks include built-in planning capabilities.
-
-Examples:
-
-| Framework | Planning Strategy       |
-| --------- | ----------------------- |
-| LangChain | tool-based reasoning    |
-| LangGraph | state graph planning    |
-| AutoGen   | conversational planning |
-| CrewAI    | role-based planning     |
-
-Despite their differences, they all implement the same core idea:
-
-> Convert goals into **structured sequences of actions**.
+| Framework   | Planning Approach                          |
+|-------------|--------------------------------------------|
+| LangChain   | Abstractions for tool usage and chaining   |
+| LangGraph   | Stateful graph-based planning and workflows|
+| AutoGen     | Conversational multi-agent planning        |
+| CrewAI      | Role-based hierarchical planning           |
 
 ---
 
 # Why Planning Matters
 
-Planning dramatically improves agent performance.
+Good planning combined with feedback loops delivers:
 
-Benefits include:
+- Better tool selection and sequencing
+- Reduced impulsive or random actions
+- Higher reliability on complex tasks through decomposition
+- Easier debugging and control
 
-### Better Tool Usage
-
-The agent knows **which tools to use and when**.
-
----
-
-### Reduced Hallucination
-
-Planning forces the model to **think before acting**.
-
----
-
-### More Reliable Execution
-
-Complex tasks become manageable through decomposition.
-
----
-
-# A Planning Example in Action
-
-Below is what a reasoning sequence might look like.
-
-```
-Goal: Find best ML GPU
-
-Thought: Need benchmark data
-Action: web_search("ML GPU benchmark")
-
-Observation: RTX 4090 and H100 results
-
-Thought: Compare training speed
-Action: analyze_benchmarks()
-
-Observation: H100 significantly faster
-
-Thought: Summarize results
-```
-
-Here the planner guides the **sequence of steps**.
-
----
-
-# The Planner as the Brain of the Agent
-
-If the **LLM is the CPU** and the **runtime is the operating system**, then the planner is the **executive function**.
-
-It determines:
-
-* what to do next
-* which tools to use
-* how to break down problems
-* when to stop
-
-Without planning, agents become **directionless**.
+Planning does **not eliminate hallucination**, but it structures thinking and reduces randomness during execution.
 
 ---
 
 # Looking Ahead
 
-In this article we explored the **planner / reasoner**, which converts high-level goals into executable plans.
+In this article we explored how the **planner / reasoner** turns high-level goals into actionable plans, the critical role of feedback-driven re-planning, tool constraints, and real-world trade-offs.
 
-We examined:
+In the next article, we’ll examine the **Tool Manager** — how agents discover, select, and reliably use tools during execution.
 
-* how agents generate plans
-* task decomposition strategies
-* the difference between reactive and planning agents
-
-In the next article we will examine the **Tool Manager**, which determines **how agents discover and select tools** during execution.
-
-→ Continue to **2.5 — The Tool Manager**
+→ Continue to **2.5 — [The Tool Manager](/agentic-ai/agent-architecture/tool-manager)**

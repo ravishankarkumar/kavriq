@@ -1,747 +1,126 @@
 ---
-title: Vector Databases - Internals, Indexes & Distributed Architecture
-description: tA Complete Deep-Dive Into HNSW, IVF, PQ, Embeddings, Metadata Filtering & Multi-Node Search Systemso
+title: Vector Databases — Interview Guide
+description: What interviewers actually ask about vector databases, how to frame your answers, and the mental models that matter.
 pubDatetime: 2022-09-25T15:20:35Z
-modDatetime: 2026-01-09T15:00:15.170Z
+modDatetime: 2026-03-30T00:00:00.000Z
 layout: ../../../layouts/TutorialPage.astro
 ---
 
-# **Vector Databases: Internals, Indexes & Distributed Architecture**
+Vector database questions became a core part of system design interviews at top tech companies from 2024 onward. This guide covers what interviewers actually ask, how to structure your answers, and the mental models that separate strong candidates from weak ones.
 
-### *A Complete Deep-Dive Into HNSW, IVF, PQ, Embeddings, Metadata Filtering & Multi-Node Search Systems*
-
-Vector databases have exploded in popularity because large language models (LLMs) turned **embeddings** into the new “universal representation” for text, images, video, audio, code, protein sequences — anything that can be encoded into high-dimensional vector space.
-
-In 2024–25, vector database questions became a **core part of HLD interviews** at FAANG, MAMAA, and Indian product companies:
-
-* “Explain how HNSW works.”
-* “How does a vector database scale horizontally?”
-* “How do you combine ANN search with metadata filters?”
-* “How does PQ compress vector space?”
-* “Why are insertions slow in HNSW?”
-* “What index would you pick for 100M vectors?”
-* “How does Pinecone/Milvus shard data?”
-* “What if you need freshness + fast ingestion?”
-
-This article teaches everything you need for interviews **and actual engineering work**:
-From embeddings → indexing → compression → filters → distributed search → ingestion → consistency → system design.
-
-This is your interview guide on vector databases.
+For deep technical content, the full series lives in the AI Engineering guide:
+- [How Vector Search Works](/ai-engineering/vector-databases/how-vector-search-works) — embeddings, ANN, index families
+- [HNSW and IVF-PQ](/ai-engineering/vector-databases/hnsw-and-ivf-pq) — the two dominant algorithms
+- [Storage and Ingestion](/ai-engineering/vector-databases/vector-db-storage-and-ingestion) — segments, WAL, compaction
+- [Scaling and Filtering](/ai-engineering/vector-databases/scaling-vector-search) — distributed architecture, metadata filtering
 
 ---
 
-# **Table of Contents**
+## What Interviewers Are Testing
 
-1. Why Vector Databases Exist
-2. Embeddings 101 — The Semantic Foundation
-3. The Challenge: High-Dimensional Nearest Neighbor Search
-4. Exact Search vs Approximate Search
-5. ANN Indexes: Categories & Trade-offs
-6. **HNSW Deep Dive (Most Important)**
-7. **IVF / IVF-Flat / IVF-PQ**
-8. **PQ, OPQ, Scalar Quantization**
-9. **Hybrid Index Architectures (HNSW-PQ, IVF-HNSW)**
-10. Storage Engine Design for Vector Databases
-11. WAL, segments, delta logs & compaction
-12. Distributed Architecture (Sharding, Replication, Routing)
-13. Metadata Filtering + Vector Search Fusion
-14. Real-Time Ingestion Challenges
-15. Memory, Latency, Recall Tuning
-16. Case Studies: FAISS, Pinecone, Milvus, Weaviate, OpenSearch
-17. Interview Mental Models
-18. Summary
+Vector DB questions test three things:
+
+1. **Do you understand why ANN exists?** — Can you explain the curse of dimensionality and why exact search doesn't scale?
+2. **Do you know the tradeoffs?** — HNSW vs IVF-PQ, pre-filter vs post-filter, consistency vs availability
+3. **Can you reason about system design?** — Given a scale requirement, what architecture would you choose and why?
+
+They are not testing whether you've memorized HNSW pseudocode. They want to see that you can reason from first principles.
 
 ---
 
-# **1. Why Vector Databases Exist**
+## The Questions and How to Answer Them
 
-LLMs turned all content into vector form.
+### "Explain how HNSW works."
 
-Instead of keyword matching (`BM25`, inverted indexes), embeddings allow engines to search for meaning:
+**Weak answer**: "It's a graph-based index with multiple layers."
 
-* “dog” and “puppy” → close in vector space
-* “machine learning engineer” and “AI developer” → similar
-* “refund request” and “money back issue” → close
+**Strong answer**: Start with the problem — greedy search on a flat proximity graph gets stuck in local optima. HNSW solves this with a hierarchy: upper layers have sparse long-range connections (for fast navigation), lower layers have dense local connections (for precise search). Insertion assigns each vector a random layer via exponential distribution, then connects it to its M nearest neighbors at each layer. Search starts at the top, greedily descends, and does beam search at the bottom layer. Complexity is O(log N). The key parameters are M (graph density), efConstruction (build quality), and efSearch (query recall-latency tradeoff).
 
-Embeddings extract semantic information that keyword search simply cannot.
+Then mention the weaknesses: memory-heavy, slow inserts due to graph rewiring, lazy deletion.
 
-This creates a new problem:
+### "When would you choose IVF-PQ over HNSW?"
 
-### **How do you search millions or billions of 768-dimensional vectors?**
+The answer is about scale and ingestion rate:
+- HNSW is better for < 100M vectors with moderate write rates
+- IVF-PQ is better for > 100M vectors, memory-constrained environments, or high-throughput ingestion (HNSW inserts are too slow)
+- PQ compresses vectors 10–400x using learned subspace codebooks, enabling billion-scale search on a single machine
 
-Naively, by computing:
+### "How do you combine vector search with metadata filters?"
 
-```
-distance(query, vector_i)
-```
+This is the hardest question and the one most candidates fumble. There are three approaches:
 
-for every vector.
-This is **O(N × d)** → too slow beyond 100K–1M vectors.
+**Post-filtering**: ANN first, filter after. Simple but loses recall when filters are selective (< 10% match rate).
 
-Vector databases exist to:
+**Pre-filtering**: Filter first, brute-force ANN on the subset. Works when the filtered set is small (< 50K vectors), degrades otherwise.
 
-* store embeddings
-* index them efficiently
-* perform approximate nearest neighbor (ANN) search
-* scale horizontally
-* support filters
-* handle ingestion
-* provide consistency
+**Hybrid index**: Maintain an inverted index for metadata alongside the vector index. During HNSW traversal, skip nodes that don't pass the filter. This is what Weaviate does. Best general solution but complex to implement.
 
-They are specialized search engines — not general databases.
+The right answer depends on filter selectivity — mention that production systems choose the strategy dynamically based on estimated selectivity.
 
----
+### "How does a vector database scale horizontally?"
 
-# **2. Embeddings 101 — The Semantic Foundation**
+Coordinator + shard architecture. Coordinator receives the query, fans out to all shards in parallel, each shard returns its local top-K, coordinator merges into global top-K. Key insight: you must oversample per shard (ask for K × factor) because the global top-K may not be the local top-K on any single shard.
 
-An embedding is a **d-dimensional float vector**:
+Mention the tail latency problem: query latency is bounded by the slowest shard, so more shards = worse P99 latency. Minimize shard count.
 
-```
-v = [0.12, -0.83, 0.44, …]
-```
+### "Why are inserts slow in HNSW?"
 
-Common embeddings:
+Each insertion requires finding the M nearest neighbors in the existing graph — which is itself an ANN search. Then bidirectional edges must be added, potentially rewiring existing connections. At high insert rates, this becomes a bottleneck. Production systems solve this with segment buffering: new writes go to an in-memory buffer (no indexing), which is periodically sealed and indexed in the background.
 
-* 384 dimensions (MiniLM)
-* 768 dimensions (BERT)
-* 1024–4096 dimensions (OpenAI / Llama)
-* 8k dimensions (image embeddings)
+### "How do vector databases persist data?"
 
-Distance metrics:
+Segment-based architecture + WAL. Writes go to WAL first (durability), then to in-memory write buffer. Buffer is periodically sealed into a segment, which gets an ANN index built in the background. Segments are immutable. Deletions use tombstones. Compaction merges small segments and rebuilds indexes. This mirrors LSM-tree design from RocksDB.
 
-1. **Cosine similarity** (most common)
-2. **L2 distance (Euclidean)**
-3. **Inner product (dot-product)**
+### "What index would you pick for 100M vectors?"
 
-Cosine similarity requires normalization:
+Walk through the decision:
+- Memory available? HNSW if yes, IVF-PQ if no
+- Ingestion rate? If > 10K/sec, HNSW inserts are too slow — use IVF-PQ or segment buffering
+- Recall requirement? HNSW gives better recall at same latency
+- GPU available? FAISS GPU with IVF-PQ can search billions of vectors
 
-```
-v_normalized = v / ||v||
-```
+A good answer picks IVF-PQ with HNSW refinement (re-rank top candidates with exact distances) as a balanced choice.
 
-Distance and similarity are interchangeable:
+### "How does PQ compression work?"
 
-```
-cosine_similarity = dot(q, v)
-l2_distance = ||q - v||
-```
-
-Vector DBs convert similarity queries into **top-K nearest neighbor searches**.
+Split each d-dimensional vector into m subvectors. Train a codebook of 256 centroids for each subspace. Encode each subvector as the index of its nearest centroid (1 byte). A 768-dim vector becomes 8 bytes — 384x compression. Distance computation uses precomputed lookup tables: for each subspace, precompute distances from the query subvector to all 256 centroids, then approximate the full distance as the sum of table lookups. Extremely fast.
 
 ---
 
-# **3. The Challenge: High-Dimensional Nearest Neighbor Search**
+## System Design: "Design a semantic search system for 1 billion product listings"
 
-Exact search is easy:
+This is the capstone question. Here's how to structure the answer:
 
-```
-for v in all_vectors:
-    compute distance(q, v)
-return top K results
-```
+**Clarify requirements first**:
+- Query latency target? (e.g. < 100ms P99)
+- Ingestion rate? (e.g. 10K updates/sec)
+- Recall requirement? (e.g. 95% recall@10)
+- Filter requirements? (brand, category, price range)
+- Consistency requirements?
 
-But high-dimensional spaces suffer from:
+**Architecture**:
+- Embedding service: encode product text/images to vectors (768-dim)
+- Vector DB: IVF-PQ for scale (1B vectors won't fit in HNSW memory), sharded across 10 nodes
+- Metadata index: inverted index for brand/category filters, range index for price
+- Query path: coordinator fans out to all shards, each shard does IVF-PQ search with filtered traversal, coordinator merges
+- Write path: Kafka queue → embedding service → vector DB write buffer → background indexing
 
-### **The Curse of Dimensionality**
-
-* Distances become less meaningful
-* Indexes like KD-trees collapse
-* Partitioning becomes ineffective
-* Clustering becomes expensive
-
-Thus the shift to **Approximate Nearest Neighbor (ANN)**:
-
-> Return results that are *very close* to the nearest ones, but not necessarily the exact top-K.
-
-ANN trades off accuracy for speed → this is acceptable for most LLM applications.
-
----
-
-# **4. Exact Search vs Approximate Search**
-
-| Property | Exact          | Approximate (ANN) |
-| -------- | -------------- | ----------------- |
-| Accuracy | 100%           | ~90–99%           |
-| Latency  | Slow           | Fast              |
-| Memory   | High           | Medium/High       |
-| Use Case | Small datasets | >1M vectors       |
-
-Exact search uses:
-
-* Flat index (brute force)
-* GPU acceleration (FAISS GPU)
-
-ANN uses:
-
-* HNSW
-* IVF
-* PQ
-* ScaNN
-* ANNoy
-* DiskANN
-
-Vector databases almost always choose ANN.
+**Tradeoffs to discuss**:
+- HNSW vs IVF-PQ: chose IVF-PQ for memory, could use HNSW on hot segments
+- Shard count: 10 shards × 100M vectors each, minimize for tail latency
+- Filter strategy: hybrid index for category/brand (moderate selectivity), post-filter for price (high selectivity)
+- Freshness: eventual consistency acceptable, new products searchable within seconds via write buffer
 
 ---
 
-# **5. ANN Index Families (The Big Picture)**
+## Mental Models to Internalize
 
-Three major families dominate ANN indexing:
+**ANN is a tradeoff, not a failure**: Returning 95% of the true top-10 is not a bug. For search, users can't tell the difference. The 5% recall loss buys 100x speedup.
 
-```
-Graph-based:    HNSW, NSG
-Tree/Cluster:   IVF, KMeans, LSH
-Quantization:   PQ, OPQ, SQ
-```
+**Recall-latency curves, not points**: Never report a single (recall, latency) number. The curve — how recall changes as you increase efSearch or nprobe — tells you how much headroom you have.
 
-They differ in accuracy, speed, memory footprint, and ingestion cost.
+**Segments solve the ingestion problem**: The reason production vector DBs can handle high write rates is that they decouple writes (fast, no indexing) from indexing (slow, background). This pattern appears everywhere in database engineering.
 
----
+**Filtering selectivity determines strategy**: There is no universally best filtering approach. The right choice depends on what fraction of vectors pass the filter. Know all three strategies and when each applies.
 
-# **6. HNSW Deep Dive (Most Important for Interviews)**
-
-### *Hierarchical Navigable Small Worlds — The King of ANN Indexes*
-
-HNSW is used by:
-
-* Pinecone
-* Weaviate
-* Qdrant
-* Vespa
-* Milvus
-* Many enterprise vector search engines
-
-It is widely considered the **best all-around ANN index**.
-
----
-
-## **6.1 Intuition: A Multi-Level Navigable Graph**
-
-HNSW builds a graph where:
-
-* nodes = vectors
-* edges = proximity links
-* upper layers = fewer nodes, long-range links
-* bottom layer = dense links, local neighbors
-
-Diagram:
-
-```
-Level 3:     A ---- B
-             |      |
-Level 2:   C ---- D ---- E
-           |       \
-Level 1: F -- G -- H -- I -- J
-           \    \      \ 
-Level 0:  (dense graph with nearest neighbors)
-```
-
-Searching works by:
-
-1. Start at top layer
-2. Greedily move to neighbor closer to query
-3. Drop to next layer
-4. Repeat
-5. Use BFS/priority queue at bottom layer
-
-Search complexity is **O(log N)**.
-
----
-
-## **6.2 Key Parameters**
-
-### **M**
-
-Max number of neighbors.
-
-Higher M → higher accuracy, more memory.
-
-### **efConstruction**
-
-Quality of graph during build.
-
-Higher → better recall, slower build.
-
-### **efSearch**
-
-Search beam width.
-
-Higher → better recall, slower search.
-
----
-
-## **6.3 HNSW Strengths**
-
-* Best-in-class recall/latency trade-off
-* Incremental inserts supported
-* Very strong locality-sensitive navigation
-* Executes on CPU, no GPU required
-
----
-
-## **6.4 HNSW Weaknesses**
-
-* Memory heavy (graph edges ~ 64–128 bytes per edge)
-* Insertions expensive
-* Deletions complicated (lazy deletion + rebuild)
-* Harder to persist to disk (needs compact segments)
-* Poor for streaming ingestion >10–50K writes/sec
-
-Thus many vector DBs use:
-
-* HNSW for in-memory serving
-* On-disk indexes (IVF-PQ, DiskANN) for cold storage
-
----
-
-# **7. IVF (Inverted File Index) & IVF-PQ**
-
-IVF is the **coarse quantization** approach.
-
----
-
-## **7.1 Concept**
-
-1. Run k-means clustering on all vectors.
-2. Assign each vector to its nearest centroid.
-3. Search only in a few nearest clusters.
-
-Visual:
-
-```
-100M vectors
-↓
-1000 clusters
-↓
-At query time: search only 4 clusters (4/1000 = 0.4%)
-```
-
-Huge speedup.
-
----
-
-## **7.2 IVF-Flat**
-
-IVF without compression.
-
-Inside each cluster, you search raw vectors.
-
-Fast but heavy on memory.
-
----
-
-## **7.3 IVF-PQ (Product Quantization)**
-
-PQ compresses vectors:
-
-* Split vector into subspaces
-* Quantize each subspace
-* Store compact codes (8–16 bytes per vector instead of 512–4096 bytes)
-
-Example:
-
-```
-128-dim vector
-↓ split into 8 segments
-each segment encoded to 1 byte
-↓
-8 bytes total storage
-```
-
-Reduction from **512 bytes → ~8 bytes**.
-
-This allows 1B vectors to fit in memory.
-
-Downside: lower recall.
-
----
-
-# **8. Product Quantization (PQ) — Compression for Massive Scale**
-
-PQ is critical for large-scale vector databases.
-
-### **PQ breaks vectors into subspaces:**
-
-```
-128 dims → 8 groups of 16 dims
-```
-
-### **Each group quantized:**
-
-```
-v = [segment1][segment2]…[segment8]
-```
-
-Each segment encoded as 1 byte.
-
-### **Distance computed using lookup tables**
-
-Distance lookup speed is extremely fast.
-
-PQ variants:
-
-* **PQ** — basic
-* **OPQ** — rotates vector space to improve quantization
-* **SQ** — scalar quantization (1D quantization per dimension)
-
-PQ allows FAISS to search **billion-scale** datasets on a single machine.
-
----
-
-# **9. Hybrid Indexes (HNSW + PQ, IVF + HNSW)**
-
-Real systems combine indexes:
-
-* **HNSW for top layer**, PQ for bottom layer
-* **IVF + HNSW refined search**
-* **HNSW graph over PQ vectors**
-
-Hybrid systems provide:
-
-* High recall
-* Low memory
-* Fast latency
-* Good ingestion performance
-
-This is how Milvus and Pinecone optimize real workloads.
-
----
-
-# **10. Storage Engine Internals**
-
-Unlike relational DBs, vector DBs must store:
-
-* raw vectors
-* compressed vectors (PQ)
-* metadata
-* filters (inverted index)
-* index files (graph, cluster assignments)
-* WAL
-* snapshot files
-
-### **Segment Files (LSM-inspired)**
-
-Most systems (Milvus, Pinecone) use segments:
-
-```
-Segment 1: 500K vectors + index
-Segment 2: 500K vectors + index
-Segment 3: new writes (in-memory)
-```
-
-When a segment grows:
-
-* sealed
-* persisted
-* indexed via HNSW / IVF
-* merged later
-
-This solves the "HNSW is slow to insert" problem.
-
----
-
-# **11. WAL, Delta Logs & Compaction**
-
-Vector DBs maintain durability with:
-
-* Write-Ahead Logs
-* Segment logs
-* Batch writes
-* Periodic snapshotting
-
-Process:
-
-```
-writes → WAL
-small in-memory index
-flush → segment file
-segment indexing → background
-compaction → merge old segments
-```
-
-This mirrors RocksDB but adapted for ANN indexing.
-
----
-
-# **12. Distributed Architecture (Sharding, Replication, Routing)**
-
-Modern vector DBs must scale horizontally.
-
-The architecture typically looks like:
-
-```
-Query Node / Coordinator
-       ↓
-Shards (Segment replicas)
-       ↓
-Index Nodes (HNSW/IVF/PQ)
-```
-
----
-
-## **12.1 Sharding Strategies**
-
-### **A. Hash by ID**
-
-Uniform distribution, simple.
-
-### **B. Hash by vector**
-
-Rare, because embeddings don’t hash uniformly.
-
-### **C. Cluster-based sharding (IVF centroids)**
-
-Shards correspond to cluster partitions.
-
-### **D. Range-based (for metadata hybrid DBs)**
-
-Used in Weaviate hybrid search.
-
----
-
-## **12.2 Replication**
-
-Replication modes:
-
-* **sync** — strong consistency
-* **async** — eventual consistency
-* **multi-primary** — conflict resolution needed
-
-Often replicates entire segment files.
-
----
-
-## **12.3 Query Routing**
-
-Query steps:
-
-1. Coordinator determines which shards are relevant
-2. Sends query vector to top candidate shards
-3. Each shard returns top-K partial results
-4. Coordinator merges into global top-K
-
-Diagram:
-
-```
-Query
- ↓
-Coordinator
- ↓            ↓             ↓
-Shard 1     Shard 2      Shard 3
- ↓            ↓             ↓
-Top-K1      Top-K2       Top-K3
- ↓ merge
-Final Top-K
-```
-
----
-
-# **13. Metadata Filtering + ANN Fusion**
-
-One of the hardest problems in vector databases.
-
-Example:
-
-```
-Find products semantically similar to Q where:
-brand = "Nike"
-price between 2000 and 4000
-category = "Shoes"
-```
-
-ANN indexes don’t handle filters well.
-Vector DBs solve this using **hybrid indexes**:
-
----
-
-## **Solution Approaches**
-
-### **1. Pre-filtering (Filter → ANN)**
-
-Filter narrow set → ANN search on remaining.
-
-Good when filters are highly selective.
-
----
-
-### **2. Post-filtering (ANN → Filter)**
-
-ANN returns candidates → filter them.
-
-May degrade recall if filtered too aggressively.
-
----
-
-### **3. Inverted index + ANN hybrid**
-
-Systems like Weaviate store:
-
-* Vector index (HNSW)
-* Inverted index for metadata
-
-Hybrid score computed using weighted fusion.
-
----
-
-### **4. Pinecone Sparse-Dense Hybrid**
-
-Dense vector + sparse keyword vector (BM25-like):
-
-```
-score = w_dense * sim_dense + w_sparse * sim_sparse
-```
-
-This is extremely effective for RAG pipelines.
-
----
-
-# **14. Real-Time Ingestion Challenges**
-
-HNSW is slow to insert into because:
-
-* Graph rewiring required
-* Each insertion updates multiple edges
-* efConstruction parameter heavily affects time
-
-Solutions:
-
-### **A. Buffer writes into log segments**
-
-Then build HNSW offline.
-
-### **B. Use IVF-PQ for write-friendly ingestion**
-
-### **C. Store writes in RAM index (small HNSW)**
-
-Merge later.
-
-### **D. Append-only segments + periodic rebuild**
-
-Like LSM compaction.
-
----
-
-# **15. Memory, Latency & Recall Tuning**
-
-### **Memory Footprint = Vectors + Index**
-
-HNSW is memory heavy:
-
-```
-vector_size + M * neighbor_size * bytes
-```
-
-PQ compresses vector size massively.
-
----
-
-## **Recall Tuning**
-
-### **HNSW tunables**:
-
-* efSearch
-* efConstruction
-* M
-
-### **IVF tunables**:
-
-* nprobe (# clusters searched)
-
-Higher values → better recall, slower search.
-
----
-
-## **Latency Optimization**
-
-* SIMD instructions for distance calculation
-* cache-aware block layout
-* prefetching
-* GPU-based search
-* reducing dimensionality via PCA
-
----
-
-# **16. Case Studies**
-
-## **16.1 FAISS (Meta)**
-
-* Best GPU-accelerated ANN library
-* IVF-PQ, HNSW, Flat, OPQ
-* Billion-scale search on a single node
-
----
-
-## **16.2 Pinecone**
-
-* Fully managed vector DB
-* Built on HNSW + proprietary segmenting
-* Adaptive capacity
-* Multi-tenant isolation
-* Sparse-dense hybrid retrieval
-
----
-
-## **16.3 Milvus**
-
-* Most advanced open-source vector DB
-* Supports HNSW, IVF, IVF-PQ, DiskANN
-* Distributed metadata server
-* LSM-tree-like segment design
-
----
-
-## **16.4 Weaviate**
-
-* Hybrid search (vector + keyword)
-* HNSW for vector search
-* Inverted index for metadata
-* Excellent for enterprise use cases
-
----
-
-## **16.5 OpenSearch KNN**
-
-* FAISS/HNSW under the hood
-* Integrates with existing search pipeline
-
----
-
-# **17. Interview Mental Models**
-
-### **Q: Why ANN instead of exact search?**
-
-High-dimensional exact search collapses after 100K vectors.
-
-### **Q: When do you choose HNSW?**
-
-When recall & latency are priority and ingestion is moderate.
-
-### **Q: When IVF-PQ?**
-
-When scaling to 100M–10B vectors with memory constraints.
-
-### **Q: How do you scale vector search horizontally?**
-
-Sharding + distributed top-K merging.
-
-### **Q: Why are inserts slow in HNSW?**
-
-Graph rewiring and greedy search to find neighbors.
-
-### **Q: How do filters work with vectors?**
-
-Hybrid indexing → pre-filter or post-filter strategies.
-
-### **Q: How do vector DBs persist data?**
-
-Segments + WAL + compaction.
-
-### **Q: Which index for streaming ingestion?**
-
-IVF-flat or HNSW + segment buffering.
-
----
-
-# **18. Summary (The one-sentence version)**
-
-> A vector database is a specialized distributed search engine that combines embeddings, ANN indexes (HNSW/IVF/PQ), metadata filters, write-ahead logging, segment storage, and multi-node top-K routing to deliver low-latency semantic search at massive scale.
+**More shards = worse tail latency**: Distributed queries are bounded by the slowest shard. Horizontal scaling improves throughput but hurts P99 latency. This is the fundamental tension in distributed search.
