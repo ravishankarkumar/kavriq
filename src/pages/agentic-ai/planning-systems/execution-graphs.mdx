@@ -106,21 +106,6 @@ def generate_report(state):
 ```
 
 </TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn collect_market_data(state: &mut AgentState) {
-    let results = web_search(&state.query);
-    state.raw_data = results;
-}
-
-fn analyze_trends(state: &mut AgentState, llm: &LLMClient) {
-    let prompt = format!("Analyze trends: {}", state.raw_data);
-    state.analysis = llm.generate(&prompt);
-}
-```
-
-</TabItem>
 </Tabs>
 
 The graph runtime orchestrates calling these nodes in the correct order, handling conditions and parallelism.
@@ -137,7 +122,7 @@ This combination gives developers fine-grained control while still allowing the 
 
 ## Execution Graphs in Modern Frameworks
 
-Graph-based execution has become a standard pattern in production-grade agent systems. The Python and Rust ecosystems take slightly different approaches.
+Graph-based execution has become a standard pattern in production-grade agent systems. In practice, Python frameworks currently offer the most mature developer experience for this style of orchestration.
 
 ### Python Ecosystem
 
@@ -146,20 +131,6 @@ Graph-based execution has become a standard pattern in production-grade agent sy
 | LangGraph   | Stateful directed graphs with cycles          | Most mature and flexible for complex agents |
 | CrewAI      | Role-based task graphs                        | Easy team-style orchestration         |
 | AutoGen     | Conversational multi-agent graphs             | Strong for collaborative agents       |
-
-### Rust Ecosystem
-
-| Library / Framework      | Approach                                      | Key Strength                          |
-|--------------------------|-----------------------------------------------|---------------------------------------|
-| **graph-flow** + **Rig** | High-performance stateful graphs with LLM integration | Excellent speed, type safety, and control |
-| **Rig** + custom graphs  | LLM agents combined with pipeline / DAG orchestration | Clean, modular API for building agents |
-| **ADK-Rust** / AxonerAI  | Modular agent frameworks with workflow support | Production-ready, performance-focused agents |
-
-**Note:** In the Rust ecosystem, the combination of **graph-flow** and **Rig** is currently one of the closest equivalents to LangGraph. It offers type-safe, high-performance graph execution with support for cycles, conditional routing, and human-in-the-loop patterns.
-
-However, Rust-based tools are generally **less mature** and **less battle-tested** compared to their Python counterparts. The ecosystem has fewer high-level abstractions, smaller community support, and fewer production case studies. Developers often need to build more infrastructure themselves, which gives greater control and performance but requires more engineering effort.
-
-This trade-off makes Rust a strong choice when performance, safety, or resource efficiency is critical, while Python frameworks remain more accessible for rapid development and complex orchestration.
 
 ---
 
@@ -186,5 +157,3 @@ This shift brings agents closer to traditional software systems while preserving
 ### Next Steps
 
 - **Python track**: Continue to **[3.6 — Building Agents with LangGraph](/agentic-ai/planning-systems/langgraph)** — a practical guide to implementing stateful, graph-based agent architectures using one of the most popular modern frameworks.
-
-- **Rust track**: Continue to **[3.6 — Building Agents with Rig and Custom Graphs](/agentic-ai/planning-systems/rig)** — a practical guide to implementing high-performance, type-safe graph-based agents using Rig and Ollama.

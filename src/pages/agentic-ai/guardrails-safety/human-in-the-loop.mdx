@@ -92,27 +92,6 @@ async def execute_with_approval(action: AgentAction, context: AgentContext):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-async fn execute_with_approval(
-    action: AgentAction,
-    context: &AgentContext,
-) -> Result<ExecutionResult> {
-    let risk = risk_evaluator.assess(&action, context).await;
-
-    if risk.level == RiskLevel::High {
-        let approval = approval_service.request_approval(&action, &risk).await?;
-        if !approval.granted {
-            return Err(ApprovalError::new(&approval.reason));
-        }
-    }
-
-    tool_executor.execute(action).await
-}
-```
-
-</TabItem>
 
 </Tabs>
 

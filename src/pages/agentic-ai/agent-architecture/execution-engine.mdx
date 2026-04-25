@@ -90,23 +90,6 @@ def call_api(endpoint: str, method: str = "GET", **kwargs) -> dict:
 ```
 
 </TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use reqwest::Client;
-use std::time::Duration;
-
-async fn call_api(url: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let client = Client::builder()
-        .timeout(Duration::from_secs(8))
-        .build()?;
-
-    let resp = client.get(url).send().await?;
-    Ok(resp.json().await?)
-}
-```
-
-</TabItem>
 </Tabs>
 
 ---
@@ -161,34 +144,6 @@ def run_code_sandboxed(code: str, timeout: int = 10) -> str:
         return result.stdout.strip()
     except subprocess.TimeoutExpired:
         return "Execution timed out"
-```
-
-</TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use std::process::{Command, Stdio};
-use std::time::Duration;
-
-fn run_code_sandboxed(code: &str, timeout_secs: u64) -> String {
-    // Note: In production, use proper sandbox (Firecracker, gVisor, etc.)
-    let output = Command::new("python3")
-        .arg("-c")
-        .arg(code)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .and_then(|mut child| {
-            // Add timeout logic here in real implementation
-            child.wait_with_output()
-        });
-
-    match output {
-        Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout).into_owned(),
-        Ok(out) => format!("Error: {}", String::from_utf8_lossy(&out.stderr)),
-        Err(e) => format!("Failed to execute: {}", e),
-    }
-}
 ```
 
 </TabItem>

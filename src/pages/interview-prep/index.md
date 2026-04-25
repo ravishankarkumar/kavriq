@@ -3,7 +3,7 @@ title: AI & ML Engineer Interview Prep
 layout: ../../layouts/TutorialPage.astro
 ---
 
-A complete interview preparation guide for AI Engineer and ML Engineer roles. Covers everything from ML fundamentals to system design to behavioral questions — with code samples in both Python and Rust where applicable.
+A complete interview preparation guide for AI Engineer and ML Engineer roles. Covers everything from ML fundamentals to system design to behavioral questions, with code samples defaulting to Python.
 
 The guide is structured around how interviews actually work at top AI companies. Q&A sections are concise by design — they tell you what to say in 2–3 minutes, with links to the deep-dive articles in ml-essentials and ai-engineering for the full derivations.
 
@@ -117,7 +117,7 @@ The most underserved area in interview prep. These questions are less standardiz
 
 Full walkthroughs of the system design questions that appear in senior AI engineer interviews. Each article covers: requirements clarification, high-level architecture, component deep-dives, tradeoffs, failure modes, and scaling considerations.
 
-Code samples in Python and Rust where relevant.
+Code samples in Python where relevant.
 
 ### Published
 - [Vector Databases — Interview Guide](/interview-prep/db/vector-database)
@@ -165,7 +165,7 @@ The infrastructure questions that separate engineers who've shipped AI systems f
 
 ## Section 6 — Coding Patterns
 
-The "implement this in 30 minutes" questions. Language-agnostic explanations with implementations in both Python and Rust.
+The "implement this in 30 minutes" questions. Language-agnostic explanations with Python implementations.
 
 ### Core Algorithms
 - Implement Softmax — Numerically Stable Version

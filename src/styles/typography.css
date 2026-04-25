@@ -1,9 +1,8 @@
 @plugin "@tailwindcss/typography";
 
 @layer base {
-  /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
-    @apply prose;
+    @apply prose prose-neutral max-w-none;
 
     h1,
     h2,
@@ -14,7 +13,7 @@
     }
 
     h3 {
-      @apply italic;
+      @apply not-italic;
     }
 
     p,
@@ -28,7 +27,7 @@
     }
 
     a {
-      @apply wrap-break-word text-foreground decoration-dashed underline-offset-4 hover:text-accent focus-visible:no-underline;
+      @apply wrap-break-word text-foreground underline decoration-1 decoration-foreground/28 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent/45 focus-visible:no-underline;
     }
 
     ul {
@@ -44,21 +43,23 @@
     }
 
     img {
-      @apply mx-auto border border-border;
+      @apply mx-auto rounded-2xl border border-border;
     }
 
     figcaption {
-      @apply opacity-75;
+      @apply mt-2 text-sm opacity-65;
     }
 
     table {
+      @apply w-full overflow-hidden rounded-2xl border border-border;
+
       th,
       td {
-        @apply border border-border p-2;
+        @apply border border-border p-3;
       }
 
       th {
-        @apply py-1.5;
+        @apply bg-muted/40 py-2;
       }
 
       code {
@@ -67,15 +68,19 @@
     }
 
     code {
-      @apply rounded bg-muted/75 p-1 wrap-break-word text-foreground before:content-none after:content-none;
+      @apply rounded-md bg-muted/80 px-1.5 py-1 wrap-break-word text-foreground before:content-none after:content-none;
     }
 
     .astro-code code {
       @apply flex-[1_0_100%] bg-inherit p-0;
     }
 
+    .astro-code [data-line] {
+      @apply px-4;
+    }
+
     blockquote {
-      @apply border-s-accent/80 wrap-break-word opacity-80;
+      @apply rounded-r-2xl border-s-3 border-s-accent/80 bg-muted/30 py-1 wrap-break-word opacity-90;
     }
 
     details {
@@ -87,17 +92,41 @@
     }
 
     pre {
-      @apply focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+      @apply overflow-x-auto rounded-[1.35rem] border border-border py-4 shadow-none focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+    }
+
+    h1 {
+      @apply text-4xl tracking-tight sm:text-5xl;
+    }
+
+    h2 {
+      @apply mt-12 text-3xl tracking-tight;
+    }
+
+    h3 {
+      @apply mt-10 text-2xl tracking-tight;
+    }
+
+    p,
+    li {
+      @apply text-[1.04rem] leading-8 text-foreground/86;
     }
   }
 
-  /* ===== Code Blocks & Syntax Highlighting ===== */
   .astro-code {
-    @apply flex border bg-(--shiki-light-bg) text-(--shiki-light) outline-border [&_span]:text-(--shiki-light);
+    @apply flex border border-slate-200 bg-(--shiki-light-bg) text-(--shiki-light) shadow-[0_10px_30px_rgba(15,23,42,0.06)] [&_span]:text-(--shiki-light);
   }
 
   html[data-theme="dark"] .astro-code {
-    @apply bg-(--shiki-dark-bg) text-(--shiki-dark) [&_span]:text-(--shiki-dark);
+    @apply border-slate-700/70 bg-(--shiki-dark-bg) text-(--shiki-dark) shadow-[0_16px_40px_rgba(2,6,23,0.45)] [&_span]:text-(--shiki-dark);
+  }
+
+  .astro-code [data-language] {
+    @apply border-b border-slate-200/80 px-4 pb-3 text-[0.72rem] font-semibold tracking-[0.18em] uppercase text-slate-500;
+  }
+
+  html[data-theme="dark"] .astro-code [data-language] {
+    @apply border-slate-700/80 text-slate-400;
   }
 
   /* Styles for Shiki transformers */

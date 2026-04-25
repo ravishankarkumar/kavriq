@@ -132,38 +132,6 @@ def react_agent(goal: str, llm, tools, max_steps: int = 10):
 ```
 
 </TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn react_agent(goal: &str, llm: &LLMClient, tools: &ToolManager, max_steps: u32) -> String {
-    let mut scratchpad = String::new();
-
-    for _ in 0..max_steps {
-        let prompt = format!(
-            "Goal: {}\n\nPrevious steps:\n{}\n\nThought + Action or Final Answer:",
-            goal, scratchpad
-        );
-
-        let response = llm.generate(&prompt);
-
-        if let Some(answer) = extract_final_answer(&response) {
-            return answer;
-        }
-
-        let (thought, action) = parse_response(&response);
-        let observation = tools.execute(&action);
-
-        scratchpad.push_str(&format!(
-            "Thought: {}\nAction: {}\nObservation: {}\n\n",
-            thought, action, observation
-        ));
-    }
-
-    "Maximum steps reached.".to_string()
-}
-```
-
-</TabItem>
 </Tabs>
 
 In practice, production implementations add parsing robustness, structured outputs (JSON mode), memory management, and termination logic.

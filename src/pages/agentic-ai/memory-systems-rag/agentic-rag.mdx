@@ -132,40 +132,6 @@ def agentic_rag(state):
 
 </TabItem>
 
-<TabItem label="Rust (async loop pattern)" icon="seti:rust">
-
-```rust
-async fn agentic_rag(
-    mut query: String,
-    retriever: &dyn Retriever,
-    llm: &LLMClient,
-    max_iterations: usize,
-) -> String {
-    let mut context = vec![];
-
-    for _ in 0..max_iterations {
-        let docs = retriever.hybrid_search(&query).await;
-        context.extend(docs);
-
-        let critique: String = llm
-            .invoke(format!("Question: {}\nContext: {:?}\nEnough? Yes/No + reason", query, context))
-            .await;
-
-        if critique.to_lowercase().contains("yes") {
-            break;
-        }
-
-        // Refine query
-        query = llm
-            .invoke(format!("Refine query. Critique: {}", critique))
-            .await;
-    }
-
-    llm.invoke(format!("Answer using this context: {:?}", context)).await
-}
-```
-
-</TabItem>
 
 </Tabs>
 

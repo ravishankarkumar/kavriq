@@ -1,32 +1,50 @@
 @import "tailwindcss";
 @import "./typography.css";
 
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 :root,
 html[data-theme="light"] {
-  --background: #fdfdfd;
-  --foreground: #282728;
-  --accent: #006cac;
-  --muted: #e6e6e6;
-  --border: #ece9e9;
+  --background: #f5f2eb;
+  --foreground: #18212b;
+  --accent: #1f4b6e;
+  --muted: #ebe6dc;
+  --border: #d7d0c4;
+  --surface: rgba(252, 250, 246, 0.88);
+  --surface-strong: rgba(255, 253, 249, 0.96);
 }
 
 html[data-theme="dark"] {
-  --background: #212737;
-  --foreground: #eaedf3;
-  --accent: #ff6b01;
-  --muted: #343f60;
-  --border: #ab4b08;
+  --background: #0f172a;
+  --foreground: #e5e7eb;
+  --accent: #f97316;
+  --muted: #182235;
+  --border: rgba(148, 163, 184, 0.18);
+  --surface: rgba(15, 23, 42, 0.72);
+  --surface-strong: rgba(15, 23, 42, 0.9);
 }
 
 @theme inline {
-  --font-app: var(--font-google-sans-code);
+  --font-inter: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-app: var(--font-inter);
+  --font-mono:
+    "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
 }
 
 @layer base {
@@ -40,6 +58,12 @@ html[data-theme="dark"] {
   }
   body {
     @apply flex min-h-svh flex-col bg-background font-app text-foreground selection:bg-accent/75 selection:text-background;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+    background-image:
+      radial-gradient(circle at top, rgba(249, 115, 22, 0.08), transparent 28rem),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent 20rem);
   }
   a,
   button {
@@ -52,15 +76,27 @@ html[data-theme="dark"] {
 }
 
 @utility max-w-app {
-  @apply max-w-3xl;
+  @apply max-w-6xl;
 }
 
 @utility app-layout {
-  @apply mx-auto w-full max-w-app px-4;
+  @apply mx-auto w-full max-w-app px-5 sm:px-6 lg:px-8;
 }
 
 .active-nav {
-  @apply underline decoration-wavy decoration-2 underline-offset-8;
+  @apply text-foreground;
+}
+
+.site-wordmark {
+  font-family: "Satoshi", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: -0.04em;
+}
+
+.surface-panel {
+  background: var(--surface);
+  backdrop-filter: blur(18px);
 }
 
 /* Source: https://piccalil.li/blog/a-more-modern-css-reset/ */
@@ -68,5 +104,3 @@ html[data-theme="dark"] {
 :target {
   scroll-margin-block: 1rem;
 }
-
-

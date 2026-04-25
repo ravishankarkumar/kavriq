@@ -14,5 +14,3 @@ title: "Planning Systems"
 - [Execution Graphs](/agentic-ai/planning-systems/execution-graphs)
 
 - [Building Agents with LangGraph (Python)](/agentic-ai/planning-systems/langgraph)
-
-- [Building Agents with Rig (Rust)](/agentic-ai/planning-systems/rig)

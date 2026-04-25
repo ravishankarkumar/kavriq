@@ -1,0 +1,101 @@
+---
+type Heading = {
+  depth: number;
+  slug: string;
+  text: string;
+};
+
+type Props = {
+  headings?: Heading[];
+  title?: string;
+};
+
+const { headings = [], title = "On this page" } = Astro.props;
+const tocItems = headings.filter(h => h.depth === 2 || h.depth === 3);
+---
+
+{
+  tocItems.length > 0 && (
+    <aside
+      class="surface-panel hidden rounded-2xl border border-border p-4 lg:block"
+      data-toc
+    >
+      <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/52">
+        {title}
+      </p>
+      <nav class="mt-4" aria-label="Table of contents">
+        <ul class="space-y-2 text-sm">
+          {tocItems.map(item => (
+            <li class:list={{ "ms-3": item.depth === 3 }}>
+              <a
+                href={`#${item.slug}`}
+                class="toc-link block rounded-xl px-3 py-2 text-foreground/62 transition-colors hover:bg-muted/45 hover:text-foreground"
+                data-toc-link
+                data-slug={item.slug}
+              >
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
+  )
+}
+
+<script is:inline>
+  function initTableOfContents() {
+    const toc = document.querySelector("[data-toc]");
+    if (!toc) return;
+
+    const links = Array.from(toc.querySelectorAll("[data-toc-link]"));
+    if (!links.length) return;
+
+    const sections = links
+      .map(link => {
+        const slug = link.getAttribute("data-slug");
+        return slug ? document.getElementById(slug) : null;
+      })
+      .filter(Boolean);
+
+    if (!sections.length) return;
+
+    const setActive = id => {
+      links.forEach(link => {
+        const isActive = link.getAttribute("data-slug") === id;
+        link.classList.toggle("is-active", isActive);
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const visible = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+
+        if (visible?.target?.id) {
+          setActive(visible.target.id);
+        }
+      },
+      {
+        rootMargin: "-20% 0px -65% 0px",
+        threshold: [0, 1],
+      }
+    );
+
+    sections.forEach(section => observer.observe(section));
+    setActive(sections[0].id);
+  }
+
+  document.addEventListener("astro:page-load", initTableOfContents);
+  document.addEventListener("astro:after-swap", initTableOfContents);
+  initTableOfContents();
+</script>
+
+<style is:global>
+  .toc-link.is-active {
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+</style>

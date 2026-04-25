@@ -219,46 +219,6 @@ This loop performs reasoning, tool execution, and state updates.
 
 <Tabs>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-struct AgentState {
-    goal: String,
-    history: Vec<String>,
-    observations: Vec<String>,
-    step: u32,
-}
-
-fn agent_loop(goal: &str, tools: &Tools, llm: &LLM) -> String {
-
-    let mut state = AgentState {
-        goal: goal.to_string(),
-        history: vec![],
-        observations: vec![],
-        step: 0,
-    };
-
-    loop {
-
-        let thought = llm.generate(&format!("{:?}", state));
-
-        let action = parse_action(&thought);
-
-        let observation = tools.execute(action);
-
-        state.history.push(thought);
-        state.observations.push(observation.clone());
-
-        state.step += 1;
-
-        if action.name == "finish" {
-            return observation;
-        }
-    }
-}
-```
-
-</TabItem>
 
 </Tabs>
 

@@ -207,25 +207,6 @@ Each iteration records a snapshot.
 
 <Tabs>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust id="tkr2yz"
-struct Snapshot {
-    step: u32,
-    thought: String,
-    action: String,
-    observation: String,
-}
-
-history.push(Snapshot {
-    step: state.step,
-    thought,
-    action,
-    observation,
-});
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -268,22 +249,6 @@ def replay(history):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust id="ncewts"
-fn replay(history: &Vec<Snapshot>) {
-
-    for step in history {
-
-        println!("Step: {}", step.step);
-        println!("Thought: {}", step.thought);
-        println!("Action: {}", step.action);
-        println!("Observation: {}", step.observation);
-    }
-}
-```
-
-</TabItem>
 
 </Tabs>
 

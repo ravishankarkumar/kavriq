@@ -5,95 +5,100 @@ type BlogData = { featured?: boolean };
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import Socials from "@/components/Socials.astro";
 import LinkButton from "@/components/LinkButton.astro";
 import Card from "@/components/Card.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
-// import IconRss from "@/assets/icons/IconRss.svg";
-import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
-import { SITE } from "@/config";
-import { SOCIALS } from "@/constants";
 
 const posts: CollectionEntry<"blog">[] = await getCollection<"blog">("blog");
 
 const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(p => (p.data as unknown as BlogData).featured);
-const recentPosts = sortedPosts.filter(p => !(p.data as unknown as BlogData).featured);
 ---
 
 <Layout>
   <Header />
   <main id="main-content" data-layout="index" class="app-layout">
-    <section id="hero" class:list={["pt-8 pb-6", "border-b border-border"]}>
-      <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
-        AI under the Hood (AUTH)
-      </h1>
-      <!-- <a
-        target="_blank"
-        href="/rss.xml"
-        class="inline-block"
-        aria-label="rss feed"
-        title="RSS Feed"
-      >
-        <IconRss
-          width={20}
-          height={20}
-          class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
-        />
-        <span class="sr-only">RSS Feed</span>
-      </a> -->
+    <section id="hero" class="grid gap-8 pt-8 pb-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.9fr)] lg:items-end">
+      <div class="max-w-4xl">
+        <p class="tech-label text-sm font-semibold tracking-[0.22em] text-accent uppercase">
+          KAVRIQ
+        </p>
+        <h1 class="mt-5 max-w-5xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+          AI education with systems-level clarity.
+        </h1>
+        <p class="mt-5 max-w-2xl text-lg text-foreground/72">
+          Led by curiosity. Built for engineers who want depth, precision, and
+          durable intuition across modern AI systems.
+        </p>
+      </div>
 
-      <p>Stop chasing the AI noise. <strong>AI Under the Hood (AUTH)</strong> is a deep-dive resource dedicated to the foundational concepts and full-stack architecture of AI. Learn to build with first-principles reasoning and gain the advantage of hindsight in an evolving field.</p>
-      <br/>
+      <div class="surface-panel rounded-3xl border border-border p-6">
+        <p class="tech-label text-xs font-semibold tracking-[0.18em] text-foreground/55 uppercase">
+          Focus
+        </p>
+        <ul class="mt-4 space-y-3 text-sm text-foreground/72">
+          <li>First-principles explanations without trend-chasing.</li>
+          <li>Python-first implementation paths for serious learners.</li>
+          <li>Coverage across models, agents, tooling, and evaluation.</li>
+        </ul>
+        <div class="mt-6 flex flex-wrap gap-3 text-sm">
+          <LinkButton class="rounded-full border border-border px-4 py-2 hover:border-accent hover:text-accent" href="/agentic-ai">
+            Agentic AI
+          </LinkButton>
+        </div>
+      </div>
+    </section>
 
-      <p>AI is a multi-layer, full-stack system. While each layer is deep enough to define an entire career, this guide is designed to look at them as a single, connected architecture.</p>
-      <br/>
-
-      <p><b>Our Approach: First Principles & Paved Paths</b></p>
-      <br/>
-
-      <p>We follow a dual-track approach: we provide a <strong>paved path</strong> for you to follow, while enforcing <strong>first-principles reasoning</strong> at every step.</p>
-      <br/>
-
-      <p>We acknowledge the limits of this approach. Since AI took center stage in late 2022, it has taken the world's finest minds over three years to effectively "tame the beast" through agentic systems. It would be ambitious to claim we can recreate every original idea from scratch in a tutorial.</p>
-      <br/>
-
-      <p>However, we have the <strong>advantage of hindsight</strong>. By applying first-principles thinking to established breakthroughs, we give you the "why" behind the "how," ensuring you aren't just following a script, but building a mental model that lasts.</p>
-      <br/>
-
-      <p><em>Note: This platform is a living resource and evolves at a rapid pace.</em></p>
-      <br/>
-
-      <p class="mt-2">
-        Read the blog posts or directly head ovet to 
-        <LinkButton
-          class="underline decoration-dashed underline-offset-4 hover:text-accent"
-          href="https://github.com/ravishankarkumar/aiunderthehood-sample-code"
-        >
-          the sample Code
-        </LinkButton>.
-      </p>
-      {
-        // only display if at least one social link is enabled
-        SOCIALS.length > 0 && (
-          <div class="mt-4 flex max-sm:flex-col sm:items-center">
-            <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">Social Links:</div>
-            <Socials />
-          </div>
-        )
-      }
+    <section class="grid gap-6 border-y border-border py-6 text-sm text-foreground/70 sm:grid-cols-3">
+      <div>
+        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
+          Positioning
+        </p>
+        <p class="mt-2 leading-6">
+          A deep-dive learning platform for modern AI systems, not a generic AI news site.
+        </p>
+      </div>
+      <div>
+        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
+          Approach
+        </p>
+        <p class="mt-2 leading-6">
+          Systems thinking, technical rigor, and educational writing shaped for builders.
+        </p>
+      </div>
+      <div>
+        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
+          Examples
+        </p>
+        <p class="mt-2 leading-6">
+          Browse the essays or jump straight to
+          <LinkButton
+            class="ms-1 underline decoration-1 decoration-foreground/30 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent/45"
+            href="https://github.com/ravishankarkumar/kavriq-examples"
+          >
+            sample code
+          </LinkButton>.
+        </p>
+      </div>
     </section>
 
     {
       featuredPosts.length > 0 && (
-        <section
-          id="featured"
-          class:list={[
-            "pt-12 pb-6",
-            { "border-b border-border": recentPosts.length > 0 },
-          ]}
-        >
-          <h2 class="text-2xl font-semibold tracking-wide">Featured</h2>
+        <section id="featured" class="py-10">
+          <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
+                Selected Reading
+              </p>
+              <h2 class="mt-2 text-3xl font-semibold tracking-tight">
+                Start with the clearest entry points.
+              </h2>
+            </div>
+            <p class="max-w-xl text-sm leading-6 text-foreground/65">
+              A few high-signal pieces that show how KAVRIQ approaches AI systems:
+              serious, structured, and implementation-aware.
+            </p>
+          </div>
           <ul>
             {featuredPosts.map(data => (
               <Card variant="h3" {...data} />
@@ -103,26 +108,6 @@ const recentPosts = sortedPosts.filter(p => !(p.data as unknown as BlogData).fea
       )
     }
 
-    {
-      recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">Recent Blogs</h2>
-          <ul>
-            {recentPosts.map(
-              (data, index) =>
-                index < SITE.postPerIndex && <Card variant="h3" {...data} />
-            )}
-          </ul>
-        </section>
-      )
-    }
-
-    <div class="my-8 text-center">
-      <LinkButton href="/blogs">
-        All Blogs
-        <IconArrowRight class="inline-block rtl:-rotate-180" />
-      </LinkButton>
-    </div>
   </main>
   <Footer />
 </Layout>

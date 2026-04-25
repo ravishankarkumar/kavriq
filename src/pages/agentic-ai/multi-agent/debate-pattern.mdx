@@ -124,33 +124,6 @@ def run_debate(question: str, proposer, critic, judge, rounds=3):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-async fn run_debate(
-    question: &str,
-    proposer: &Agent,
-    critic: &Agent,
-    judge: &Agent,
-    max_rounds: usize,
-) -> String {
-    let mut current_answer = proposer.generate(question).await;
-
-    for _ in 0..max_rounds {
-        let critique = critic.generate(
-            &format!("Question: {}\nAnswer: {}\nCritique and improve.", question, current_answer)
-        ).await;
-
-        current_answer = proposer.generate(
-            &format!("Question: {}\nPrevious: {}\nCritique: {}\nRevise.", question, current_answer, critique)
-        ).await;
-    }
-
-    judge.generate(&format!("Question: {}\nFinal answer:", question, current_answer)).await
-}
-```
-
-</TabItem>
 
 </Tabs>
 

@@ -135,26 +135,6 @@ memory.add(
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-// Using a vector store with metadata (e.g., qdrant, lance, or custom implementation)
-let episode = Episode {
-    episode_id: "ep_20260402_0912".to_string(),
-    timestamp: Utc::now(),
-    user_id: "ravi_001".to_string(),
-    task: "Compare RTX 4090 and H100...".to_string(),
-    actions: vec![...],
-    observations: vec!["H100 offers 2.8x better training throughput".to_string()],
-    success: true,
-    reflection: "Specific queries produced better results.".to_string(),
-    metadata: ...,
-};
-
-memory_store.add_episode(episode).await;
-```
-
-</TabItem>
 
 </Tabs>
 

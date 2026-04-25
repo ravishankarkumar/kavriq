@@ -76,21 +76,6 @@ def generate_with_cot(prompt: str, llm) -> str:
 ```
 
 </TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn generate_with_cot(task: &str, llm: &LLMClient) -> String {
-    let prompt = format!(
-        "Solve the following task step by step.\n\
-         Show your reasoning clearly before the final answer.\n\n\
-         Task: {}",
-        task
-    );
-    llm.generate(&prompt)
-}
-```
-
-</TabItem>
 </Tabs>
 
 Modern agents often combine CoT with structured output (JSON mode) or few-shot examples for even better consistency.

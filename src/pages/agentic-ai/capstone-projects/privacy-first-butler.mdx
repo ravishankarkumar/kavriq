@@ -216,18 +216,6 @@ def add_event(title, time):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn add_event(title: &str, time: &str) -> String {
-
-    calendar::create_event(title, time);
-
-    "Event added".to_string()
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -265,22 +253,6 @@ def search_files(query):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn search_files(query: &str) -> Vec<String> {
-
-    let files = std::fs::read_dir("./documents");
-
-    files
-        .filter_map(|f| f.ok())
-        .map(|f| f.file_name().to_string_lossy().to_string())
-        .filter(|f| f.contains(query))
-        .collect()
-}
-```
-
-</TabItem>
 
 </Tabs>
 

@@ -86,20 +86,6 @@ def reflect(goal: str, state: str, llm) -> str:
 ```
 
 </TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn reflect(goal: &str, state: &str, llm: &LLMClient) -> String {
-    let prompt = format!(
-        "Goal: {}\n\nCurrent state:\n{}\n\nIs the task complete? \
-         Reply with \"FINAL ANSWER\" if yes, otherwise suggest the single best next action.",
-        goal, state
-    );
-    llm.generate(&prompt)
-}
-```
-
-</TabItem>
 </Tabs>
 
 ---

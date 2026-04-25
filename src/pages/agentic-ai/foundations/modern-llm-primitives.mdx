@@ -314,8 +314,8 @@ A useful framework here is:
 
 | Dimension     | What It Defines                  | Example                                                     |
 | ------------- | -------------------------------- | ----------------------------------------------------------- |
-| **Persona**   | Who the agent is                 | “You are a senior Rust systems engineer.”                   |
-| **Action**    | What the agent is supposed to do | “You help debug Rust code and may use documentation tools.” |
+| **Persona**   | Who the agent is                 | “You are a senior AI systems engineer.”                     |
+| **Action**    | What the agent is supposed to do | “You help debug Python AI code and may use documentation tools.” |
 | **Guardrail** | What it must not do              | “Do not fabricate APIs. If unsure, say so.”                 |
 
 This structure is simple, but it captures the three things that matter most:
@@ -341,25 +341,24 @@ MODEL = "qwen3.5:9b"
 # -----------------------------
 SYSTEM_PROMPT = """
 ## Persona
-You are Ferris, an expert AI assistant specializing in Rust programming and 
-systems engineering. You are precise, concise, and prefer working examples 
-over abstract explanations.
+You are Atlas, an expert AI assistant specializing in Python-based AI systems.
+You are precise, concise, and prefer working examples over abstract explanations.
 
 ## Action
 You help developers with:
-- Writing and debugging Rust code
-- Explaining Rust concepts
-- Recommending crates from the Rust ecosystem
+- Writing and debugging Python AI code
+- Explaining AI systems concepts
+- Recommending practical Python libraries and patterns
 You may search documentation and run code examples to verify answers.
 
 ## Guardrail
-- Do not answer questions outside Rust and systems programming.
+- Do not answer questions outside AI systems and Python engineering.
 - If unsure, say so explicitly.
-- Never fabricate crate names or API signatures.
+- Never fabricate package names or API signatures.
 - Do not execute code that modifies the filesystem.
 """
 
-def run_rust_expert(user_query: str):
+def run_ai_systems_expert(user_query: str):
     response: ChatResponse = chat(model=MODEL, messages=[
         {"role": "system", "content": SYSTEM_PROMPT},
         {
@@ -375,73 +374,17 @@ def run_rust_expert(user_query: str):
     return response['message']['content']
 
 if __name__ == "__main__":
-    query = "Please explain string slices in Rust?"
-    
-    print("Querying Ferris...\n")
-    answer = run_rust_expert(query)
+    query = "Please explain how Pydantic helps with structured outputs."
+
+    print("Querying Atlas...\n")
+    answer = run_ai_systems_expert(query)
 
     print("-" * 30)
-    print("Ferris's Response:")
+    print("Atlas's Response:")
     print(answer)
 ```
 
-  </TabItem>
-
-  <TabItem label="Rust" icon="seti:rust">
-
-```rust
-use ollama_rs::{
-    generation::chat::{ChatMessage},
-    Ollama,
-};
-use ollama_rs::generation::chat::request::ChatMessageRequest;
-
-// -----------------------------
-// System Persona & Guardrails
-// -----------------------------
-const SYSTEM_PROMPT: &str = r#"
-## Persona
-You are Ferris, an expert AI assistant specializing in Rust programming and 
-systems engineering. You are precise, concise, and prefer working examples 
-over abstract explanations.
-
-## Action
-You help developers with:
-- Writing and debugging Rust code
-- Explaining Rust concepts
-- Recommending crates from the Rust ecosystem
-
-## Guardrail
-- Do not answer questions outside Rust and systems programming.
-- If unsure, say so explicitly.
-- Never fabricate crate names or API signatures.
-- Do not execute code that modifies the filesystem.
-"#;
-
-pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let ollama = Ollama::default();
-
-    let prompt = "What's the best crate for async HTTP in Rust?";
-    println!("User: {}\n", prompt);
-
-    // 👇 roles are plain strings
-    let messages = vec![
-        ChatMessage::system(SYSTEM_PROMPT.to_string()),
-        ChatMessage::user(prompt.to_string()),
-    ];
-
-    // 👇 build request object
-    let request = ChatMessageRequest::new("qwen3.5:9b".to_string(), messages);
-
-    let response = ollama.send_chat_messages(request).await?;
-
-    println!("Ferris: {}", response.message.content);
-
-    Ok(())
-}
-```
-
-  </TabItem>
+</TabItem>
 </Tabs>
 
 ---
@@ -517,73 +460,7 @@ print(f"Sources: {result.sources}")
 
   </TabItem>
 
-  <TabItem label="Rust" icon="seti:rust">
-
-```rust
-use ollama_rs::{
-    generation::chat::{ChatMessage, request::ChatMessageRequest},
-    Ollama,
-};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Deserialize, Serialize)]
-struct ResearchResult {
-    topic: String,
-    summary: String,
-    sources: Vec<String>,
-    confidence: f32,
-    needs_more_research: bool,
-}
-
-// -----------------------------
-// System Prompt (force JSON)
-// -----------------------------
-const SYSTEM_PROMPT: &str = r#"
-You are a research assistant.
-
-Return ONLY valid JSON matching this schema:
-
-{
-  "topic": string,
-  "summary": string,
-  "sources": string[],
-  "confidence": number (0 to 1),
-  "needs_more_research": boolean
-}
-
-Do not include any explanation or extra text.
-"#;
-
-pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let ollama = Ollama::default();
-
-    let messages = vec![
-        ChatMessage::system(SYSTEM_PROMPT.to_string()),
-        ChatMessage::user("Research the current state of MCP (Model Context Protocol).".to_string()),
-    ];
-
-    let request = ChatMessageRequest::new("qwen3.5:9b".to_string(), messages);
-
-    let response = ollama.send_chat_messages(request).await?;
-
-    let content = response.message.content;
-
-    // -----------------------------
-    // Parse JSON → serde
-    // -----------------------------
-    let result: ResearchResult = serde_json::from_str(&content)?;
-
-    println!("Topic: {}", result.topic);
-    println!("Summary: {}", result.summary);
-    println!("Confidence: {:.0}%", result.confidence * 100.0);
-    println!("Needs more research: {}", result.needs_more_research);
-    println!("Sources: {:?}", result.sources);
-
-    Ok(())
-}
-```
-
-  </TabItem>
+  
 </Tabs>
 
 ---
@@ -637,9 +514,8 @@ That information is defined in the tool schema.
 
 We have already seen tool calling in our previous examples. Let's take a look at them again.
 
-[Python Example](https://github.com/ravishankarkumar/aiunderthehood-sample-code/blob/main/python/agentic-ai/01-foundations/cognitive-architecture.py)
+[Python Example](https://github.com/ravishankarkumar/kavriq-examples/blob/main/python/agentic-ai/01-foundations/cognitive-architecture.py)
 
-[Rust Example](https://github.com/ravishankarkumar/aiunderthehood-sample-code/blob/main/rust/agentic-ai/r-01-b-agent-cognitive-architecture/src/main.rs)
 
 ---
 
