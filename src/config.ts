@@ -15,7 +15,7 @@ export const SITE = {
   editPost: {
     enabled: false,
     text: "Edit page",
-    url: "https://github.com/ravishankarkumar/aiunderthehood/edit/main/",
+    url: "https://github.com/ravishankarkumar/kavriq/edit/main/",
   },
   dynamicOgImage: true,
   dir: "ltr", // "rtl" | "auto"
