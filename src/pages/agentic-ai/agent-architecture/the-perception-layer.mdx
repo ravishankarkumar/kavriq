@@ -168,19 +168,6 @@ print(preview)
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use pdf_extract::extract_text;
-
-fn main() {
-    let text = extract_text("report.pdf").expect("failed to parse report.pdf");
-    let preview: String = text.chars().take(500).collect();
-    println!("{preview}");
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -238,19 +225,6 @@ data = json.loads(response)
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let prompt = format!(
-    "Return JSON with title, key_findings, and main_conclusion:\n{}",
-    document_text
-);
-
-let response = llm.generate(prompt);
-let data: serde_json::Value = serde_json::from_str(&response)?;
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -331,15 +305,6 @@ response = llm.generate({
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let image_bytes = std::fs::read("chart.png")?;
-
-let response = model.analyze_image(image_bytes);
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -405,19 +370,6 @@ print(len(vector))  # quick sanity check
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let embedding = client
-    .embeddings()
-    .create("text-embedding-3-small", "Solar adoption trends")
-    .await?;
-
-let vector = &embedding.data[0].embedding;
-println!("embedding dims: {}", vector.len());
-```
-
-</TabItem>
 
 </Tabs>
 

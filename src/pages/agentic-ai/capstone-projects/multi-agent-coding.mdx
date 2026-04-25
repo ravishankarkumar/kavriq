@@ -271,21 +271,6 @@ This loop can be repeated until approval.
 
 <Tabs>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust id="zmy8yx"
-let spec = pm_agent.generate(request);
-
-let code = dev_agent.generate(&spec);
-
-let review = reviewer_agent.evaluate(&code);
-
-if review.approved {
-    return code;
-}
-```
-
-</TabItem>
 
 </Tabs>
 

@@ -115,36 +115,6 @@ def manager_node(state):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-async fn manager_loop(
-    goal: String,
-    workers: HashMap<String, Box<dyn Worker>>,
-    llm: LLMClient,
-) -> String {
-    let mut state = AgentState::new(goal);
-
-    loop {
-        let decision = llm.invoke(format!(
-            "Goal: {}\nState: {:?}\nChoose next worker or finish.",
-            state.goal, state
-        )).await;
-
-        if decision.contains("FINISH") {
-            return synthesize_final_answer(&state);
-        }
-
-        let worker_name = parse_worker_name(&decision);
-        if let Some(worker) = workers.get(&worker_name) {
-            let result = worker.execute(&mut state).await;
-            state.add_result(result);
-        }
-    }
-}
-```
-
-</TabItem>
 
 </Tabs>
 

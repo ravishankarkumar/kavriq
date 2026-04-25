@@ -8,6 +8,7 @@ const breadcrumbList = currentUrlPath.split("/").slice(1);
 
 // Custom mapping to clean up folder names (Optional but recommended)
 const labelMapping: Record<string, string> = {
+  blogs: "Blogs",
   "agentic-ai": "Agentic AI",
   "prerequisite": "Prerequisites",
   "foundations": "Foundations",
@@ -98,7 +99,6 @@ const labelMapping: Record<string, string> = {
 
   // Module 11 — High Performance Engineering
   "small-model": "The Small Model Strategy",
-  "small-model-using-rust": "Using Rust for Agent Infrastructure",
   "observability": "Observability for Agents",
 
   // Module 12 — Agent Internals
@@ -131,64 +131,45 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
 }
 ---
 
-<nav class="app-layout mt-8 mb-1" aria-label="breadcrumb">
-  <ul
-    class="font-light [&>li]:inline [&>li:not(:last-child)>a]:hover:opacity-100"
-  >
+<nav class="app-layout mt-6 mb-2" aria-label="breadcrumb">
+  <ul class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/48">
     <li>
-      <a href="/" class="opacity-80">Home</a>
-      <span aria-hidden="true" class="opacity-80">&raquo;</span>
+      <a href="/" class="transition-colors hover:text-foreground/72">Home</a>
     </li>
-    <!-- {
-      breadcrumbList.map((breadcrumb, index) =>
-        index + 1 === breadcrumbList.length ? (
-          <li>
-            <span
-              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
-              aria-current="page"
-            >
-              {/* make the last part lowercase in Home > Tags > some-tag */}
-              {decodeURIComponent(breadcrumb)}
-            </span>
-          </li>
-        ) : (
-          <li>
-            <a href={`/${breadcrumb}/`} class="capitalize opacity-70">
-              {breadcrumb}
-            </a>
-            <span aria-hidden="true">&raquo;</span>
-          </li>
-        )
-      )
-    } -->
     {
       breadcrumbList.map((breadcrumb, index) => {
-        // BUILD THE CUMULATIVE PATH
-        // This joins all previous segments to create the correct nested link
         const breadcrumbPath = `/${breadcrumbList.slice(0, index + 1).join("/")}/`;
-
-        // Use mapping if exists, otherwise fallback to title-casing the slug
         const displayName =
           labelMapping[breadcrumb] ||
           decodeURIComponent(breadcrumb).replace(/-/g, " ");
         const isLast = index + 1 === breadcrumbList.length;
+        const isBlogIntermediate =
+          breadcrumbList[0] === "blogs" && index > 0 && !isLast;
+        const shouldLink = !isLast && !isBlogIntermediate;
 
-        return isLast ? (
-          <li>
-            <span
-              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
-              aria-current="page"
-            >
-              {displayName}
-            </span>
-          </li>
-        ) : (
-          <li>
-            <a href={breadcrumbPath} class="capitalize opacity-70">
-              {displayName}
-            </a>
-            <span aria-hidden="true">&raquo;</span>
-          </li>
+        return (
+          <>
+            <li aria-hidden="true" class="text-foreground/28">
+              /
+            </li>
+            <li>
+              {!shouldLink ? (
+                <span
+                  class:list={["capitalize text-foreground/68", { lowercase: index > 0 }]}
+                  aria-current={isLast ? "page" : undefined}
+                >
+                  {displayName}
+                </span>
+              ) : (
+                <a
+                  href={breadcrumbPath}
+                  class="capitalize transition-colors hover:text-foreground/72"
+                >
+                  {displayName}
+                </a>
+              )}
+            </li>
+          </>
         );
       })
     }

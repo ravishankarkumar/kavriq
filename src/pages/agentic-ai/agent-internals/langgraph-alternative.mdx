@@ -104,18 +104,6 @@ class AgentState:
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-struct AgentState {
-    goal: String,
-    history: Vec<String>,
-    observations: Vec<String>,
-    step: u32,
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -165,22 +153,6 @@ def reasoning_node(state, llm):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn reasoning_node(state: &mut AgentState, llm: &LLM) -> String {
-
-    let prompt = format!("Goal: {}\nHistory: {:?}", state.goal, state.history);
-
-    let thought = llm.generate(&prompt);
-
-    state.history.push(thought.clone());
-
-    thought
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -208,16 +180,6 @@ def tool_node(action, tools):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn tool_node(action: Action, tools: &Tools) -> String {
-
-    tools.execute(action.name, action.args)
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -245,13 +207,6 @@ state.observations.append(result)
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-state.observations.push(result);
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -331,38 +286,6 @@ def run_agent(goal, tools, llm):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn run_agent(goal: &str, tools: &Tools, llm: &LLM) -> String {
-
-    let mut state = AgentState {
-        goal: goal.to_string(),
-        history: vec![],
-        observations: vec![],
-        step: 0,
-    };
-
-    loop {
-
-        let thought = reasoning_node(&mut state, llm);
-
-        let action = parse_action(&thought);
-
-        if action.name == "finish" {
-            return action.answer;
-        }
-
-        let result = tool_node(action, tools);
-
-        state.observations.push(result);
-
-        state.step += 1;
-    }
-}
-```
-
-</TabItem>
 
 </Tabs>
 

@@ -99,23 +99,6 @@ def process_weather(data: dict) -> str:
 ```
 
 </TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use serde_json::Value;
-
-fn process_weather(data: &Value) -> String {
-    let weather = &data["weather"];
-    format!(
-        "Observation: Current temperature in {} is {}°C with {}% humidity.",
-        weather["location"].as_str().unwrap_or("unknown"),
-        weather["temperature"].as_f64().unwrap_or(0.0),
-        weather["humidity"].as_i64().unwrap_or(0)
-    )
-}
-```
-
-</TabItem>
 </Tabs>
 
 ---
@@ -146,20 +129,6 @@ def summarize_observation(raw_output: str, goal: str, llm) -> str:
     {raw_output}
     """
     return llm.generate(prompt)
-```
-
-</TabItem>
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn summarize_observation(raw_output: &str, goal: &str, llm: &LLMClient) -> String {
-    let prompt = format!(
-        "Summarize this tool output in one concise paragraph.\n\
-         Focus only on details relevant to: {}\n\nTool output:\n{}",
-        goal, raw_output
-    );
-    llm.generate(&prompt)
-}
 ```
 
 </TabItem>
@@ -202,7 +171,7 @@ Many production systems go beyond plain text and use **structured observations**
 - Reduces hallucination risk
 - Enables better reflection in later stages
 
-You can use Pydantic (Python) or Serde + typed structs (Rust) to enforce observation schemas.
+You can use Pydantic or typed data models in Python to enforce observation schemas.
 
 ---
 

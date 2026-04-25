@@ -158,25 +158,6 @@ relevant = memory.search(
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-// Using a vector store or custom memory crate
-let mut memory_store = MemoryStore::new();
-
-memory_store.add_entry(MemoryEntry {
-    content: "User prefers concise answers and dark mode.".to_string(),
-    memory_type: MemoryType::Semantic,
-    user_id: "ravi_001".to_string(),
-    timestamp: Utc::now(),
-    metadata: ...,
-});
-
-// Hybrid search combining semantic similarity + filters
-let relevant = memory_store.search("UI preferences", "ravi_001");
-```
-
-</TabItem>
 
 </Tabs>
 

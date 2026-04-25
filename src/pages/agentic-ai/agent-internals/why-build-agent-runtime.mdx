@@ -305,22 +305,6 @@ while not done:
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-while !done {
-
-    let thought = llm.generate(prompt);
-
-    let action = parse_action(&thought);
-
-    let observation = execute_tool(action);
-
-    state.update(observation);
-}
-```
-
-</TabItem>
 
 </Tabs>
 

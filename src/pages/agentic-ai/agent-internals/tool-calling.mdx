@@ -232,24 +232,6 @@ This dispatcher selects the correct tool.
 
 <Tabs>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-type ToolFn = fn(HashMap<String, String>) -> String;
-
-fn dispatch_tool(name: &str, args: HashMap<String, String>) -> String {
-
-    match name {
-
-        "web_search" => web_search(args),
-        "calculator" => calculator(args),
-
-        _ => panic!("Unknown tool")
-    }
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -323,22 +305,6 @@ if action["type"] == "tool":
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-let thought = llm.generate(&prompt);
-
-let action = parse_action(&thought);
-
-if action.kind == ActionKind::Tool {
-
-    let observation = dispatch_tool(&action.name, action.args);
-
-    state.observations.push(observation);
-}
-```
-
-</TabItem>
 
 </Tabs>
 

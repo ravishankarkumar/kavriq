@@ -3,6 +3,7 @@ import type { MarkdownLayoutProps } from "astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
 import Layout from "./Layout.astro";
 import { SITE } from "@/config";
 
@@ -11,6 +12,7 @@ import { SITE } from "@/config";
 
 type Props = MarkdownLayoutProps<{ title: string }>;
 const { frontmatter } = Astro.props;
+const headings = Astro.props.headings ?? [];
 ---
 
 <Layout title={`${frontmatter.title} | ${SITE.title}`}>
@@ -21,11 +23,16 @@ const { frontmatter } = Astro.props;
 
   <Header />
   <Breadcrumb />
-  <main id="main-content" class="app-layout">
-    <section id="about" class="app-prose mb-28 max-w-app prose-img:border-0">
-      <h1 class="text-2xl tracking-wider sm:text-3xl">{frontmatter.title}</h1>
-      <slot />
-    </section>
+  <main id="main-content" class="app-layout pb-16 pt-6">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+      <section id="about" class="app-prose mx-auto min-w-0 max-w-4xl prose-img:border-0 lg:max-w-none">
+        <h1>{frontmatter.title}</h1>
+        <slot />
+      </section>
+      <div class="lg:sticky lg:top-28">
+        <TableOfContents headings={headings} />
+      </div>
+    </div>
   </main>
   <Footer />
 </Layout>
@@ -40,13 +47,20 @@ const { frontmatter } = Astro.props;
   /* Style the Tabs so they don't look like plain bullet points */
   starlight-tabs {
     display: block;
+    max-width: 100%;
+    min-width: 0;
     margin: 1.5rem 0;
+  }
+
+  starlight-tabs div[role="tabpanel"] {
+    min-width: 0;
   }
   
   .starlight-aside {
-    padding: 1rem;
+    padding: 1rem 1.1rem;
     margin: 1.5rem 0;
     border-left: 0.25rem solid var(--sl-color-accent);
-    background-color: rgba(0, 122, 204, 0.1);
+    background-color: color-mix(in srgb, var(--color-muted) 75%, transparent);
+    border-radius: 0 1rem 1rem 0;
   }
 </style>

@@ -117,25 +117,6 @@ memory.add(
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-// Using Qdrant or a similar vector store client
-let document = Document {
-    id: "doc_h100_001".to_string(),
-    embedding: embedding_vector,
-    payload: json!({
-        "text": "The Nvidia H100 GPU features 80GB HBM3 memory...",
-        "category": "hardware",
-        "source": "nvidia_h100_architecture_2026",
-        "user_id": "ravi_001"
-    }),
-};
-
-vector_db.upsert(document).await?;
-```
-
-</TabItem>
 
 </Tabs>
 

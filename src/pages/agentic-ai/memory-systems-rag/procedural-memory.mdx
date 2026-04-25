@@ -82,19 +82,6 @@ def financial_analysis_workflow(data: dict) -> Report:
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn financial_analysis_workflow(data: Dataset) -> Report {
-    let validated = validate_and_clean(data);
-    let stats = compute_summary_statistics(&validated);
-    let trends = identify_trends(&stats);
-    let anomalies = detect_anomalies(&stats);
-    generate_structured_report(trends, anomalies)
-}
-```
-
-</TabItem>
 
 </Tabs>
 

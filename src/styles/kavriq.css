@@ -1,0 +1,27 @@
+@layer base {
+  body {
+    color: var(--foreground);
+    background-color: var(--background);
+    font-family: var(--font-app);
+    line-height: 1.6;
+    letter-spacing: -0.011em;
+    word-spacing: 0.02em;
+  }
+
+  h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5em;
+    color: var(--foreground);
+  }
+
+  .tech-label,
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+  }
+}

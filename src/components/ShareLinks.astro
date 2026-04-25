@@ -1,22 +1,23 @@
 ---
 import { SHARE_LINKS } from "@/constants";
 import LinkButton from "./LinkButton.astro";
+import { SITE } from "@/config";
 
-const URL = 'https://aiunderthehood.com' + Astro.url.pathname;
+const shareUrl = new URL(Astro.url.pathname, SITE.website).toString();
 ---
 
 {
   SHARE_LINKS.length > 0 && (
-    <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
-      <span class="italic">Share this post on:</span>
+    <div class="surface-panel flex flex-none flex-col items-center justify-center gap-3 rounded-2xl border border-border px-4 py-4 md:items-start">
+      <span class="text-sm text-foreground/65">Share this post</span>
       <div class="text-center">
         {SHARE_LINKS.map(social => (
           <LinkButton
-            href={`${social.href + URL}`}
-            class="scale-90 p-2 hover:rotate-6 sm:p-1"
+            href={`${social.href + shareUrl}`}
+            class="inline-flex rounded-xl p-2 text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground sm:p-2"
             title={social.linkTitle}
           >
-            <social.icon class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" />
+            <social.icon class="inline-block size-5 fill-transparent stroke-current stroke-2" />
             <span class="sr-only">{social.linkTitle}</span>
           </LinkButton>
         ))}

@@ -1,6 +1,6 @@
 ---
 title: The Model Context Protocol (MCP) and Building Reliable MCP Servers
-description: Understanding the Model Context Protocol for standardized tool discovery, its architecture, and implementing production-ready MCP servers in Rust and Python
+description: Understanding the Model Context Protocol for standardized tool discovery, its architecture, and implementing production-ready MCP servers in Python
 layout: ../../../layouts/TutorialPage.astro
 ---
 
@@ -81,7 +81,7 @@ Let’s implement a basic but functional MCP server that exposes:
 - An SQLite database
 - Local filesystem access (with security notes)
 
-We’ll use **FastMCP** (popular for Python) and patterns from the official Rust SDK (`rmcp`).
+We’ll use **FastMCP** for a clean Python implementation.
 
 ---
 
@@ -119,38 +119,6 @@ def get_weather(args: WeatherArgs) -> dict:
 
 </TabItem>
 
-<TabItem label="Rust (using rmcp, official rust sdk for mcp)" icon="seti:rust">
-
-```rust
-use rmcp::server::{Server, Tool};
-use serde_json::Value;
-
-// In a real implementation with the Rust SDK
-#[derive(Clone)]
-struct WeatherTool;
-
-impl Tool for WeatherTool {
-    fn name(&self) -> &str { "get_weather" }
-    fn description(&self) -> &str {
-        "Get current weather for a city. Use when user asks about temperature or conditions."
-    }
-    fn schema(&self) -> Value { /* JSON Schema */ }
-    async fn execute(&self, args: Value) -> Result<Value, String> {
-        // Implementation here
-        Ok(serde_json::json!({
-            "city": "Tokyo",
-            "temperature": 18,
-            "condition": "cloudy"
-        }))
-    }
-}
-
-// Register with the server
-let mut server = Server::new();
-server.register_tool(WeatherTool);
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -175,17 +143,6 @@ def run_sql(query: str) -> list:
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-// Similar to earlier example, wrapped as an MCP Tool
-async fn run_sql_tool(query: String) -> Result<Value, String> {
-    // Use rusqlite with proper error handling and read-only mode
-    // ...
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -210,13 +167,6 @@ def read_file(path: str) -> str:
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-// Wrap fs::read_to_string with path validation as an MCP Resource or Tool
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -238,17 +188,6 @@ if __name__ == "__main__":
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-#[tokio::main]
-async fn main() {
-    let server = Server::new(/* registered tools */);
-    server.serve().await;  // Uses stdio, SSE, or custom transport
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -279,7 +218,7 @@ Real-world MCP servers should include:
 - Idempotency support for mutations
 - Caching for expensive operations
 
-Rust excels for high-concurrency and performance-critical servers. Python with FastMCP is ideal for rapid development and data-centric tools.
+Python with FastMCP is ideal for rapid development and data-centric tools.
 
 ---
 
@@ -290,7 +229,7 @@ The **Model Context Protocol (MCP)** provides the standardization layer that tur
 In this article we covered:
 - MCP architecture (Host → Client → Server)
 - Why MCP is superior to plain REST for agents
-- Practical implementation of tools, SQLite, and filesystem access in Python and Rust
+- Practical implementation of tools, SQLite, and filesystem access in Python
 
 By combining MCP with the reliable tool design principles from the previous article, you can build powerful, secure, and future-proof agent systems.
 

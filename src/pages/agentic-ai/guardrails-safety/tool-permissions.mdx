@@ -94,29 +94,6 @@ def execute_tool(tool_name: str, args: dict, context: AgentContext):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-async fn execute_tool(
-    tool_name: &str,
-    args: Value,
-    context: &AgentContext,
-) -> Result<Value> {
-    let permission = permission_system.check_permission(
-        tool_name,
-        &args,
-        &context
-    ).await?;
-
-    if !permission.granted {
-        return Err(PermissionError::new(&permission.reason));
-    }
-
-    tools[tool_name].execute(args).await
-}
-```
-
-</TabItem>
 
 </Tabs>
 

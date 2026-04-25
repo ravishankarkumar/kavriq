@@ -1,6 +1,6 @@
-# AI Under the Hood
+# KAVRIQ
 
-Deep dives into AI internals — transformers, inference, embeddings, and everything under the hood.
+KAVRIQ is a deep-dive resource for AI internals, transformers, inference, embeddings, and modern AI systems.
 
 Built by [Ravi Shankar Kumar](https://www.linkedin.com/in/ravi-shankar-a725b0225/), AI Engineer at Salesforce.
 
@@ -10,7 +10,7 @@ Built by [Ravi Shankar Kumar](https://www.linkedin.com/in/ravi-shankar-a725b0225
 
 A technical blog and structured learning resource for AI and ML engineers. The goal is to be the single best resource for understanding how modern AI systems actually work — from the mathematics up through production infrastructure.
 
-Content is written manually, from first principles, with no hand-waving. Code samples are provided in both Python and Rust where applicable.
+Content is written manually, from first principles, with no hand-waving. Code samples default to Python so the material can go deeper without splitting attention across languages.
 
 ---
 
@@ -41,7 +41,7 @@ The engineering discipline of building, deploying, and operating AI systems. Cov
 A complete guide to building autonomous AI agents — from agent architecture and planning systems to tool use, memory, multi-agent coordination, guardrails, and evaluation. 12 modules with capstone projects.
 
 ### [Interview Prep](/interview-prep)
-Interview preparation for AI Engineer and ML Engineer roles. Q&A sections for ML fundamentals, transformers, LLMs, and agents. Full system design walkthroughs. Coding patterns in Python and Rust. Living roadmap.
+Interview preparation for AI Engineer and ML Engineer roles. Q&A sections for ML fundamentals, transformers, LLMs, and agents. Full system design walkthroughs. Coding patterns in Python. Living roadmap.
 
 ---
 

@@ -138,39 +138,6 @@ def multi_hop_retrieval(question: str, retriever, llm, max_hops=4):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-async fn multi_hop_retrieval(
-    question: &str,
-    retriever: &dyn Retriever,
-    llm: &LLMClient,
-    max_hops: usize,
-) -> String {
-    let mut context = vec![];
-    let mut current_query = question.to_string();
-
-    for _ in 0..max_hops {
-        let docs = retriever.hybrid_search(&current_query).await;
-        context.extend(docs.into_iter().map(|d| d.text));
-
-        let reflection = llm.invoke(format!(
-            "Question: {}\nContext so far: {:?}\nWhat next?",
-            question, context
-        )).await;
-
-        if reflection.to_lowercase().contains("enough") {
-            break;
-        }
-
-        current_query = llm.invoke(format!("Next search query based on: {}", reflection)).await;
-    }
-
-    llm.invoke(format!("Synthesize answer from: {:?}", context)).await
-}
-```
-
-</TabItem>
 
 </Tabs>
 

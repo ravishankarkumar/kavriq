@@ -1,24 +1,29 @@
 ---
-title: "Disclaimer: Pre-Beta Status"
-description: Important information regarding the Alpha/Pre-Beta state of AI Under the Hood.
+title: "Disclaimer"
+description: Important information about Kavriq content, examples, and code usage.
 layout: ../layouts/TutorialPage.astro
 ---
 
-**Last Updated:** December 2025
+**Last Updated:** April 2026
 
-Please be advised that this website is currently in an **Alpha/Pre-Beta state**. The content published here is a compilation of raw data and drafts collected from various sources for development purposes.
+Kavriq is an educational website focused on AI systems, agentic AI, and engineering practice.
 
+The site is still evolving, and some examples, code snippets, commands, notebooks, or companion projects may not run exactly as written in every environment.
 
+I am actively working to improve and verify the runnable examples.
 
-We are currently undergoing a streamlining process to refine and verify all content. Until this process is complete, please be aware of the following:
+## Content and Examples
 
-### Content Status
-* **Unverified:** Information has not yet been vetted for technical accuracy or reliability.
-* **Unpolished:** The site contains drafts with grammatical errors, broken links, or formatting issues.
-* **Redundant:** You may encounter duplicate or overlapping information as we consolidate data.
+The explanations are provided for learning and reference. They may simplify implementation details, omit production-specific concerns, or depend on package versions, APIs, model behavior, hardware, or cloud services that change over time.
 
-### Use at Your Own Risk
-Users are advised that any reliance on the information found on this site is strictly at their own risk. **The creators of this website assume no liability for any inaccuracies, errors, or omissions in the content provided during this development phase.**
+Before using any code or design pattern from Kavriq in a real system, review it carefully, test it in your own environment, and adapt it to your requirements.
 
-### Future Updates
-Once the website has been streamlined, verified, and polished, a formal announcement will be posted. Until then, please treat all information as **experimental and subject to change without notice**.
+## No Liability
+
+All content, examples, and code are provided "as is", without any warranty of correctness, reliability, security, or fitness for a particular purpose.
+
+I am not liable for any loss, damage, security issue, business impact, data loss, or other consequence arising from the use of this website, its explanations, or any code derived from it.
+
+## Updates
+
+Kavriq will continue to be updated as examples are tested, improved, and corrected. Content may change without notice.

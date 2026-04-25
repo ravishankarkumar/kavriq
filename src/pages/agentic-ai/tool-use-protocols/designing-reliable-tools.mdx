@@ -144,18 +144,6 @@ except ValidationError as e:
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-use jsonschema::JSONSchema;
-
-let compiled = JSONSchema::compile(&schema_json).unwrap();
-if let Err(errors) = compiled.validate(&instance_json) {
-    // Return structured error to agent
-}
-```
-
-</TabItem>
 
 </Tabs>
 

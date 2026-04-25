@@ -149,16 +149,6 @@ def web_search(query):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn web_search(query: &str) -> Vec<String> {
-
-    search_api(query)
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -233,16 +223,6 @@ def capture_screen():
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn capture_screen() -> Image {
-
-    screenshot::capture()
-}
-```
-
-</TabItem>
 
 </Tabs>
 
@@ -318,21 +298,6 @@ def generate_report(context, llm):
 
 </TabItem>
 
-<TabItem label="Rust" icon="seti:rust">
-
-```rust
-fn generate_report(context: &str, llm: &LLM) -> String {
-
-    let prompt = format!(
-        "Generate a research report based on:\n{}",
-        context
-    );
-
-    llm.generate(&prompt)
-}
-```
-
-</TabItem>
 
 </Tabs>
 
