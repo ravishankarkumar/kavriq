@@ -137,29 +137,126 @@ const structuredData = {
 
     {
       googleAnalyticsId && (
-        <>
-          <script
-            async
-            is:inline
-            src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
-          />
-          <script is:inline define:vars={{ googleAnalyticsId }}>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {
-              dataLayer.push(arguments);
-            }
-            window.gtag = gtag;
-            gtag("js", new Date());
+        <script is:inline define:vars={{ googleAnalyticsId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          window.gtag = gtag;
 
-            document.addEventListener("astro:page-load", () => {
+          gtag("consent", "default", {
+            ad_user_data: "denied",
+            ad_personalization: "denied",
+            ad_storage: "denied",
+            analytics_storage: "denied",
+            wait_for_update: 500,
+          });
+          gtag("js", new Date());
+
+          (function () {
+            const consentKey = "kavriq.analyticsConsent";
+            let isGoogleTagLoaded = false;
+            let lastTrackedPath = "";
+
+            function updateConsent(analyticsStorage) {
+              gtag("consent", "update", {
+                ad_user_data: "denied",
+                ad_personalization: "denied",
+                ad_storage: "denied",
+                analytics_storage: analyticsStorage,
+              });
+            }
+
+            function trackPageView() {
+              const currentPath = window.location.pathname + window.location.search;
+
+              if (!isGoogleTagLoaded || currentPath === lastTrackedPath) return;
+
+              lastTrackedPath = currentPath;
               gtag("config", googleAnalyticsId, {
                 page_title: document.title,
                 page_location: window.location.href,
-                page_path: window.location.pathname + window.location.search,
+                page_path: currentPath,
               });
+            }
+
+            function loadGoogleTag() {
+              updateConsent("granted");
+
+              if (isGoogleTagLoaded) {
+                trackPageView();
+                return;
+              }
+
+              isGoogleTagLoaded = true;
+
+              const script = document.createElement("script");
+              script.async = true;
+              script.src = `https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`;
+              script.onload = trackPageView;
+              document.head.appendChild(script);
+            }
+
+            function hideConsentBanner() {
+              document
+                .querySelector("[data-analytics-consent-banner]")
+                ?.setAttribute("hidden", "");
+            }
+
+            function showConsentBanner() {
+              document
+                .querySelector("[data-analytics-consent-banner]")
+                ?.removeAttribute("hidden");
+            }
+
+            function syncConsentState() {
+              const storedConsent = localStorage.getItem(consentKey);
+
+              if (storedConsent === "granted") {
+                hideConsentBanner();
+                loadGoogleTag();
+                return;
+              }
+
+              updateConsent("denied");
+
+              if (storedConsent === "denied") {
+                hideConsentBanner();
+              } else {
+                showConsentBanner();
+              }
+            }
+
+            function bindConsentButtons() {
+              const acceptButton = document.querySelector(
+                "[data-analytics-consent-accept]:not([data-consent-bound])",
+              );
+              const rejectButton = document.querySelector(
+                "[data-analytics-consent-reject]:not([data-consent-bound])",
+              );
+
+              acceptButton?.setAttribute("data-consent-bound", "true");
+              rejectButton?.setAttribute("data-consent-bound", "true");
+
+              acceptButton?.addEventListener("click", () => {
+                localStorage.setItem(consentKey, "granted");
+                hideConsentBanner();
+                loadGoogleTag();
+              });
+
+              rejectButton?.addEventListener("click", () => {
+                localStorage.setItem(consentKey, "denied");
+                updateConsent("denied");
+                hideConsentBanner();
+              });
+            }
+
+            document.addEventListener("astro:page-load", () => {
+              bindConsentButtons();
+              syncConsentState();
             });
-          </script>
-        </>
+          })();
+        </script>
       )
     }
 
@@ -197,6 +294,36 @@ const structuredData = {
   </head>
   <body>
     <slot />
+
+    {
+      googleAnalyticsId && (
+        <aside
+          class="surface-panel fixed inset-x-4 bottom-4 z-50 mx-auto max-w-3xl rounded-2xl border border-border p-4 shadow-2xl shadow-black/20 sm:bottom-6 sm:flex sm:items-center sm:justify-between sm:gap-5 sm:p-5"
+          data-analytics-consent-banner
+          hidden
+        >
+          <p class="text-sm leading-6 text-foreground/78 sm:max-w-xl">
+            Kavriq uses Google Analytics to understand page traffic and improve the site. Analytics only starts if you accept.
+          </p>
+          <div class="mt-4 flex flex-col gap-2 sm:mt-0 sm:flex-row sm:items-center">
+            <button
+              class="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground/72 transition-colors hover:border-accent/45 hover:text-foreground"
+              type="button"
+              data-analytics-consent-reject
+            >
+              Reject
+            </button>
+            <button
+              class="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+              type="button"
+              data-analytics-consent-accept
+            >
+              Accept analytics
+            </button>
+          </div>
+        </aside>
+      )
+    }
 
     <!-- Load full theme logic -->
     <script src="../scripts/theme.ts"></script>
