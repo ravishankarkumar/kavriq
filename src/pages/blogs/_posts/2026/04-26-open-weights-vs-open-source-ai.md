@@ -3,6 +3,7 @@ title: Open Weights Is Not the Same as Open Source AI
 description: A practical distinction between open-weight AI models and truly open source AI systems, and why the difference matters when choosing local LLMs.
 pubDatetime: 2026-04-26T09:00:00Z
 modDatetime: 2026-04-26T09:00:00Z
+ogImage: https://kavriq.com/images/blogs/open_source_open_weight.png
 tags:
   - AI
   - LLMs
@@ -18,6 +19,11 @@ Sometimes that is accurate. Often it is not.
 In AI, there is an important distinction between **open weights** and **open source**. The difference is not pedantic. It affects what you can inspect, what you can reproduce, what you can modify, and what risks you take when building on top of a model.
 
 ## The Short Version
+
+<img
+  src="/images/blogs/open_source_open_weight.png"
+  alt="Open weights vs open source AI comparison"
+/>
 
 An **open-weight model** gives you access to the trained parameters of the model. You can usually download the model, run it locally, fine-tune it, quantize it, or deploy it on your own infrastructure, depending on the license.
 
