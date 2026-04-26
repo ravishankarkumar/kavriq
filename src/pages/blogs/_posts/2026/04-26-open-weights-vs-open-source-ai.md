@@ -1,8 +1,8 @@
 ---
 title: Open Weights Is Not the Same as Open Source AI
 description: A practical distinction between open-weight AI models and truly open source AI systems, and why the difference matters when choosing local LLMs.
-pubDatetime: 2026-04-26T09:00:00Z
-modDatetime: 2026-04-26T09:00:00Z
+pubDatetime: 2026-04-26T05:00:00Z
+modDatetime: 2026-04-26T05:00:00Z
 ogImage: https://kavriq.com/images/blogs/open_source_open_weight.png
 tags:
   - AI
