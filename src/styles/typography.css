@@ -3,6 +3,18 @@
 @layer base {
   .app-prose {
     @apply prose prose-neutral max-w-none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: break-word;
+
+    > *,
+    figure,
+    starlight-tabs,
+    starlight-tabs [role="tabpanel"] {
+      min-width: 0;
+      max-width: 100%;
+    }
 
     h1,
     h2,
@@ -72,7 +84,7 @@
     }
 
     .astro-code code {
-      @apply flex-[1_0_100%] bg-inherit p-0;
+      @apply min-w-0 flex-[1_0_100%] bg-inherit p-0;
     }
 
     .astro-code [data-line] {
@@ -92,7 +104,10 @@
     }
 
     pre {
-      @apply overflow-x-auto rounded-[1.35rem] border border-border py-4 shadow-none focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+      @apply w-full max-w-full overflow-x-auto rounded-[1.35rem] border border-border py-4 shadow-none focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+      min-width: 0;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
     }
 
     h1 {
@@ -114,7 +129,10 @@
   }
 
   .astro-code {
-    @apply flex border border-slate-200 bg-(--shiki-light-bg) text-(--shiki-light) shadow-[0_10px_30px_rgba(15,23,42,0.06)] [&_span]:text-(--shiki-light);
+    @apply min-w-0 max-w-full flex border border-slate-200 bg-(--shiki-light-bg) text-(--shiki-light) shadow-[0_10px_30px_rgba(15,23,42,0.06)] [&_span]:text-(--shiki-light);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   html[data-theme="dark"] .astro-code {
