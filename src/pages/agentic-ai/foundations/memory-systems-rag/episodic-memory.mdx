@@ -1,0 +1,229 @@
+---
+title: Episodic Memory
+description: How AI agents store past experiences, learn from successes and failures, and improve over time using structured episodic memory
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Humans solve new problems by recalling specific past experiences — how a bug was fixed, what worked in a previous conversation, or why an experiment failed. This is called **episodic memory**.
+
+In cognitive science and modern agent architectures (especially the **CoALA** framework — Cognitive Architectures for Language Agents), episodic memory refers to **structured records of specific events** the agent has experienced, including the context, actions, observations, and outcomes.
+
+Unlike semantic memory (general facts), episodic memory captures the agent’s own history, enabling it to reuse successful strategies and avoid repeating mistakes.
+
+---
+
+## Why Episodic Memory Matters
+
+Without episodic memory, every task starts from scratch:
+
+```text
+User: Debug this Python ImportError again.
+
+Agent: Searches documentation → tries multiple fixes → eventually solves it.
+```
+
+The same error appears later. The agent repeats the entire process.
+
+With episodic memory:
+
+```text
+Agent recalls: “Last week we fixed a similar ImportError by upgrading package X and adjusting sys.path.”
+
+Agent applies the proven solution quickly.
+```
+
+This turns agents from stateless responders into systems that **accumulate experience** and become more efficient over time. It is one of the key differences between simple tool-using agents and truly learning, persistent ones.
+
+---
+
+## What Counts as an Episode?
+
+An **episode** is a self-contained record of a meaningful interaction or task. Typical episodes include:
+
+- Problem-solving sessions
+- Tool usage sequences and their results
+- Multi-turn conversations with users
+- Completed tasks or workflows
+- Failures, corrections, and recovery attempts
+
+A rich episode usually contains:
+
+```json
+{
+  "episode_id": "ep_20260402_0912",
+  "timestamp": "2026-04-02T09:12:00Z",
+  "user_id": "ravi_001",
+  "task": "Compare RTX 4090 and H100 GPUs for AI training",
+  "actions": [
+    "web_search('RTX 4090 vs H100 benchmarks')",
+    "extract performance metrics",
+    "compare price/performance ratio"
+  ],
+  "observations": ["H100 offers 2.8x better training throughput"],
+  "outcome": "Successful comparison delivered",
+  "success": true,
+  "reflection": "Narrow search queries produced better results than broad ones.",
+  "metadata": {
+    "duration_seconds": 45,
+    "tokens_used": 1240
+  }
+}
+```
+
+This structured format makes episodes both searchable and useful for future reasoning.
+
+---
+
+## Episodic Memory Structure
+
+High-quality episodic memory typically includes these core fields:
+
+| Field          | Description                                      |
+|----------------|--------------------------------------------------|
+| Task / Goal    | What the agent was trying to achieve             |
+| Actions        | Sequence of thoughts, tool calls, and decisions  |
+| Observations   | Results returned by tools or the environment     |
+| Outcome        | Final result and success/failure flag            |
+| Reflection     | Agent’s self-critique or lesson learned          |
+| Metadata       | Timestamps, user_id, cost, duration, etc.        |
+
+The addition of **reflection** is especially powerful — it turns raw experience into distilled knowledge.
+
+---
+
+## Storing Episodes
+
+Episodes are stored in long-term memory systems, most commonly using **vector databases** (for semantic similarity) combined with structured metadata filters.
+
+Popular approaches in 2026 include:
+- **Mem0** — the most widely used episodic + semantic memory layer
+- **Letta (MemGPT)** — agent-controlled memory blocks
+- **LangGraph** checkpoints combined with vector stores
+- Custom hybrid vector + graph stores
+
+---
+
+## Example: Storing and Reflecting on Episodes
+
+<Tabs>
+
+<TabItem label="Python (with Mem0)" icon="seti:python">
+
+```python
+from mem0 import Memory
+
+memory = Memory()
+
+# After completing a task
+memory.add(
+    data="""
+    Task: Compare RTX 4090 and H100 for AI training.
+    Actions: Searched benchmarks → extracted metrics → compared throughput.
+    Outcome: H100 is 2.8x faster for training workloads.
+    Reflection: Using specific queries like 'H100 training throughput 2026' yielded better results.
+    """,
+    user_id="ravi_001",
+    metadata={
+        "type": "episodic",
+        "success": True,
+        "task_category": "hardware_comparison"
+    }
+)
+```
+
+</TabItem>
+
+
+</Tabs>
+
+Many systems automatically trigger reflection (via a separate LLM call) at the end of a task to generate the `reflection` field.
+
+---
+
+## Retrieving Relevant Episodes
+
+When facing a new task, the agent searches its episodic memory for similar past experiences:
+
+```text
+New Task
+   ↓
+Hybrid Retrieval (semantic similarity + filters)
+   ↓
+Top-k relevant episodes
+   ↓
+Injected into working memory / prompt
+```
+
+The agent can then reuse proven strategies or avoid previously failed approaches. This is closely related to **case-based reasoning** from classical AI.
+
+---
+
+## Learning from Successes and Failures
+
+**Successful episodes** provide reusable templates:
+
+- “For hardware benchmark comparisons, start with targeted 2026-specific queries.”
+
+**Failed episodes** prevent repetition:
+
+- “SQL table-not-found errors were previously resolved by validating schema first.”
+
+Reflection turns both into higher-level procedural knowledge over time (the bridge to procedural memory, covered later in the module).
+
+---
+
+## Challenges and Best Practices
+
+Implementing episodic memory well requires addressing several real-world issues:
+
+- **Memory Growth**: Episodes accumulate quickly. Use automatic summarization, salience scoring, and periodic pruning.
+- **Retrieval Quality**: Rely on hybrid search (vector embeddings + keyword + graph relations) and reranking.
+- **Noise and Hallucination**: Only high-confidence or human-verified episodes should influence critical decisions.
+- **Privacy & Governance**: Support user-scoped memory and “right to be forgotten” mechanisms.
+
+Best practices in 2026:
+- Combine episodic memory with semantic memory for richer retrieval.
+- Run lightweight reflection after every significant task.
+- Use metadata filtering (user_id, task_category, success flag) alongside semantic search.
+- Monitor retrieval impact and allow agents to “forget” low-value memories.
+
+---
+
+## Episodic Memory in Modern Frameworks
+
+Leading implementations include:
+- **Mem0** — Excellent support for episodic + semantic memory with automatic reflection.
+- **Letta (MemGPT)** — Agent-managed memory blocks with strong episodic capabilities.
+- **LangGraph** + vector stores — Checkpointing combined with memory layers.
+- Research systems inspired by the CoALA framework.
+
+These tools make episodic memory production-ready rather than a research prototype.
+
+---
+
+## Episodic Memory vs Semantic Memory
+
+| Memory Type   | Focus                          | Example                                              |
+|---------------|--------------------------------|------------------------------------------------------|
+| Episodic      | Specific past experiences      | “Last week I compared H100 vs RTX 4090 using these steps…” |
+| Semantic      | Generalized facts and knowledge| “The H100 GPU has 80GB HBM3 memory and excels at training” |
+
+Episodic memory captures **what happened to the agent**. Semantic memory captures **what the agent knows**. Both are essential and often work together during retrieval.
+
+---
+
+## Episodic Memory as Experience
+
+Episodic memory is what allows agents to evolve from simple executors into systems that **learn from their own history**. Combined with reliable tools (via MCP) and strong working memory management, it forms the foundation for persistent, adaptive intelligence.
+
+---
+
+## Looking Ahead
+
+In this article we explored **episodic memory** — how agents structure, store, retrieve, and learn from specific past experiences, including the critical role of reflection.
+
+In the next article we will examine **Semantic Memory**, which stores and retrieves generalized factual knowledge using embeddings, vector databases, and hybrid retrieval techniques.
+
+→ Continue to **[5.3 — Semantic Memory](/agentic-ai/foundations/memory-systems-rag/semantic-memory)**

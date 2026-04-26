@@ -1,0 +1,244 @@
+---
+title: The Model Context Protocol (MCP) and Building Reliable MCP Servers
+description: Understanding the Model Context Protocol for standardized tool discovery, its architecture, and implementing production-ready MCP servers in Python
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+
+As AI agents grow more capable, they require access to many external tools and data sources: databases, filesystems, web APIs, code interpreters, and enterprise systems.
+
+Historically, every agent framework handled these integrations differently, leading to fragmentation and duplicated work. The **Model Context Protocol (MCP)** solves this by providing an open, standardized protocol for connecting AI applications to tools and data.
+
+Originally introduced by Anthropic in late 2024, MCP is now governed by the Linux Foundation’s Agentic AI Foundation and has become the de-facto standard supported by Claude, Cursor, VS Code Copilot, Gemini, and many others.
+
+MCP enables **dynamic tool discovery**, standardized schemas, secure access, and true interoperability.
+
+---
+
+## MCP Architecture: Host, Client, and Server
+
+MCP uses a three-tier architecture:
+
+```text
+AI Application (Host)
+   ↓
+MCP Client (inside the host)
+   ↓ (stateful connection)
+MCP Server
+   ↓
+Tools, Resources, Databases, Filesystem, External APIs
+```
+
+- **Host**: The AI application the user interacts with (e.g., Claude Desktop, Cursor, custom agent framework).
+- **MCP Client**: The protocol layer inside the host. It maintains a stateful, one-to-one connection to a specific server and loads tool definitions into the model's context.
+- **MCP Server**: A lightweight program that exposes tools, resources (read-only data), and prompts in a standardized way.
+
+This design allows a single host to connect to many different MCP servers simultaneously, each providing specialized capabilities.
+
+---
+
+## MCP Server vs Regular HTTP API — Why Not Just Use REST?
+
+You might wonder: *Why build a dedicated MCP server instead of exposing tools via a regular HTTP/REST API with JSON Schema validation?*
+
+Here's the key difference:
+
+| Aspect                  | Regular HTTP/REST API                          | MCP Server                                      |
+|-------------------------|------------------------------------------------|-------------------------------------------------|
+| **Discovery**           | Static documentation (OpenAPI)                 | Dynamic at runtime (`tools/list`)               |
+| **Designed for**        | Human developers / traditional software        | LLMs and AI agents                              |
+| **Statefulness**        | Usually stateless                              | Stateful sessions with context                  |
+| **Tool Usage**          | Fixed at design time                           | Discovered and selected dynamically by the agent |
+| **Integration Effort**  | Custom code per API                            | Implement MCP once → works with any compatible agent |
+| **AI-Friendliness**     | Requires precise prompts and error handling    | Built-in rich schemas, structured responses, and guidance |
+
+**MCP servers are not replacements for APIs** — they often *wrap* existing APIs or services. They add an AI-native layer on top: the server advertises what it can do, provides detailed schemas and descriptions, and handles conversation-style interactions (including multi-step workflows).
+
+In short: A plain HTTP API requires the *developer* to hardcode integrations. An MCP server lets the *AI agent* discover and use capabilities at runtime, safely and consistently.
+
+This is why MCP has become the standard — it solves the N×M integration problem for agent ecosystems.
+
+---
+
+## Why MCP Matters in 2026
+
+MCP builds directly on reliable tool design principles:
+- Rich JSON Schema for inputs/outputs
+- Structured success/error responses
+- Support for idempotency and retries
+- Built-in security (OAuth-style permissions, sandboxing)
+
+It turns custom tool integrations into a plug-and-play ecosystem.
+
+---
+
+## Building an MCP Server
+
+Let’s implement a basic but functional MCP server that exposes:
+- Custom tools
+- An SQLite database
+- Local filesystem access (with security notes)
+
+We’ll use **FastMCP** for a clean Python implementation.
+
+---
+
+## Defining and Registering Tools
+
+Modern MCP SDKs make tool definition declarative and automatic.
+
+<Tabs>
+
+<TabItem label="Python (with FastMCP)" icon="seti:python">
+
+```python
+from fastmcp import FastMCP
+from pydantic import BaseModel
+
+mcp = FastMCP("my-agent-tools")
+
+class WeatherArgs(BaseModel):
+    city: str
+    unit: str = "celsius"
+
+@mcp.tool
+def get_weather(args: WeatherArgs) -> dict:
+    """Get current weather for a city. Use when user asks about temperature or conditions."""
+    # Call external API or cache here
+    return {
+        "city": args.city,
+        "temperature": 22,
+        "condition": "cloudy",
+        "unit": args.unit
+    }
+
+# Tools are automatically discovered with full schemas
+```
+
+</TabItem>
+
+
+</Tabs>
+
+---
+
+## Exposing a Database (SQLite)
+
+<Tabs>
+
+<TabItem label="Python (FastMCP)" icon="seti:python">
+
+```python
+@mcp.tool
+def run_sql(query: str) -> list:
+    """Execute a read-only SQL query on the local database."""
+    import sqlite3
+    conn = sqlite3.connect("data.db")
+    cursor = conn.cursor()
+    cursor.execute(query)  # Use parameters in production!
+    return cursor.fetchall()
+```
+
+</TabItem>
+
+
+</Tabs>
+
+**Security note**: Always use parameterized queries and consider read-only connections in production.
+
+---
+
+## Exposing the Local Filesystem
+
+<Tabs>
+
+<TabItem label="Python (FastMCP)" icon="seti:python">
+
+```python
+@mcp.resource
+def read_file(path: str) -> str:
+    """Read a file from the allowed project directory."""
+    # Sandbox: restrict to safe base path in production
+    safe_path = f"./project/{path}"
+    return open(safe_path).read()
+```
+
+</TabItem>
+
+
+</Tabs>
+
+**Important**: Always implement sandboxing (e.g., allow-list directories) to prevent agents from accessing sensitive files.
+
+---
+
+## Starting the MCP Server
+
+<Tabs>
+
+<TabItem label="Python (FastMCP)" icon="seti:python">
+
+```python
+if __name__ == "__main__":
+    mcp.run()  # Starts server with stdio or HTTP transport
+    # Or: mcp.run_http(host="127.0.0.1", port=8000)
+```
+
+</TabItem>
+
+
+</Tabs>
+
+MCP supports multiple transports (stdio for local tools, HTTP/SSE for remote).
+
+---
+
+## How an MCP Client Interacts (Agent Side)
+
+From the agent's perspective, the flow is simple and standardized:
+
+1. Discover tools: `tools/list`
+2. Get detailed schema for a tool
+3. Call the tool with arguments
+4. Receive structured response (`status`, `data`, or error)
+
+The MCP Client inside the host handles the protocol, feeding results back into the model's reasoning loop.
+
+---
+
+## Production Considerations
+
+Real-world MCP servers should include:
+- Full protocol compliance via official SDKs
+- Authentication (OAuth 2.0 style)
+- Rate limiting and observability
+- Sandboxing and permission scoping
+- Idempotency support for mutations
+- Caching for expensive operations
+
+Python with FastMCP is ideal for rapid development and data-centric tools.
+
+---
+
+## Summary
+
+The **Model Context Protocol (MCP)** provides the standardization layer that turns custom tool integrations into a scalable ecosystem. Unlike regular HTTP APIs, MCP servers are designed specifically for AI agents — enabling dynamic discovery, stateful interactions, and safe, interoperable tool use.
+
+In this article we covered:
+- MCP architecture (Host → Client → Server)
+- Why MCP is superior to plain REST for agents
+- Practical implementation of tools, SQLite, and filesystem access in Python
+
+By combining MCP with the reliable tool design principles from the previous article, you can build powerful, secure, and future-proof agent systems.
+
+---
+
+## Looking Ahead
+
+In the next module we will explore **Memory Systems & Retrieval-Augmented Generation (RAG)**.
+
+Topics include memory hierarchies, episodic vs. semantic memory, vector databases, and multi-hop retrieval — systems that let agents remember and reason over long contexts.
+
+→ Continue to **[5.1 — The Memory Hierarchy of Agents](/agentic-ai/foundations/memory-systems-rag/memory-hierarchy)**

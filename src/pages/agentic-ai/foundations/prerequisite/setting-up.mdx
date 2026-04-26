@@ -1,0 +1,150 @@
+---
+pubDatetime: 2026-03-14T08:00:00Z
+modDatetime: 2026-03-29T08:00:00Z
+title: "Setting Up Your Local Agentic AI Environment"
+description: Run everything locally with Ollama — no API keys, no rate limits, perfect for learning by trial and error.
+layout: ../../../../layouts/TutorialPage.astro
+heroImage: /images/agentic-ai-setup.png
+ogImage: /images/agentic-ai-setup.png
+---
+
+import { Tabs, TabItem, Steps, Aside } from '@astrojs/starlight/components';
+import { YouTube } from 'astro-embed';
+
+In this tutorial series, examples default to **Python** so the material can stay focused and go deeper.
+
+We strongly recommend running **everything locally with Ollama**.  
+Cloud APIs (even free tiers like Gemini) quickly hit rate limits when you experiment, debug, or run many iterations. Ollama gives you **unlimited** local inference, zero cost, and full privacy — ideal for learning agentic AI by trial and error.
+
+> **Note:** Local Ollama will be **significantly slower** than cloud APIs, especially on older hardware. If you need more speed, you can switch to a cloud API (like Gemini) at any time — just be mindful of rate limits and costs.
+
+---
+
+## 1. Programming Language Setup
+
+We use **Python** as the default language throughout the tutorials.
+
+**Official install links:**
+- [Python 3.12+](https://www.python.org/downloads/)
+
+<Aside type="note" title="Tested On">
+All code in this series has been tested on **macOS Apple Silicon**. It also works great on Windows and Linux.
+</Aside>
+
+---
+
+## 2. Install Ollama (Local LLM Runtime)
+
+Ollama lets you run powerful local models (like Qwen 3.5) directly on your laptop.
+
+<Aside type="note" title="Open weights vs open source">
+Many local LLMs are downloadable and runnable offline, but that does not always mean they are fully open source. In this series, when we recommend local models, we mostly care about practical offline use: can you download the weights, run them locally, and inspect the license? For the deeper distinction, read [Open Weights Is Not the Same as Open Source AI](/blogs/2026/04-26-open-weights-vs-open-source-ai/).
+</Aside>
+
+### macOS (Recommended: Homebrew)
+
+```bash
+# Install Ollama via Homebrew (easiest way on macOS)
+brew install ollama
+
+# Start the Ollama service
+brew services start ollama
+```
+
+### Windows / Linux / Other macOS methods
+
+Visit the official download page → https://ollama.com/download
+
+<YouTube id="NuMan079fIs" />  
+**Best multi-platform video (Mac + Windows + Linux)** – “Install Ollama on Mac, Windows & Linux (Step-by-Step)” (Dec 2025)
+
+**Additional excellent videos:**
+- [Installing Ollama is EASY Everywhere (macOS, Windows, Linux)](https://www.youtube.com/watch?v=oI7VoTM9NKQ)
+- [How to Install Ollama on macOS (Apple Silicon)](https://www.youtube.com/watch?v=ucxtk-jUj6c) – great for M-series Macs
+- [Ollama on Windows in 5 minutes](https://www.youtube.com/watch?v=WlMT_FDLhg4)
+
+---
+
+## 3. Pull the Model We Will Use
+
+```bash
+# Pull Qwen 3.5 (9B) — excellent balance of speed and reasoning
+ollama pull qwen3.5:9b
+```
+
+This model runs well on most recent laptops (8GB+ RAM recommended).
+
+---
+
+## 4. Quick Test – Is Ollama Working?
+
+Run the interactive chat:
+
+```bash
+ollama run qwen3.5:9b
+```
+
+Then type:
+
+```
+Explain how a ReAct agent works in one paragraph.
+```
+
+You should get a coherent answer instantly.
+
+---
+
+## 5. Verifying Your Setup (Ollama + Python)
+
+Install the Python packages used by the examples:
+
+```bash
+python3 -m pip install ollama pydantic
+```
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+from ollama import chat
+from pydantic import BaseModel
+
+response = chat(
+    model="qwen3.5:9b",
+    messages=[{"role": "user", "content": "Say hello from Ollama!"}]
+)
+
+print(response.message.content)
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+## When to Use What
+
+| Use Case                    | Recommended Setup          | Reason |
+|-----------------------------|----------------------------|--------|
+| Learning / experimentation  | **Ollama (local)**         | Unlimited trials, no cost |
+| Production / high-scale     | OpenAI / Gemini            | Higher speed & scale |
+| Offline / privacy-first     | **Ollama**                 | Runs 100% locally |
+
+---
+
+## Optional: Cloud Model Providers
+
+This series uses Ollama by default. If you prefer a hosted model, you can use any provider that supports chat/completion APIs and tool calling.
+
+- Gemini: https://aistudio.google.com/
+- OpenAI: https://platform.openai.com/
+- Anthropic: https://console.anthropic.com/
+
+Cloud providers are useful for speed and stronger frontier models, but they introduce API keys, costs, rate limits, and data-sharing considerations.
+
+---
+
+**You're now fully set up!**
+
+→ Next: [What is an Agent?](/agentic-ai/foundations/core-concepts/what-is-an-agent)

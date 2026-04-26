@@ -1,0 +1,119 @@
+---
+title: LLM-as-a-Judge
+description: Using language models to automatically evaluate agent outputs, reasoning quality, and trajectories at scale
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+
+Evaluating AI agents at scale is difficult. Human review is accurate but slow and expensive. Traditional automated metrics (exact match, BLEU, etc.) work poorly for open-ended reasoning and multi-step agent behavior.
+
+**LLM-as-a-Judge** solves this by using a capable language model to automatically evaluate the outputs (and reasoning) of another model or agent.
+
+Instead of relying solely on humans, we turn the LLM itself into an evaluator — a "judge" that can score answers, critique reasoning, and compare trajectories.
+
+---
+
+## Why LLM-as-a-Judge Works
+
+Large language models have strong capabilities in:
+- Understanding natural language
+- Applying evaluation rubrics
+- Providing detailed reasoning for their judgments
+- Comparing multiple answers consistently
+
+When properly prompted, a strong judge model can approximate human-level evaluation for many tasks while scaling to millions of examples.
+
+---
+
+## Basic Architectures
+
+### 1. Single-Answer Scoring
+The judge receives a question + answer and assigns a score + explanation.
+
+### 2. Pairwise Comparison (often more reliable)
+The judge receives two answers and decides which is better (and why).
+
+### 3. Trajectory Evaluation
+The judge reviews the full sequence of thoughts, tool calls, and observations — not just the final answer.
+
+---
+
+## Example Judge Prompt (Structured)
+
+A good judge prompt in 2026 typically includes:
+
+- Clear evaluation criteria (rubric)
+- Few-shot examples
+- Structured output format (JSON)
+- Instructions to explain reasoning
+
+Example:
+
+```text
+You are an expert evaluator.
+
+Question: {question}
+Answer: {answer}
+
+Evaluate on these dimensions (1-5 scale):
+1. Factual correctness
+2. Reasoning quality
+3. Completeness
+4. Relevance
+
+Return your evaluation in JSON format.
+```
+
+The judge then returns structured output that can be parsed and aggregated.
+
+---
+
+## Advantages of LLM-as-a-Judge
+
+- **Scalability** — Can evaluate thousands or millions of agent runs automatically.
+- **Consistency** — Applies the same rubric across evaluations (when using the same judge model and temperature).
+- **Rich feedback** — Provides natural language explanations, not just scores.
+- **Trajectory awareness** — Can evaluate the full reasoning path, tool usage, and efficiency.
+
+---
+
+## Limitations and Known Issues
+
+LLM judges are not perfect:
+
+- **Bias** — Judges may favor longer answers, their own style, or outputs that resemble their training data (self-preference bias).
+- **Position bias** — When doing pairwise comparison, the order of answers can influence the result.
+- **Evaluation errors** — Judges can make mistakes on complex reasoning or domain-specific tasks.
+- **Cost** — Running a strong judge model on every output adds significant expense.
+
+**Best practices in 2026**:
+- Use structured rubrics with clear scoring criteria.
+- Run multiple judges and aggregate results (ensemble judging).
+- Use reference-based evaluation when possible.
+- Combine LLM judges with human review for high-stakes or ambiguous cases.
+- Monitor judge agreement rates and calibrate against human baselines.
+
+---
+
+## LLM Judges for Trajectory Evaluation
+
+One of the most powerful applications is evaluating full **agent trajectories**:
+
+- Was the reasoning logical?
+- Were tools used appropriately?
+- Did the agent recover from errors?
+- Was the process efficient?
+
+This goes far beyond final-answer scoring and helps identify systemic weaknesses in agent design.
+
+---
+
+## Looking Ahead
+
+In this article we explored **LLM-as-a-Judge** — a scalable technique for automatically evaluating agent outputs and reasoning using language models themselves.
+
+In the next article we will dive deeper into **Trajectory Evaluation**, focusing on how to measure the quality and efficiency of an agent’s full reasoning path and decision process.
+
+→ Continue to **[9.3 — Trajectory Evaluation](/agentic-ai/foundations/evaluation-metrics/trajectory-eval)**

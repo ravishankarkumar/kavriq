@@ -1,0 +1,175 @@
+---
+title: ReAct — Reason + Act
+description: How interleaving reasoning and tool use creates powerful, grounded agent behavior
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Early agent systems struggled to combine two essential capabilities: **reasoning** about a problem and **acting** in the external world.
+
+Chain-of-Thought prompting enabled strong reasoning but kept the model isolated from real data and tools.  
+Pure tool-calling systems could act but often lacked structured thinking, leading to hallucinations and poor decision-making.
+
+The **ReAct** framework, introduced in the 2022 paper *["ReAct: Synergizing Reasoning and Acting in Language Models"](https://arxiv.org/abs/2210.03629)* (Yao et al.), solved this by tightly interleaving the two.
+
+---
+
+## The ReAct Pattern
+
+ReAct structures agent behavior as a repeating cycle:
+
+```text
+Thought → Action → Observation → Thought → ...
+```
+
+- **Thought**: The agent reasons about the current situation and decides what to do next.
+- **Action**: The agent calls a tool (search, calculator, database, etc.).
+- **Observation**: The agent receives the tool result and incorporates it into its reasoning.
+
+This loop continues until the agent has enough information to produce a **Final Answer**.
+
+---
+
+## ReAct Example
+
+**Task:** “What is the population of the capital of Germany?”
+
+```text
+Thought: The capital of Germany is Berlin. I need its current population.
+
+Action: web_search("Berlin population 2026")
+
+Observation: Berlin has an estimated population of 3.68 million as of 2026.
+
+Thought: This answers the question directly.
+
+Final Answer: The population of Berlin, the capital of Germany, is approximately 3.68 million.
+```
+
+Notice how reasoning guides the action, and the observation grounds the next thought. This tight integration reduces hallucinations and makes the agent’s process highly interpretable.
+
+---
+
+## Why ReAct Works So Well
+
+ReAct delivers three major advantages over earlier approaches:
+
+1. **Grounded Reasoning**  
+   Every claim is backed by fresh tool results rather than potentially outdated or fabricated knowledge.
+
+2. **Adaptive Problem Solving**  
+   The agent can adjust its strategy dynamically based on what it learns (e.g., “The first search returned incomplete data → try a different query or source”).
+
+3. **Improved Interpretability & Debugging**  
+   The explicit Thought → Action → Observation trace reads like human problem-solving, making it easier to understand, diagnose, and improve agent behavior.
+
+---
+
+## ReAct vs Chain-of-Thought
+
+| Method           | Focus                  | Strength                          | Limitation                     |
+|------------------|------------------------|-----------------------------------|--------------------------------|
+| Chain-of-Thought | Pure reasoning         | Strong step-by-step logic         | No access to external data     |
+| ReAct            | Reasoning + Acting     | Grounded, adaptive, interactive   | Can still follow suboptimal paths |
+
+**Chain-of-Thought example (isolated):**
+
+```text
+Thought: Germany’s capital is Berlin. Berlin has roughly 3.6 million people.
+Final Answer: 3.6 million.
+```
+
+**ReAct (grounded):**
+
+```text
+Thought: I should verify the latest population.
+Action: web_search(...)
+Observation: 3.68 million (2026 estimate).
+Final Answer: ...
+```
+
+ReAct keeps reasoning honest by forcing interaction with the real world.
+
+---
+
+## Implementing a Basic ReAct Loop
+
+Here’s a minimal ReAct-style agent skeleton:
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+def react_agent(goal: str, llm, tools, max_steps: int = 10):
+    scratchpad = ""
+    
+    for step in range(max_steps):
+        prompt = f"""
+        Goal: {goal}
+        
+        Previous steps:
+        {scratchpad}
+        
+        Respond in the format:
+        Thought: <reasoning>
+        Action: <tool_name> with args: <arguments>
+        Or: Final Answer: <answer>
+        """
+        
+        response = llm.generate(prompt)
+        # Parse Thought, Action, or Final Answer
+        
+        if "Final Answer" in response:
+            return extract_final_answer(response)
+            
+        thought, action = parse_thought_and_action(response)
+        observation = tools.execute(action.name, action.args)
+        
+        scratchpad += f"Thought: {thought}\nAction: {action}\nObservation: {observation}\n\n"
+    
+    return "Max steps reached."
+```
+
+</TabItem>
+</Tabs>
+
+In practice, production implementations add parsing robustness, structured outputs (JSON mode), memory management, and termination logic.
+
+---
+
+## ReAct in Modern Agent Frameworks
+
+ReAct (or close variants) remains a foundational pattern in 2026. You’ll find it in:
+
+- **LangChain / LangGraph** — Core ReAct agents and graph-based extensions
+- **CrewAI** — Role-based agents with ReAct-style reasoning
+- **AutoGen** and many others
+
+Many frameworks enhance the original pattern with better memory, multi-step planning, or parallel tool use, but the **Thought → Action → Observation** backbone is still widely used.
+
+---
+
+## Strengths and Limitations
+
+**Strengths:**
+- Simple yet effective for a wide range of tasks
+- Excellent grounding and reduced hallucination
+- Human-readable traces for debugging
+
+**Limitations:**
+- Single-path reasoning (no exploration of multiple branches)
+- Can get stuck in local optima or inefficient loops
+- Less optimal for tasks requiring deep lookahead or complex orchestration
+
+For more challenging problems, ReAct is often combined with higher-level planning techniques (e.g., Plan-and-Execute or Tree-of-Thoughts).
+
+---
+
+## Looking Ahead
+
+ReAct was a pivotal breakthrough because it showed that **reasoning and acting are far more powerful together** than apart.
+
+It laid the groundwork for today's sophisticated agent systems.
+
+→ Continue to **3.3 — [Chain-of-Thought Planning](/agentic-ai/foundations/planning-systems/chain-of-thought)**: Techniques that enhance reasoning depth before or alongside action.

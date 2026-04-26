@@ -1,0 +1,131 @@
+---
+title: Agent-to-Agent Communication (A2A)
+description: How independent AI agents discover, negotiate, and collaborate across platforms and organizations using standardized protocols
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+
+As AI agents become more capable and widely deployed, they increasingly need to work together across different platforms, organizations, and environments.
+
+A coding agent, a research agent, a financial analysis agent, and an enterprise workflow agent may all need to collaborate — even if they were built by different companies and run on different infrastructure.
+
+This requirement has driven the development of **Agent-to-Agent (A2A) communication protocols** — standardized ways for agents to discover each other, advertise capabilities, negotiate tasks, and exchange information securely.
+
+---
+
+## Why A2A Protocols Are Necessary
+
+Without standardization, agent collaboration requires brittle custom integrations. Every new agent pair needs custom APIs, authentication, and data formats.
+
+A2A protocols solve this by providing a common communication layer, similar to how HTTP enabled the web or MCP standardized tool access.
+
+```text
+Agent A  ←→  A2A Protocol  ←→  Agent B
+```
+
+This enables true interoperability across vendors and platforms.
+
+---
+
+## Core Capabilities of A2A
+
+Modern A2A protocols typically support four key functions:
+
+1. **Agent Discovery** — Finding available agents and their capabilities.
+2. **Capability Negotiation** — Understanding what each agent can do and what inputs/outputs they expect.
+3. **Task Delegation** — Securely handing off subtasks with context.
+4. **Result Exchange** — Returning structured results and feedback.
+
+These functions build directly on the coordination patterns we’ve already covered (Manager–Worker, Swarm, Debate).
+
+---
+
+## Agent Discovery and Capability Advertisement
+
+Agents first need to announce themselves and describe what they can do.
+
+Example discovery response:
+
+```json
+{
+  "agent_id": "finance_analyzer_v2",
+  "provider": "acme_corp",
+  "capabilities": [
+    "market_trend_analysis",
+    "revenue_forecasting",
+    "risk_assessment"
+  ],
+  "input_schema": { ... },
+  "output_schema": { ... },
+  "supported_protocols": ["a2a-v1", "mcp"]
+}
+```
+
+Discovery can happen via registries, directories, or peer-to-peer announcements, much like service discovery in microservices.
+
+---
+
+## Capability Negotiation and Task Delegation
+
+Once discovered, agents negotiate:
+
+- Does this agent have the right expertise?
+- What data format and context does it need?
+- What are the expected outputs and success criteria?
+
+After negotiation, one agent can delegate a subtask. The delegation message typically includes:
+- Task description
+- Relevant context (from semantic/episodic memory)
+- Constraints and success criteria
+- Authentication and permission tokens
+
+The receiving agent processes the task (using its own tools via MCP and memory) and returns structured results.
+
+---
+
+## A2A vs MCP
+
+| Protocol | Purpose                        | Scope                     |
+|----------|--------------------------------|---------------------------|
+| MCP      | Agent ↔ Tools / Resources      | Tool execution layer      |
+| A2A      | Agent ↔ Agent                  | Collaboration layer       |
+
+They are complementary:
+- MCP lets an agent use external tools and data sources.
+- A2A lets agents collaborate with other intelligent agents.
+
+Together they form the foundation of a true **agent ecosystem**.
+
+---
+
+## Security and Trust Considerations
+
+Cross-agent communication introduces serious security challenges. Production A2A systems must include:
+
+- Strong authentication and identity verification
+- Fine-grained permission scoping (e.g., “can read but not modify”)
+- Sandboxing and execution boundaries
+- Audit logging and provenance tracking
+- Rate limiting and abuse prevention
+
+Trust models are still evolving — some systems use reputation scores, cryptographic attestations, or human-in-the-loop approval for sensitive actions.
+
+---
+
+## Current State and Future Vision (2026)
+
+As of 2026, A2A is still an emerging space with multiple competing proposals and early implementations from major players and open-source communities. No single universal standard has achieved dominance yet, but the direction is clear: toward an **Internet of Agents** where specialized agents dynamically discover and collaborate across organizational boundaries.
+
+This vision combines the coordination patterns from this module with standardized discovery and communication — enabling far more powerful, scalable, and resilient AI systems.
+
+---
+
+## Looking Ahead
+
+In the next module we will explore **Computer Use & Vision Agents** — systems that can perceive and interact with graphical user interfaces, screenshots, and real-world environments.
+
+Topics will include Large Action Models (LAMs), GUI automation, visual grounding, and multimodal perception.
+
+→ Continue to **[7.1 — Computer Use Agents](/agentic-ai/foundations/computer-use-vision/computer-use-agents)**

@@ -1,0 +1,199 @@
+---
+title: Semantic Memory
+description: How AI agents store and retrieve factual knowledge using embeddings, vector databases, hybrid search, and modern semantic memory systems
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Humans use different types of long-term memory:
+
+* **Episodic memory** stores specific personal experiences.
+* **Semantic memory** stores general facts and knowledge.
+
+| Memory Type   | Example                                              |
+|---------------|------------------------------------------------------|
+| Episodic      | “Yesterday I compared the H100 and RTX 4090 GPUs.”   |
+| Semantic      | “The H100 GPU has 80GB HBM3 memory and excels at AI training workloads.” |
+
+Modern AI agents implement a similar distinction. While episodic memory captures the agent’s own history, **semantic memory** serves as the agent’s **external knowledge base** — storing documents, research papers, technical specifications, company data, and domain expertise.
+
+Instead of relying solely on the LLM’s fixed parametric knowledge, agents store this information externally and retrieve it at runtime. This approach scales far beyond context windows and stays up-to-date.
+
+---
+
+## Why Semantic Memory Is Essential
+
+Large language models have several fundamental limitations:
+
+- Their knowledge is frozen at training time.
+- They cannot easily incorporate new documents or proprietary data.
+- They struggle with rapidly changing information.
+- They are prone to hallucinations when asked about specialized or recent topics.
+
+Semantic memory addresses these gaps by providing a dynamic, updatable knowledge layer. The agent retrieves only the most relevant information needed for the current task and injects it into working memory.
+
+This retrieval process is the foundation of **Retrieval-Augmented Generation (RAG)**, which has evolved into **Agentic RAG** in 2026 — where the agent itself can iteratively refine queries, critique results, and decide when enough context has been gathered.
+
+---
+
+## Knowledge Bases and Document Processing
+
+A semantic memory system starts with a **knowledge base** — a collection of documents that can include:
+
+- Product documentation and technical manuals
+- Research papers and benchmarks
+- Internal company wikis and policies
+- Customer support articles
+- Domain-specific datasets
+
+Raw documents are typically **chunked** into smaller pieces, enriched with metadata (source, timestamp, user_id, category), and converted into vector embeddings before storage.
+
+---
+
+## Embeddings: Capturing Semantic Meaning
+
+An **embedding** is a high-dimensional numerical vector that represents the semantic meaning of text. Texts with similar meanings end up close together in vector space, even if their wording differs.
+
+Example pipeline:
+
+```text
+Document / Chunk
+   ↓
+Embedding Model (e.g. text-embedding-3-large, voyage-3, snowflake-arctic-embed)
+   ↓
+Dense Vector (e.g. 1024 or 3072 dimensions)
+```
+
+Modern embedding models produce high-quality vectors optimized for retrieval quality and cost.
+
+---
+
+## Vector Databases and Hybrid Search
+
+Embeddings are stored in **vector databases**, which support fast similarity search. In 2026, pure vector search is rarely used alone. Production systems use **hybrid search** that combines:
+
+- Dense vector similarity (semantic)
+- Sparse keyword search (BM25 or SPLADE)
+- Metadata filtering (user_id, date range, document type, etc.)
+- Graph-based retrieval (for entity relationships)
+
+Popular vector databases include:
+
+| Database     | Strengths                                      |
+|--------------|------------------------------------------------|
+| Qdrant       | Excellent hybrid search and filtering          |
+| Weaviate     | Strong graph + vector capabilities             |
+| Pinecone     | Fully managed, serverless scale                |
+| pgvector     | Postgres-based, easy integration               |
+| Chroma       | Lightweight and developer-friendly             |
+
+---
+
+## Storing Knowledge in Semantic Memory
+
+Here’s how documents are typically added to semantic memory:
+
+<Tabs>
+
+<TabItem label="Python (with Mem0 / LangChain)" icon="seti:python">
+
+```python
+from mem0 import Memory
+
+memory = Memory()
+
+memory.add(
+    data="The Nvidia H100 GPU features 80GB HBM3 memory and delivers up to 2.8x better training performance than the RTX 4090 for large language models.",
+    user_id="ravi_001",
+    metadata={
+        "type": "semantic",
+        "source": "nvidia_h100_architecture_2026",
+        "category": "hardware",
+        "timestamp": "2026-03-15"
+    }
+)
+```
+
+</TabItem>
+
+
+</Tabs>
+
+Good semantic memory systems also support automatic chunking, metadata extraction, and periodic re-embedding when documents are updated.
+
+---
+
+## Retrieval Process
+
+When the agent needs information:
+
+1. The query is converted into an embedding.
+2. Hybrid search is performed (vector + keyword + metadata filters).
+3. Results are reranked for relevance.
+4. Top-k documents (or chunks) are returned and inserted into the agent’s working memory.
+
+This retrieved context grounds the LLM’s reasoning and significantly reduces hallucinations.
+
+---
+
+## Retrieval-Augmented Generation (RAG) and Agentic RAG
+
+Basic RAG follows a simple retrieve-then-generate pattern. In 2026, most advanced agents use **Agentic RAG**, where the agent can:
+
+- Rewrite or decompose the original query
+- Perform multi-hop retrieval
+- Self-critique the quality of retrieved context
+- Decide whether to retrieve more information or proceed
+
+This makes semantic memory far more powerful and adaptive.
+
+---
+
+## Advantages of Semantic Memory
+
+- **Unlimited knowledge expansion** — agents can incorporate massive external datasets.
+- **Updatable and fresh** — new documents can be added or old ones updated without retraining.
+- **Domain specialization** — agents can master company-specific or project-specific knowledge.
+- **Reduced hallucinations** — grounding responses in retrieved documents improves reliability.
+
+---
+
+## Challenges and Best Practices
+
+Semantic memory systems face several practical challenges:
+
+- **Retrieval accuracy** — poor embeddings or missing metadata can return irrelevant results.
+- **Context window limits** — too many documents can overwhelm the prompt (use summarization or reranking).
+- **Knowledge freshness** — implement versioning and scheduled updates.
+- **Cost and latency** — embedding generation and search add overhead; use caching and tiered retrieval.
+- **Privacy** — support user-scoped or organization-scoped memory with proper access controls.
+
+**Best practices in 2026**:
+- Use hybrid search instead of pure vector search.
+- Combine semantic memory with episodic memory for richer context.
+- Add metadata filtering and reranking steps.
+- Run reflection or quality scoring on retrieved results.
+- Monitor retrieval effectiveness and allow agents to request better context when needed.
+
+---
+
+## Semantic Memory in the Broader Architecture
+
+Semantic memory works best when integrated with the full memory hierarchy:
+
+- **Working memory** holds the current reasoning trace and retrieved context.
+- **Episodic memory** provides past experiences.
+- **Semantic memory** supplies factual knowledge.
+
+Together with reliable tools (via MCP) and procedural memory (covered next), these layers enable agents to reason with both **what they know** and **what they have experienced**.
+
+---
+
+## Looking Ahead
+
+In this article we explored **semantic memory** — how agents store and retrieve factual knowledge using embeddings, vector/hybrid databases, and modern RAG techniques.
+
+In the next article we will examine **Procedural Memory**, which allows agents to store, reuse, and improve workflows, strategies, and operational “how-to” knowledge.
+
+→ Continue to **[5.4 — Procedural Memory](/agentic-ai/foundations/memory-systems-rag/procedural-memory)**

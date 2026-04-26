@@ -1,0 +1,272 @@
+---
+pubDatetime: 2026-04-26T00:00:00Z
+modDatetime: 2026-04-26T00:00:00Z
+title: From DAGs to State Machines
+description: Why production agent systems need loops, branching, retries, and state transitions instead of only linear chains or DAGs.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+The first generation of agent engineering borrowed heavily from workflow automation. That made sense: developers already knew how to build pipelines, connect one step to the next, and represent work as a graph of tasks.
+
+So when LLMs became programmable components, the natural move was to place them inside chains, DAGs, and orchestration frameworks. Input goes in, the model runs, a tool is called, a result is passed forward, another model call happens, and the final output is returned.
+
+This mental model is useful. It gives structure to the chaos of generative systems. But it is not enough.
+
+Agent systems do not merely move data through a pipeline. They operate under uncertainty, change course at runtime, retry, validate, revisit earlier assumptions, stop, escalate, or fall back depending on what happens. That behavior needs a different abstraction: not just a graph of steps, but a machine of states.
+
+---
+
+## The Industry Mental Model
+
+Much of the agent ecosystem still thinks in chains and workflows. You can see it in the language developers use: chains, pipelines, DAGs, nodes, edges, workflows, and orchestration graphs.
+
+Frameworks like LangChain made this mental model popular because it was approachable. A developer could take a model call, connect it to a parser, connect that to a retriever, connect that to another model call, and produce something useful. This was an important step forward because it moved teams away from isolated prompts and toward structured execution.
+
+A DAG, or directed acyclic graph, is especially attractive because it gives a workflow a visible shape. Each node performs some operation. Each edge passes output forward. Since the graph is acyclic, the execution path does not loop backward.
+
+That works well for many software tasks:
+
+```text
+Load Document -> Chunk Text -> Embed Chunks -> Store Vectors
+```
+
+Or:
+
+```text
+User Query -> Retrieve Context -> Generate Answer -> Format Response
+```
+
+These are clean, useful pipelines. But they are not enough to model agents.
+
+---
+
+## Why DAGs Are Not Enough
+
+DAGs are good at representing workflows where the structure is mostly known in advance. Agent systems are different because they often do not know the correct path until execution begins.
+
+A system may need to search, inspect the result, decide the result is weak, search again with a better query, compare sources, update memory, and only then choose whether to continue or answer. That requires cycles, and a DAG, by definition, does not contain cycles.
+
+This limitation matters because the core behavior of an agent is not simply progression. It is adaptation.
+
+DAGs struggle with agent systems for three reasons. First, they do not naturally represent loops: agents need to retry, re-evaluate, ask for clarification, revise a plan, or repeat a step with new information. Second, they do not naturally represent adaptive flow: the next step may depend on tool output, validation results, confidence, permissions, or accumulated state. Third, they do not naturally represent state transitions: an agent is not just passing data between steps, it is moving between execution modes such as planning, acting, observing, validating, recovering, escalating, and terminating.
+
+Those modes matter. If the system does not represent them explicitly, they get buried inside prompts, callbacks, and framework glue. That is where agent systems become difficult to reason about.
+
+---
+
+## What Systems Actually Need
+
+Production agent systems need more than a forward-only workflow. They need loops because a tool call may fail, a retrieved answer may be weak, a generated plan may be incomplete, or a validation step may reject the output. The system needs a way to return to an earlier mode with new information.
+
+They need branching because different conditions should lead to different paths. A high-confidence answer may move to completion. A low-confidence answer may trigger another search. A risky action may require approval. A repeated failure may trigger escalation.
+
+They need retries, but retries cannot be blind. A useful retry should know what failed, what changed, how many attempts remain, and whether the next attempt is meaningfully different. They also need dynamic decisions: the system should be able to choose the next step based on the current state, not only a predefined path.
+
+These requirements point toward a different kind of abstraction. An agent system should be modeled as a runtime that moves through states based on events, conditions, and actions.
+
+That is a state machine.
+
+---
+
+## State Machines
+
+A state machine is a system that exists in one state at a time and moves to another state through transitions. It is a simple idea with a lot of power.
+
+The key concepts are:
+
+- **State**: the current mode or condition of the system.
+- **Event**: something that happens and may trigger a transition.
+- **Transition**: the movement from one state to another.
+- **Action**: work performed during a state or transition.
+
+For an agent system, states might include:
+
+- planning
+- tool selection
+- tool execution
+- observation
+- validation
+- recovery
+- human approval
+- completion
+- failure
+
+Events might include:
+
+- plan created
+- tool succeeded
+- tool failed
+- validation passed
+- validation failed
+- retry limit reached
+- approval granted
+- approval denied
+
+Transitions define what happens next:
+
+```text
+Planning --plan_ready--> Tool Execution
+Tool Execution --tool_succeeded--> Validation
+Tool Execution --tool_failed--> Recovery
+Validation --passed--> Completion
+Validation --failed--> Planning
+Recovery --retry_allowed--> Tool Execution
+Recovery --retry_exhausted--> Failure
+```
+
+This gives the agent a structure that matches its real behavior. It does not pretend execution is a straight line. It makes uncertainty visible.
+
+---
+
+## Mapping Agents to State Machines
+
+Once you look at agents through this lens, the mapping becomes natural.
+
+Planning is a state: the agent is deciding what should happen next. Tool execution is a transition into the external world: the system leaves pure reasoning and attempts to change or inspect the environment. Observation is a state: the system receives feedback from the environment and records what happened. Validation is a transition: the system decides whether the result satisfies the requirement or whether execution must continue.
+
+Recovery is also a state. The system analyzes failure and decides whether to retry, repair, fall back, escalate, or stop. Completion is a terminal state, because the system has satisfied the goal or reached an acceptable stopping condition. Failure is also a terminal state, because the system has determined that it cannot safely or usefully continue.
+
+A simple agent state machine might look like this:
+
+```text
+Start
+  |
+  v
+Plan -> Act -> Observe -> Validate -> Complete
+ ^       |        |          |
+ |       |        |          v
+ |       |        +------> Recover
+ |       |                   |
+ |       +-------------------+
+ |                           |
+ +-------- retry / replan ---+
+```
+
+The point is not that every agent must use exactly this diagram. The point is that agent behavior becomes clearer when we model execution as states and transitions rather than as a fixed chain of calls.
+
+---
+
+{/* TODO: Murali visual brief.
+
+Create a state-machine visual rather than a pipeline.
+
+Core elements:
+
+- nodes for states
+- arrows for transitions
+- loop edges for retry and re-evaluation
+- terminal states for complete and fail
+
+Suggested structure:
+
+```text
+             +--------+
+             |  Plan  |
+             +---+----+
+                 |
+                 v
+             +--------+
+             |  Act   |
+             +---+----+
+                 |
+                 v
+            +---------+
+            | Observe |
+            +----+----+
+                 |
+                 v
+           +----------+
+           | Validate |
+           +----+-----+
+        pass |     | fail
+             v     v
+      +----------+ +---------+
+      | Complete | | Recover |
+      +----------+ +----+----+
+                        |
+                  retry | fallback
+                        v
+                      Plan
+```
+
+Design notes:
+
+- Make **Plan**, **Act**, **Observe**, **Validate**, and **Recover** feel like states, not steps in a straight pipeline.
+- Use arrows to emphasize transitions between states.
+- Highlight the loop from **Recover** back to **Plan**.
+- Show **Complete** as a terminal state.
+- Optionally include **Failure** as a second terminal state when retry limits are exhausted.
+
+The visual should help readers feel the central shift: agent systems are not only workflows. They are runtime systems with stateful transitions.
+
+*/}
+
+## Cyclic Reasoning
+
+Cyclic reasoning is the ability to revisit a decision after new evidence arrives. This is central to agents because a simple chain asks the model to produce a result and moves forward, while a stateful agent can ask better questions: did the last action change what we know, is the current plan still valid, did validation expose a gap, and should we retry the same strategy, revise the plan, or fall back?
+
+This is not just repetition. Good cyclic reasoning changes the next attempt. If a search query fails, the system may broaden the query. If a tool returns incomplete data, the system may call a second source. If a validation step fails, the system may re-enter planning with a specific error signal. If retries are exhausted, the system may stop or escalate.
+
+The loop is useful because the system carries state through it. Without state, a loop becomes a repeated guess. With state, a loop becomes learning within a bounded execution.
+
+---
+
+## Multi-Agent Systems
+
+State machines become even more important when multiple agents are involved. In a multi-agent system, the problem is not only what one model decides. The problem is coordination.
+
+Different agents may have different roles:
+
+- planner
+- researcher
+- coder
+- reviewer
+- executor
+- supervisor
+
+Each agent may act on shared state, produce messages, wait for another agent, or hand off responsibility. Without an explicit state model, coordination becomes fragile: messages get duplicated, agents repeat work, one agent acts on stale context, and another agent assumes a task is complete when it is only partially done.
+
+A shared state machine gives the system a coordination surface. It can define who owns the current state, what events are allowed, which transitions are valid, and when a handoff is complete.
+
+Multi-agent systems are not just conversations among models. They are distributed execution systems, and distributed execution needs state.
+
+---
+
+## Where This Leads
+
+The move from DAGs to state machines is not just theoretical. It leads directly to runtime systems.
+
+A production agent runtime needs to know:
+
+- what state the agent is in
+- what events have occurred
+- what transitions are allowed
+- what actions were attempted
+- what data was observed
+- what retries remain
+- what safety constraints apply
+- what terminal condition was reached
+
+This is the layer where agent engineering becomes concrete. It is also where systems like Sutra become important.
+
+Sutra is the direction this abstraction points toward: a runtime model for agents where reasoning, execution, state, and control are treated as first-class concepts rather than scattered across prompts and framework code.
+
+The deeper idea is simple: if agents are closed-loop systems under uncertainty, then they need a runtime that can represent loops, state, and control directly. That is what state machines give us.
+
+---
+
+## Where This Connects to the Foundations
+
+This article builds on [Execution Graphs](/agentic-ai/foundations/planning-systems/execution-graphs), where graph-based planning becomes a first-class concept.
+
+It also connects to [Designing a Simple Agent State Machine](/agentic-ai/foundations/agent-internals/state-machine), which turns this abstraction into an implementation model.
+
+For the control side, it connects to [Tool Permission Systems](/agentic-ai/foundations/guardrails-safety/tool-permissions), because transitions should not only describe what can happen. They should also describe what is allowed to happen.
+
+In the next article, we will take that control layer seriously. Once an agent can act, retry, and move through states over time, the central production question becomes: how do we keep agency bounded?
+
+---
+
+## Next
+
+Continue to [Controlled Agency: Tools, Safety, and Production Readiness](/agentic-ai/engineering-agent-systems/controlled-agency-tools-safety), where we look at tool contracts, permissions, action gates, observability, and bounded autonomy.

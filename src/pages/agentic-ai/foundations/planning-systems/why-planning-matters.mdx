@@ -1,0 +1,124 @@
+---
+title: Why Planning Matters
+description: Why simple agent loops fail on complex tasks and how planning unlocks reliable intelligence
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Most basic AI agents follow a simple reactive loop:
+
+```text
+Observe → Reason → Act → Reflect
+```
+
+This works for straightforward queries, but **breaks down** on complex, multi-step problems. The agent starts repeating actions, gathering redundant information, and failing to make meaningful progress.
+
+**Planning** solves this by shifting the agent from reactive trial-and-error to deliberate, structured problem-solving.
+
+---
+
+## Reactive Loops in Practice
+
+Consider the task:
+
+> “Research the economic impact of electric vehicles and write a short report.”
+
+A purely reactive agent might do this:
+
+```text
+Thought: Need market data → web_search("EV market size")
+Observation: Expected 30% growth by 2030
+
+Thought: Check jobs → web_search("EV job growth")
+Observation: New manufacturing jobs created
+
+Thought: Environmental angle? → web_search("EV environmental benefits")
+```
+
+Without an overarching strategy, the agent jumps between ideas, repeats similar searches, misses key aspects, and struggles to know when to stop.
+
+---
+
+## Reactive vs Planned Behavior
+
+| Approach     | Style                        | Best For               | Main Weakness                     |
+|--------------|------------------------------|------------------------|-----------------------------------|
+| Reactive     | Decide next step every turn  | Simple tasks           | Inefficient, repetitive, short-sighted |
+| Planned      | Build strategy upfront       | Complex multi-step     | Requires stronger initial reasoning |
+
+Planning gives the agent a **coherent roadmap** instead of forcing it to reinvent direction at every step.
+
+---
+
+## What Planning Delivers
+
+A good plan transforms a vague goal into ordered, purposeful steps.
+
+**Example for GPU comparison:**
+
+```text
+Goal: Compare RTX 4090 vs H100 for ML workloads
+
+Plan:
+1. Collect benchmarks for both GPUs (throughput, memory, power)
+2. Gather pricing and availability data
+3. Analyze suitability for training vs inference
+4. Summarize trade-offs and recommendations
+```
+
+Benefits include:
+- **Coherence** — Every action serves the overall goal
+- **Efficiency** — Fewer redundant tool calls and lower token cost
+- **Reliability** — Easier to track progress and recover from errors
+- **Better tool orchestration** — Right tool, right time, right sequence
+
+---
+
+## Reasoning vs Planning
+
+**Reasoning** = thinking about the current situation.  
+**Planning** = organizing thoughts into a systematic sequence of actions.
+
+LLMs are strong at local reasoning but weak at long-horizon coordination without explicit planning support. Planning compensates for this limitation and unlocks advanced techniques like ReAct, Tree-of-Thoughts, and execution graphs.
+
+---
+
+## Planning as the Control Layer
+
+Extending our architecture analogy:
+
+| Component        | Analogy                |
+|------------------|------------------------|
+| LLM              | CPU                    |
+| Agent Runtime    | Operating System       |
+| Planner          | Task Scheduler         |
+
+The planner provides the **control flow** that turns powerful components into a directed system.
+
+---
+
+## Planning Enables Advanced Techniques
+
+Once you introduce planning, you unlock far more powerful reasoning strategies:
+
+- ReAct (Reason + Act)
+- Chain-of-Thought and Tree-of-Thoughts
+- Plan-and-Execute frameworks
+- Multi-agent planning and execution graphs
+
+These techniques form the foundation of today’s most capable agent systems.
+
+---
+
+## Looking Ahead
+
+Simple reactive loops are fine for basic assistance, but **planning is what elevates agents from helpful chatbots to reliable problem solvers**.
+
+Next, we’ll explore one of the most influential planning methods:
+
+**ReAct — Reason + Act**
+
+This approach tightly integrates reasoning and tool use into a single effective loop.
+
+→ Continue to **3.2 — [ReAct: Reason + Act](/agentic-ai/foundations/planning-systems/react)**

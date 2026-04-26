@@ -1,0 +1,143 @@
+---
+title: Tool Permission Systems
+description: How capability-based security, scoping, and runtime enforcement protect AI agents from unsafe or malicious tool usage
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Modern AI agents gain power through access to tools: database queries, code execution, web search, email sending, filesystem operations, and (increasingly) computer use actions. 
+
+However, with power comes risk. A compromised or misbehaving agent can cause serious damage if it can freely use dangerous tools.
+
+**Tool permission systems** enforce boundaries on what agents are allowed to do. They are a critical layer of defense that complements prompt-level safeguards.
+
+---
+
+## Why Tool Permissions Are Essential
+
+Even with strong defensive prompting, prompt injection or reasoning errors can still occur. Tool permissions act as a **hard enforcement layer** that prevents catastrophic actions regardless of what the model "thinks" it should do.
+
+Example risk without permissions:
+
+- An agent with `delete_files()` and `send_email()` tools receives a malicious instruction and deletes production data or exfiltrates sensitive information.
+
+With proper permissions, the agent simply cannot call restricted tools — the request is denied at the runtime level.
+
+---
+
+## Core Principles
+
+### 1. Principle of Least Privilege
+Agents should only have the minimum permissions required for their current task.
+
+### 2. Capability-Based Security
+Instead of broad roles, grant **fine-grained capabilities** that can be scoped, time-limited, and revoked.
+
+### 3. Runtime Enforcement
+Permissions must be checked at execution time, not just at prompt level.
+
+---
+
+## Capability-Based vs Role-Based Permissions
+
+| Model                  | Granularity       | Flexibility                  | Typical Use Case                     |
+|------------------------|-------------------|------------------------------|--------------------------------------|
+| Role-Based (RBAC)      | Medium            | Easier to manage             | Simple team-based access             |
+| Capability-Based       | High              | Very fine-grained            | Agent systems with dynamic tasks     |
+
+Capability-based systems are generally preferred for agents because they allow temporary, scoped, and revocable permissions.
+
+Example capability:
+
+```json
+{
+  "capability": "database_query",
+  "scope": "read_only",
+  "tables": ["analytics", "reports"],
+  "expires_at": "2026-04-10T12:00:00Z"
+}
+```
+
+---
+
+## Practical Implementation
+
+A robust tool permission system typically includes:
+
+- **Allow-list** of permitted tools
+- **Scoping rules** (e.g., read-only vs full access)
+- **Context-aware checks** (permissions can depend on user, task, or current memory state)
+- **Temporary capabilities** that automatically expire
+- **Audit logging** for every tool invocation
+
+Example permission check in practice:
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def execute_tool(tool_name: str, args: dict, context: AgentContext):
+    permission = permission_system.check(
+        tool=tool_name,
+        scope=args.get("scope"),
+        user=context.user_id,
+        task=context.current_task
+    )
+
+    if not permission.granted:
+        raise PermissionError(f"Tool '{tool_name}' not allowed: {permission.reason}")
+
+    return tools[tool_name].execute(args)
+```
+
+</TabItem>
+
+
+</Tabs>
+
+This pattern integrates cleanly with MCP-style tool calling.
+
+---
+
+## Advanced Features
+
+- **Temporary / Scoped Capabilities** — Grant access only for the duration of a task.
+- **Human Approval Gates** — Require explicit approval for high-risk tools (delete, send_email, code_execution).
+- **Dynamic Permission Adjustment** — Permissions can change based on agent behavior or user feedback.
+- **Revocation** — Instantly revoke capabilities if suspicious activity is detected.
+
+---
+
+## Best Practices in 2026
+
+- Combine tool permissions with strong input sanitization and output verification.
+- Use least-privilege by default and grant broader access only when explicitly needed.
+- Log every tool call with full context (who requested it, why, what was returned).
+- Integrate permissions with memory systems (e.g., remember past permission violations).
+- For computer-use agents, apply permissions at the action level (e.g., block certain mouse/keyboard actions or system commands).
+
+---
+
+## Tool Permissions as a Hard Security Boundary
+
+While prompt defenses (like defensive prompting) are important, they are soft and bypassable. Tool permission systems provide a **hard runtime boundary** that protects the outside world even if the agent's reasoning or prompt is fully compromised.
+
+Together with MCP for structured tool calling, they form one of the most important guardrails in modern agent architectures.
+
+---
+
+## Looking Ahead
+
+In this article we explored **Tool Permission Systems** — how capability-based security, scoping, and runtime enforcement limit what agents can do.
+
+> **Systems Insight**
+>
+> Prompt-level safety is soft control. Tool permissions are hard control. They decide what the system can actually do, even if the model is confused, overconfident, or exposed to an injected instruction.
+>
+> This is the heart of bounded autonomy: agents should be free to operate, but only inside designed boundaries. The broader production architecture is covered in [Controlled Agency](/agentic-ai/engineering-agent-systems/controlled-agency-tools-safety).
+
+In the next article we will examine **Human-in-the-Loop (HITL)** systems, which introduce human oversight into agent workflows for high-stakes decisions.
+
+→ Continue to **[8.3 — Human-in-the-Loop (HITL)](/agentic-ai/foundations/guardrails-safety/human-in-the-loop)**

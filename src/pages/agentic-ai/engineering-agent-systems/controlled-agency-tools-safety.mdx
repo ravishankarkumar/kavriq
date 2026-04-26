@@ -1,0 +1,299 @@
+---
+pubDatetime: 2026-04-26T00:00:00Z
+modDatetime: 2026-04-26T00:00:00Z
+title: "Controlled Agency: Tools, Safety, and Production Readiness"
+description: How bounded autonomy, tool contracts, action gating, and observability turn capable agents into production-ready systems.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+An agent becomes useful when it can act. It can search, query, write, update, trigger, schedule, deploy, purchase, send, delete, approve, or escalate. That is the point where agent engineering becomes serious.
+
+A chatbot can be wrong and still leave the world unchanged. An agent with tools can be wrong and create consequences. It can modify the wrong record, send the wrong message, leak data into the wrong context, call a tool with a hallucinated argument, or repeat an action because it failed to understand that the first attempt already succeeded.
+
+The same capability that makes agents valuable also makes them risky. This is why production agents need controlled agency: not unlimited autonomy, not blind tool access, and not trust in raw model output.
+
+Controlled agency means the system is allowed to act, but only inside designed boundaries.
+
+---
+
+## The Risk of Unbounded Agents
+
+Unbounded agents are dangerous because they combine uncertain reasoning with real-world action. The model may misunderstand the task, infer a missing value incorrectly, choose a plausible but wrong tool, or continue after the user expected it to stop.
+
+If the agent only produces text, the damage is limited. If the agent can act, the damage can leave the chat window.
+
+In production, incorrect actions matter. A customer-support agent might issue the wrong refund. A finance agent might classify a transaction incorrectly. A coding agent might overwrite unrelated files. A sales agent might email the wrong prospect. A data agent might query sensitive information it should not access. A browser agent might click through a destructive confirmation.
+
+These failures are not only model failures. They are system design failures. The question is not simply, "Can the model decide what to do?" The question is:
+
+> Under what conditions is the system allowed to act?
+
+That is the control problem.
+
+---
+
+## Action Layer Basics
+
+The action layer is the part of the agent system that connects reasoning to the outside world. It is where model intent becomes tool execution, and it needs more structure than a natural-language instruction like "use the right tool."
+
+This layer needs contracts, validation, permissions, and observability. It should make three things explicit:
+
+- what actions exist
+- what inputs those actions accept
+- what outputs and side effects those actions can produce
+
+Without this structure, tool use becomes guesswork. With it, the system can reason, validate, and control action in a more reliable way.
+
+---
+
+## Tooling Contracts
+
+A tool is not just a function the model can call. It is a contract between the agent and the environment.
+
+A good tooling contract defines:
+
+- the tool name
+- the purpose of the tool
+- the input schema
+- the output schema
+- possible errors
+- side effects
+- permission requirements
+- retry behavior
+- validation rules
+
+JSON Schema and structured inputs matter because they turn vague intent into typed action. Instead of asking the model to "look up a customer," the system exposes a tool with explicit parameters:
+
+```json
+{
+  "tool": "get_customer_account",
+  "input": {
+    "customer_id": "cus_123",
+    "include_billing": false
+  }
+}
+```
+
+The schema defines what is allowed. The runtime validates whether the input is well-formed. The permission layer decides whether the action is allowed. The execution layer records what happened. The validation layer checks whether the result can be trusted.
+
+This is the difference between a model asking for an action and a system safely executing one.
+
+---
+
+## MCP at the System Boundary
+
+The Model Context Protocol, or MCP, matters because agents need a consistent way to discover and use external capabilities. At a high level, MCP provides a standardized interface between AI applications and tools, resources, or services.
+
+Instead of every agent framework inventing its own integration pattern, an MCP server can expose capabilities with structured definitions. The host can connect to those capabilities and make them available to the agent through a common protocol.
+
+This is useful for production systems because it moves tool integration toward a more explicit boundary. The agent does not need magical access to the whole system. It receives a set of available capabilities, and those capabilities can have schemas, descriptions, permissions, and runtime checks.
+
+MCP does not solve safety by itself, but it gives the action layer a cleaner surface. That surface is where control can be applied.
+
+---
+
+## Why Tools Alone Are Dangerous
+
+Tools make agents powerful, but tools alone do not make agents safe. If a model has unrestricted access to tools, then a reasoning error can become an execution error.
+
+The model may hallucinate an action that does not match the user's intent. It may call a destructive tool when a read-only tool was enough. It may pass arguments that are syntactically valid but semantically wrong. It may act on stale memory, obey an injected instruction from an untrusted document, or retry an action that should not be repeated.
+
+The danger is not only that the model might produce invalid output. The danger is that the system might execute that output without enough checks.
+
+This is why action must be mediated. The model can propose. The system must decide whether the proposal is valid, allowed, safe, and appropriate.
+
+---
+
+## Control Systems
+
+Control systems define the boundaries of agency. They answer questions like:
+
+- What can this agent do?
+- What can it never do?
+- What can it do only with approval?
+- What can it do only in this task context?
+- What should happen when a tool call fails?
+- What should happen when the model asks for an unsafe action?
+
+Good control systems do not depend on the model remembering every rule. They enforce rules at runtime.
+
+This distinction is crucial. A prompt can tell the agent not to delete files. A permission system can make deletion impossible. For production systems, hard runtime boundaries matter more than polite instructions.
+
+---
+
+## Bounded Autonomy
+
+Bounded autonomy means the agent has freedom inside a scoped operating area. It can make local decisions, but it cannot act outside its authorization.
+
+A research agent may be allowed to read public web pages but not access internal customer data. A coding agent may be allowed to edit files in a workspace but not push to production. A support agent may be allowed to draft a refund recommendation but not issue a refund above a threshold. A data agent may be allowed to run read-only queries but not modify tables.
+
+This is not a weakness. It is what makes autonomy deployable.
+
+The goal is not to remove agency. The goal is to give agency a shape.
+
+---
+
+## Action Gating
+
+Action gating is the process of placing checkpoints before important actions. Some actions can execute automatically, some require validation, some require human approval, and some should be blocked entirely.
+
+The gate depends on risk. Low-risk actions may proceed after schema validation. Medium-risk actions may require additional checks. High-risk actions may require a human-in-the-loop approval step.
+
+For example:
+
+```text
+Agent proposes action
+  |
+  v
+Validate schema
+  |
+  v
+Check permissions
+  |
+  v
+Assess risk
+  |
+  +--> low risk: execute
+  |
+  +--> high risk: request approval
+  |
+  +--> forbidden: block
+```
+
+This turns action from a direct model decision into a controlled system process. The agent can still reason, but execution passes through gates.
+
+{/* TODO: Murali visual brief.
+
+Create a guardrail and HITL approval flow visual. The visual should show an agent attempting an action, the action being checked by a guardrail, and a human approval path for high-risk actions.
+
+Suggested structure:
+
+```text
+        +---------+
+        |  Agent  |
+        +----+----+
+             |
+             v
+   proposes tool action
+             |
+             v
+      +-------------+
+      |  Guardrail  |
+      +------+------+
+             |
+     +-------+--------+
+     |                |
+     v                v
+ +--------+      +-----------+
+ | Allow  |      | Approval  |
+ +---+----+      | Required  |
+     |           +-----+-----+
+     v                 |
+ +---------+           v
+ | Execute |      +----------+
+ +---------+      |  Human   |
+                  | Approval |
+                  +----+-----+
+                       |
+              +--------+--------+
+              |                 |
+              v                 v
+          +--------+        +-------+
+          |Execute |        | Block |
+          +--------+        +-------+
+```
+
+Design notes:
+
+- Show the agent trying to perform an action.
+- Place the guardrail between the agent and the tool.
+- Make **Allow**, **Approval Required**, and **Block** visually distinct outcomes.
+- Highlight the human-in-the-loop approval path.
+- Make the visual feel like a control system, not a warning poster.
+
+Key message: production agents should not execute every action they can imagine. They should execute only actions that pass the system's control layer.
+*/}
+
+---
+
+## Observability
+
+You cannot control what you cannot see.
+
+Production agents need observability because failures rarely happen in a single obvious place. An incorrect final answer may come from a bad plan, a stale memory, a weak retrieval result, a malformed tool response, a skipped validation step, or an unsafe retry.
+
+The system needs traces, logs, and structured records of each step. Useful observability captures:
+
+- user goal
+- model decisions
+- tool calls
+- tool inputs and outputs
+- validation results
+- state transitions
+- retries
+- permission checks
+- human approvals
+- terminal outcomes
+
+This is not only for debugging. It is also for improvement. Observability lets teams see where agents drift, where tools fail, where retries waste time, where approvals are too broad, and where control boundaries need adjustment.
+
+Without observability, agent behavior becomes a story reconstructed after the fact. With observability, it becomes an inspectable execution trace.
+
+---
+
+## Production Architecture
+
+A production agent architecture should separate three concerns:
+
+- reasoning
+- execution
+- control
+
+Reasoning decides what the agent thinks should happen next. Execution performs the action, manages state, handles retries, and records outcomes. Control decides what is allowed, what needs approval, and what must be blocked.
+
+These concerns are tightly connected, but they should not collapse into one prompt. When everything lives inside the model context, the system becomes hard to trust. The model may reason well, but it should not be the only place where safety rules live.
+
+The runtime should enforce permissions. The tool layer should validate schemas. The execution layer should manage retries and state. The control layer should gate risky actions. The observability layer should record the full trajectory.
+
+This is what turns an agent from a clever loop into an engineered system.
+
+---
+
+## Practical Guidelines
+
+Controlled agency is not a single feature. It is a design posture.
+
+Start with these rules:
+
+- Never trust raw model output.
+- Validate every tool input before execution.
+- Validate every tool output before using it as truth.
+- Give agents the minimum permissions required for the task.
+- Separate read actions from write actions.
+- Put approval gates in front of irreversible or high-risk actions.
+- Make retries bounded and state-aware.
+- Persist execution state so partial progress can be inspected.
+- Log every tool call, permission check, validation result, and terminal state.
+- Treat prompt instructions as guidance, not enforcement.
+
+The core idea is simple: let the model reason, and let the system control.
+
+---
+
+## Where This Connects to the Foundations
+
+This article builds on [Designing Reliable Tools](/agentic-ai/foundations/tool-use-protocols/designing-reliable-tools), where tool contracts, structured inputs, validation, and error handling become concrete.
+
+It connects to [The Model Context Protocol (MCP)](/agentic-ai/foundations/tool-use-protocols/mcp), which gives agents a standardized way to interact with tools and resources.
+
+It also connects to [Tool Permission Systems](/agentic-ai/foundations/guardrails-safety/tool-permissions) and [Human-in-the-Loop (HITL)](/agentic-ai/foundations/guardrails-safety/human-in-the-loop), because bounded autonomy and approval gates are the control surface of production agents.
+
+Finally, it connects to [Observability for Agents](/agentic-ai/foundations/high-perf-engineering/observability), because safe systems must be inspectable systems.
+
+This is the final move in the systems-level view. Agents are not just prompts. They are not just chains. They are not just tools. They are closed-loop systems operating under uncertainty over time. And if they are going to act in the real world, they must be controlled.
+
+---
+
+## Next
+
+Continue to [Kavriq Recommendations for Building Reliable Agentic Systems](/agentic-ai/engineering-agent-systems/kavriq-recommendations-reliable-agentic-systems), the final piece in this series: a practical checklist for turning the systems worldview into production design decisions.

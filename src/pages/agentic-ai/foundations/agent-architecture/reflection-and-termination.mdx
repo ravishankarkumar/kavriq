@@ -1,0 +1,187 @@
+---
+title: Reflection and Termination
+description: How AI agents evaluate progress, detect mistakes, and decide when to stop
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Even the most capable agent will fail if it doesn’t know when to stop.
+
+Without a dedicated **reflection** stage, agents tend to loop indefinitely — searching, summarizing, and acting long after the goal is achieved.
+
+Modern agent systems close the loop with **reflection and termination logic**, turning open-ended action sequences into focused, goal-directed processes.
+
+The extended agent cycle becomes:
+
+```text
+Observe → Reason → Plan → Act → Observe → Reflect → (Continue or Terminate)
+```
+
+---
+
+## Why Reflection Matters
+
+LLMs are excellent at generating the next step, but they have no built-in sense of completion. Left unchecked, an agent can easily fall into repetitive or unproductive loops.
+
+**Example task:**
+
+> “Summarize the latest research on fusion energy.”
+
+Without reflection, the agent might keep searching for more papers indefinitely.  
+With reflection, it evaluates whether it has gathered enough high-quality information to produce a final answer.
+
+Reflection serves as the agent’s **meta-cognition layer** — it thinks about its own progress and reasoning quality.
+
+---
+
+## What Happens During Reflection
+
+In the reflection stage, the agent evaluates:
+
+- Has the original goal been sufficiently achieved?
+- Are the collected observations complete and consistent?
+- Did any previous steps contain errors or gaps?
+- Is continuing likely to yield meaningful improvement?
+
+Based on this evaluation, the agent decides to either:
+- Produce a **final answer** and terminate, or
+- Continue with a new plan or action.
+
+---
+
+## Simple Reflection Prompt
+
+Most systems implement reflection with a targeted prompt:
+
+```text
+Goal: {goal}
+
+Current observations and actions:
+{state}
+
+Evaluate whether the task is complete.
+If yes, respond with: FINAL ANSWER
+If not, suggest the single most valuable next step.
+```
+
+The runtime parses the output and either ends the loop or continues.
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+def reflect(goal: str, state: str, llm) -> str:
+    prompt = f"""
+    Goal: {goal}
+
+    Current state:
+    {state}
+
+    Is the task complete? 
+    Reply with "FINAL ANSWER" if you can provide a complete response, 
+    otherwise suggest the single best next action.
+    """
+    return llm.generate(prompt)
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+## Reflexion: Learning from Mistakes
+
+A powerful extension of basic reflection is the **Reflexion** technique (introduced in the [2023 paper](https://arxiv.org/abs/2303.11366) of the same name).
+
+Instead of only asking “Am I done?”, the agent also critiques its own past actions:
+
+- What went wrong in previous steps?
+- What assumptions were incorrect?
+- How can I improve my approach?
+
+**Example:**
+
+```text
+Reflection: I searched for population data of France, but the query asked about Germany.
+Critique: I misread the country name.
+Next action: Search again with corrected query.
+```
+
+This self-critique loop significantly boosts performance on complex, multi-step tasks by turning failures into explicit learning signals.
+
+---
+
+## Preventing Infinite Loops and Resource Waste
+
+Reflection alone is not enough. Production agents always combine it with hard safeguards:
+
+| Safeguard                | Description                                      | Typical Value          |
+|--------------------------|--------------------------------------------------|------------------------|
+| Maximum iterations       | Hard limit on reasoning steps                    | 8–15 steps             |
+| Time budget              | Overall runtime limit                            | 30–120 seconds         |
+| Confidence threshold     | Require high model confidence before termination | ≥ 8/10                 |
+| Human-in-the-loop        | Require approval for high-risk or expensive actions | For finance, legal, etc. |
+
+These guards ensure agents remain safe and cost-effective even when reflection fails to trigger termination.
+
+---
+
+## Full Agent Loop with Reflection
+
+```text
+User Goal
+   ↓
+Reasoning + Tool Selection
+   ↓
+Execution
+   ↓
+Observation Processing
+   ↓
+Reflection & Critique
+   ↓
+→ Final Answer + Terminate
+   ↓ or
+→ Continue with updated plan
+```
+
+Reflection is what makes the loop **goal-directed** rather than purely reactive.
+
+---
+
+## Example: Reflection in Action
+
+```text
+Goal: Compare RTX 4090 and H100 for machine learning training
+
+Thought: Search for benchmarks
+Action: web_search("RTX 4090 vs H100 ML performance")
+Observation: H100 offers 2–3× higher throughput on large models
+
+Reflection: I have consistent benchmarks from multiple reliable sources. 
+           This is sufficient to answer.
+
+Final Answer: The NVIDIA H100 significantly outperforms the RTX 4090 for large-scale ML training workloads, especially in FP8 and FP16 precision.
+```
+
+---
+
+## Reflection as the Agent’s Quality Gate
+
+Reflection and termination logic turn a chain of tool calls into a true **autonomous problem solver**. It prevents wasted computation, reduces hallucinations from over-processing, and dramatically improves reliability.
+
+Without it, even sophisticated Tool Managers and Execution Engines produce agents that never know when to stop.
+
+---
+
+## Looking Ahead
+
+→ Continue to **[Module 3 — Planning Systems](/agentic-ai/foundations/planning-systems)**
+
+In the next module we will explore advanced planning techniques that go far beyond simple loops:
+
+- ReAct (Reason + Act)
+- Chain-of-Thought and Tree-of-Thought reasoning
+- Execution graphs and multi-agent coordination
+
+These strategies unlock significantly more complex and reliable agent behavior.

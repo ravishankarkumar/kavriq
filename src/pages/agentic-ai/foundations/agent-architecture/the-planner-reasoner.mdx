@@ -1,0 +1,236 @@
+---
+title: The Planner / Reasoner
+description: How AI agents turn high-level goals into executable plans
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+**Planner = Strategy**  
+**Reasoning = Thinking**  
+**Acting = Execution**
+
+When a user gives an agent a high-level task, they rarely specify the exact steps. Examples include:
+
+- “Summarize the latest research on fusion energy.”
+- “Find the cheapest flights to Tokyo next month.”
+- “Compare the performance of RTX 4090 and H100 for machine learning.”
+
+The **planner / reasoner** (or reasoning-driven planning) converts such vague goals into structured, executable sequences of actions. In modern systems, planning often **emerges from structured reasoning** produced by the LLM rather than from a separate module.
+
+---
+
+# What the Planner Does
+
+The reasoning + planning process acts as the agent’s **decision engine**:
+
+```
+Goal → Reasoning → Plan → Actions
+```
+
+**Example:**
+
+**Goal:** Compare GPUs for machine learning
+
+**Plan:**
+1. Search for recent benchmark data
+2. Extract key performance metrics (training/inference speed, memory, cost)
+3. Compare results across workloads
+4. Summarize findings and trade-offs
+
+---
+
+# Reasoning vs Planning
+
+| Concept       | Description                                      |
+|---------------|--------------------------------------------------|
+| **Reasoning** | LLM inference that generates thoughts and insights |
+| **Planning**  | Constructing a concrete sequence of actions (may be explicit or implicit) |
+
+Reasoning produces understanding.  
+Planning produces structure and coordination.
+
+In practice, planning is often **interleaved with reasoning**. This pattern is closely related to **ReAct-style agents**, where thinking and tool use alternate in a tight loop.
+
+---
+
+# Where Planning Fits in the Agent Loop
+
+A common idealized loop is `observe → reason → plan → act → reflect`.  
+
+In real systems it usually looks more like:
+
+```
+while not done:
+    observe
+    reason (LLM)
+    decide / plan next action(s)
+    act (tool calls)
+    reflect & update
+```
+
+Most production agents use a **hybrid** approach: a high-level plan with reactive execution and dynamic re-planning.
+
+---
+
+# Task Decomposition
+
+Effective planning relies on **task decomposition** — breaking complex goals into smaller, actionable subtasks.
+
+**Example:**
+
+**Goal:** Research the economic impact of electric vehicles
+
+**Decomposed Plan:**
+1. Gather recent EV market statistics and adoption trends
+2. Identify key economic indicators (jobs, investment, costs)
+3. Analyze industry and supply chain impacts
+4. Summarize findings with supporting data
+
+**What poor planning looks like:**
+
+**Goal:** Find the cheapest flights to Tokyo
+
+**Weak Plan:**
+1. Search for flights
+2. Book the cheapest one
+
+**Problem:** This ignores baggage fees, layover duration, airline reliability, and travel time — common real-world failure modes when planning doesn’t account for tool constraints and full requirements.
+
+Plans are always **constrained by the tools available** to the agent and their interfaces (schemas, limitations, and reliability).
+
+---
+
+# Planning Strategies & Trade-offs
+
+| Planning Type              | Description                              | Trade-off                          |
+|----------------------------|------------------------------------------|------------------------------------|
+| Single-step / Reactive     | Decide only the immediate next action    | Fast, flexible, but prone to repetition |
+| Linear planning            | Fixed sequence of steps                  | Simple, but brittle                |
+| Hierarchical               | Break into subtasks and sub-subtasks     | Better for complex goals           |
+| Tree search / Multi-path   | Explore multiple reasoning paths         | More robust, higher compute cost   |
+
+**Key real-world trade-off:**  
+Deeper planning improves accuracy but increases **latency, token usage, and cost**. Many systems use selective or dynamic planning depth.
+
+---
+
+# Execution Feedback & Re-Planning
+
+Modern agents treat plans as **provisional**. After acting, the agent observes results, reflects, and **re-plans** if needed:
+
+```
+Plan → Act → Observe → Reflect → Update / Re-plan
+```
+
+This feedback loop is essential for handling tool failures, missing data, ambiguous goals, and changing conditions.
+
+---
+
+# Reactive vs Planning Agents
+
+**Reactive agents** rely on local, step-by-step decisions.  
+**Planning agents** generate more global structure upfront.  
+
+Most production systems are **hybrid**: they begin with high-level reasoning/planning, execute reactively, and re-plan dynamically when necessary.
+
+---
+
+# Implementing a Simple Planner
+
+Here’s a minimal planner. In practice, plans are often returned as **structured output** (JSON, graphs, or tool-call sequences) rather than plain text.
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from __future__ import annotations
+from pydantic import BaseModel
+from typing import List
+from ollama import chat
+
+MODEL = "qwen3.5:9b"
+
+class Step(BaseModel):
+    number: int
+    description: str
+
+class Plan(BaseModel):
+    steps: List[Step]
+
+def generate_plan(goal: str) -> Plan:
+    prompt = f"""You are an agent planner.
+Break the following goal into a clear, numbered sequence of steps.
+Consider tool constraints and potential uncertainties.
+
+Goal: {goal}
+
+Return ONLY valid JSON matching this schema:
+{{
+  "steps": [
+    {{"number": 1, "description": "..."}},
+    ...
+  ]
+}}
+"""
+
+    response = chat(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        format=Plan.model_json_schema(),   # forces structured JSON
+        options={"temperature": 0.2},
+    )
+
+    return Plan.model_validate_json(response.message.content)
+
+if __name__ == "__main__":
+    goal = "Find the best laptop GPU choice for local ML and explain why."
+    plan = generate_plan(goal)
+
+    print("\n=== GENERATED PLAN ===\n")
+    for step in plan.steps:
+        print(f"{step.number}. {step.description}")
+    print("\n=== END OF PLAN ===\n")
+```
+
+</TabItem>
+
+
+</Tabs>
+
+The plan is stored and updated in the agent’s **working memory** (short-term scratchpad + long-term context), allowing progress tracking and adaptation over time.
+
+---
+
+# Planning in Modern Agent Frameworks
+
+| Framework   | Planning Approach                          |
+|-------------|--------------------------------------------|
+| LangChain   | Abstractions for tool usage and chaining   |
+| LangGraph   | Stateful graph-based planning and workflows|
+| AutoGen     | Conversational multi-agent planning        |
+| CrewAI      | Role-based hierarchical planning           |
+
+---
+
+# Why Planning Matters
+
+Good planning combined with feedback loops delivers:
+
+- Better tool selection and sequencing
+- Reduced impulsive or random actions
+- Higher reliability on complex tasks through decomposition
+- Easier debugging and control
+
+Planning does **not eliminate hallucination**, but it structures thinking and reduces randomness during execution.
+
+---
+
+# Looking Ahead
+
+In this article we explored how the **planner / reasoner** turns high-level goals into actionable plans, the critical role of feedback-driven re-planning, tool constraints, and real-world trade-offs.
+
+In the next article, we’ll examine the **Tool Manager** — how agents discover, select, and reliably use tools during execution.
+
+→ Continue to **2.5 — [The Tool Manager](/agentic-ai/foundations/agent-architecture/tool-manager)**

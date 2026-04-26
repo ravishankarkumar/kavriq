@@ -1,0 +1,193 @@
+---
+title: The Execution Engine
+description: How AI agents safely and deterministically execute tools, APIs, and code
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+An agent can reason, plan, and select tools — but none of it matters without **reliable execution**.
+
+The **Execution Engine** is the component that turns tool calls into real actions in the external environment. It sits at the critical boundary between the agent’s reasoning layer and the outside world.
+
+```text
+Planner → Tool Manager → Execution Engine → External Systems
+```
+
+It handles execution of APIs, database queries, filesystem operations, shell commands, and dynamic code — all while enforcing determinism, safety, and observability.
+
+---
+
+## Why Deterministic & Safe Execution Matters
+
+Language models are probabilistic, but the real world demands predictability and security. Once the agent decides on a tool call, the Execution Engine must:
+
+- Invoke the exact intended function
+- Preserve arguments faithfully
+- Return results in a consistent format
+- Prevent catastrophic side effects
+
+Without strong guarantees, agents become unpredictable and dangerous.
+
+---
+
+## The Execution Pipeline
+
+A typical execution flow looks like this:
+
+```text
+Tool Call (from Tool Manager)
+     ↓
+Argument Validation & Sanitization
+     ↓
+Permission & Policy Check
+     ↓
+Execution (with timeout & resource limits)
+     ↓
+Result Capture & Normalization
+     ↓
+Return to Observation Processor
+```
+
+---
+
+## Common Execution Types
+
+Agents interact with three major categories of external systems, each requiring different safeguards.
+
+| Type           | Examples                          | Key Risks                     |
+|----------------|-----------------------------------|-------------------------------|
+| APIs           | Web search, weather, payments     | Rate limits, auth leaks, SSRF |
+| Databases      | SQL / vector queries              | SQL injection, data exfiltration |
+| Code & Files   | Dynamic code, read/write files    | Arbitrary code execution (RCE), path traversal |
+
+---
+
+## Executing APIs
+
+APIs are the most common tool type. The engine must handle formatting, authentication, timeouts, retries, and response parsing.
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+import requests
+from typing import Any
+
+def call_api(endpoint: str, method: str = "GET", **kwargs) -> dict:
+    try:
+        response = requests.request(
+            method=method,
+            url=endpoint,
+            timeout=8,
+            **kwargs
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        # Log and return structured error for observation processor
+        raise RuntimeError(f"API call failed: {e}")
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+## Database Queries
+
+Database tools require strict query validation and permission scoping.
+
+**Best practice:** Use parameterized queries and read-only roles where possible.
+
+---
+
+## Filesystem & Code Execution — The Highest Risk Area
+
+Filesystem access and dynamic code execution are extremely powerful but dangerous. A single mistake (or malicious prompt injection) can lead to data loss, exfiltration, or full compromise.
+
+### Safe Execution Strategies (2026 Best Practices)
+
+- **Least privilege** — Never run with more permissions than absolutely necessary
+- **Sandboxing** — Use containers, microVMs (Firecracker), gVisor, or WebAssembly isolates
+- **Resource limits** — CPU time, memory, network access
+- **Human-in-the-loop** — Require approval for destructive actions (delete, write outside allowed dirs, shell commands)
+- **Output validation** — Never blindly execute or trust results from tools
+
+**Modern sandboxing options:**
+- Lightweight: Wasm / V8 isolates (very fast startup)
+- Strong isolation: Firecracker microVMs
+- Practical middle-ground: Docker + gVisor or Kata Containers
+
+
+## Example: Sandboxed Code Execution
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+import subprocess
+from typing import Optional
+
+def run_code_sandboxed(code: str, timeout: int = 10) -> str:
+    """Run code in a restricted subprocess (production use real sandbox)."""
+    try:
+        result = subprocess.run(
+            ["python3", "-c", code],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            # In production: run inside Docker / Firecracker with dropped privileges
+        )
+        if result.returncode != 0:
+            return f"Error: {result.stderr}"
+        return result.stdout.strip()
+    except subprocess.TimeoutExpired:
+        return "Execution timed out"
+```
+
+</TabItem>
+</Tabs>
+
+**Note:** The examples above are illustrative. Production systems should never use plain `subprocess` or `Command` for untrusted code.
+
+---
+
+## Observability and Auditing
+
+Every execution must be logged with context:
+
+```json
+{
+  "tool": "database_query",
+  "arguments": "...",
+  "duration_ms": 245,
+  "success": true,
+  "user_id": "agent_session_123"
+}
+```
+
+Comprehensive logs enable debugging, auditing, and security monitoring.
+
+---
+
+## The Execution Engine as the Action Layer
+
+In the computer architecture analogy:
+
+| Component          | Analogy                      |
+|--------------------|------------------------------|
+| LLM                | CPU                          |
+| Agent Runtime      | Operating System             |
+| Tool Manager       | System Call Interface        |
+| Execution Engine   | Kernel + Hardware Abstraction|
+
+It is where abstract plans become concrete, observable effects.
+
+---
+
+## Looking Ahead
+
+A robust Execution Engine makes agents both **capable** and **safe**. It enforces determinism while containing the inherent risks of giving language models hands in the real world.
+
+→ Continue to **[2.7 — The Observation Processor](/agentic-ai/foundations/agent-architecture/observation-processor)**: Transforming raw execution results into clean, structured observations for reliable reasoning.

@@ -1,0 +1,165 @@
+---
+title: Execution Graphs
+description: Modeling agent workflows as structured graphs instead of simple loops
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Early agent systems relied on simple control loops:
+
+```text
+Observe → Reason → Act → Observe → ...
+```
+
+These loops work well for basic tasks, but they struggle with real-world complexity — branching decisions, parallel tool calls, conditional logic, and the need to revisit earlier states.
+
+Modern agent architectures solve this by modeling workflows as **execution graphs** — directed graphs where nodes represent steps and edges define transitions and control flow.
+
+---
+
+## From Loops to Graphs
+
+A simple loop is inherently linear and reactive.  
+An execution graph is **explicit, structured, and flexible**.
+
+**Simple linear graph:**
+
+```text
+Start → Collect Data → Analyze → Generate Report → End
+```
+
+**Complex graph with branching and merging:**
+
+```text
+          Start
+            ↓
+      Collect Data
+       /         \
+      /           \
+ Analyze A     Analyze B
+      \           /
+       \         /
+        Combine Results
+             ↓
+          Report
+```
+
+Graphs naturally support:
+- Conditional branching
+- Parallel execution
+- Cycles (revisiting states)
+- Merging of multiple paths
+
+---
+
+## What Is an Execution Graph?
+
+An execution graph consists of:
+
+- **Nodes** — Individual computation steps (reasoning, tool calls, analysis, reflection, etc.)
+- **Edges** — Transitions between nodes, often with conditions
+- **State** — Shared data passed between nodes (observations, intermediate results, memory)
+
+Each node receives the current state, performs its work, and returns an updated state for the next node.
+
+This design makes workflows **visible, controllable, and easier to debug** compared to reasoning hidden inside a loop.
+
+---
+
+## Key Advantages of Execution Graphs
+
+| Advantage               | Description                                                                 |
+|-------------------------|-----------------------------------------------------------------------------|
+| Explicit Structure      | Workflow is declared clearly instead of emerging from repeated reasoning    |
+| Branching & Conditions  | Different paths based on data quality, confidence, or intermediate results  |
+| Parallel Execution      | Multiple tools or analyses can run simultaneously                           |
+| Determinism & Reliability | Easier to enforce rules, timeouts, and safety checks in production          |
+| Observability           | Every node can be logged, monitored, and traced individually                |
+
+These properties make graphs especially valuable for complex, long-running, or high-stakes agent systems.
+
+---
+
+## Nodes as Reusable Functions
+
+In practice, nodes are often simple functions that operate on a shared state object.
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+def collect_market_data(state):
+    results = web_search(state["query"])
+    state["raw_data"] = results
+    return state
+
+def analyze_trends(state):
+    analysis = llm.generate(f"Analyze trends in this data: {state['raw_data']}")
+    state["analysis"] = analysis
+    return state
+
+def generate_report(state):
+    report = llm.generate(f"Write a market report based on: {state['analysis']}")
+    state["final_report"] = report
+    return state
+```
+
+</TabItem>
+</Tabs>
+
+The graph runtime orchestrates calling these nodes in the correct order, handling conditions and parallelism.
+
+---
+
+## Graphs and State Machines
+
+Execution graphs are closely related to **state machines**. Each node represents a state, and edges define valid transitions based on conditions or events.
+
+This combination gives developers fine-grained control while still allowing the LLM to drive intelligent decisions inside individual nodes.
+
+---
+
+## Execution Graphs in Modern Frameworks
+
+Graph-based execution has become a standard pattern in production-grade agent systems. In practice, Python frameworks currently offer the most mature developer experience for this style of orchestration.
+
+### Python Ecosystem
+
+| Framework   | Approach                                      | Key Strength                          |
+|-------------|-----------------------------------------------|---------------------------------------|
+| LangGraph   | Stateful directed graphs with cycles          | Most mature and flexible for complex agents |
+| CrewAI      | Role-based task graphs                        | Easy team-style orchestration         |
+| AutoGen     | Conversational multi-agent graphs             | Strong for collaborative agents       |
+
+---
+
+## Loops Inside Graphs
+
+Interestingly, graphs can still contain cycles. For example:
+
+```text
+Collect Data → Analyze → 
+    ↓ (if data insufficient)
+Collect More Data → ...
+```
+
+This allows the best of both worlds: the structure and control of graphs combined with the flexibility of loops.
+
+---
+
+## Looking Ahead
+
+Execution graphs represent a major evolution in agent design — moving from implicit, probabilistic loops to explicit, engineerable workflows.
+
+This shift brings agents closer to traditional software systems while preserving the intelligence of LLMs.
+
+> **Systems Insight**
+>
+> Static plans are not enough once the environment can push back. Real agent systems need loops, branches, retries, and explicit transitions when validation fails or the state changes.
+>
+> This is the abstraction shift from workflow graphs toward state machines, covered in [From DAGs to State Machines](/agentic-ai/engineering-agent-systems/from-dags-to-state-machines).
+
+### Next Steps
+
+- **Python track**: Continue to **[3.6 — Building Agents with LangGraph](/agentic-ai/foundations/planning-systems/langgraph)** — a practical guide to implementing stateful, graph-based agent architectures using one of the most popular modern frameworks.

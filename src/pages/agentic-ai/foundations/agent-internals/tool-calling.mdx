@@ -1,0 +1,404 @@
+---
+
+title: Implementing Tool Calling
+description: Adding schema-based tools and dispatching logic to a minimal agent runtime
+layout: ../../../../layouts/TutorialPage.astro
+-------------------------------------------
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Module Context">
+This article is part of **Module 11 — Building a Minimal Agent Runtime**.
+
+In the previous article we implemented the **agent state machine and execution loop**.
+
+However, a reasoning loop alone does not make a useful agent.
+Agents become powerful when they can **interact with external tools** such as search engines, databases, APIs, or code execution environments.
+
+In this article we will extend the runtime to support **schema-based tool calling and tool dispatching**.
+
+</Aside>
+
+# Implementing Tool Calling
+
+Modern agent systems rely heavily on **tool usage**.
+
+Examples of tools include:
+
+* web search APIs
+* database queries
+* code execution
+* file system operations
+* external service APIs
+
+Example workflow:
+
+```text
+User Question
+      ↓
+Agent reasoning
+      ↓
+Tool call
+      ↓
+Observation
+      ↓
+Final answer
+```
+
+Without tools, language models can only rely on their training data.
+
+Tool calling allows agents to **interact with the external world**.
+
+---
+
+# Tool Calling Architecture
+
+A typical tool calling system has three components:
+
+| Component        | Purpose                  |
+| ---------------- | ------------------------ |
+| tool schema      | describes tool inputs    |
+| tool dispatcher  | selects the correct tool |
+| execution engine | runs the tool            |
+
+Conceptually:
+
+```text
+Agent Reasoning
+      ↓
+Tool Selection
+      ↓
+Tool Dispatcher
+      ↓
+Tool Execution
+      ↓
+Observation
+```
+
+The observation is then fed back into the agent loop.
+
+---
+
+# Schema-Based Tool Execution
+
+Tools should be described using **structured schemas**.
+
+Schemas define:
+
+* tool name
+* description
+* required inputs
+* output format
+
+Example schema:
+
+```json
+{
+  "name": "web_search",
+  "description": "Search the web for information",
+  "parameters": {
+    "query": "string"
+  }
+}
+```
+
+This schema allows the language model to understand **how to call the tool**.
+
+---
+
+# Why Schemas Are Important
+
+Schemas provide several advantages.
+
+### Structured Input
+
+The model knows exactly which arguments to provide.
+
+---
+
+### Validation
+
+Inputs can be validated before execution.
+
+---
+
+### Tool Discovery
+
+Agents can examine available tools dynamically.
+
+---
+
+# Example Tool Schema
+
+Example tool registry:
+
+```json
+[
+  {
+    "name": "web_search",
+    "parameters": {
+      "query": "string"
+    }
+  },
+  {
+    "name": "calculator",
+    "parameters": {
+      "expression": "string"
+    }
+  }
+]
+```
+
+This registry describes the tools available to the agent.
+
+---
+
+# Parsing Tool Calls
+
+The language model typically generates structured tool calls.
+
+Example model output:
+
+```json
+{
+  "tool": "web_search",
+  "args": {
+    "query": "H100 GPU architecture"
+  }
+}
+```
+
+The runtime must parse this output and dispatch the tool.
+
+---
+
+# Tool Dispatching
+
+Tool dispatching determines **which function to execute**.
+
+Conceptually:
+
+```text
+Tool Call
+   ↓
+Dispatcher
+   ↓
+Correct Tool Function
+```
+
+Example mapping:
+
+| Tool Name  | Function    |
+| ---------- | ----------- |
+| web_search | search()    |
+| calculator | calculate() |
+
+The dispatcher routes the call to the correct implementation.
+
+---
+
+# Example Python Tool System
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+tools = {
+    "web_search": web_search,
+    "calculator": calculator
+}
+
+def dispatch_tool(call):
+
+    tool_name = call["tool"]
+    args = call["args"]
+
+    if tool_name not in tools:
+        raise ValueError("Unknown tool")
+
+    return tools[tool_name](**args)
+```
+
+</TabItem>
+
+</Tabs>
+
+This dispatcher selects the correct tool.
+
+---
+
+# Example Rust Tool System
+
+<Tabs>
+
+
+</Tabs>
+
+Rust's pattern matching makes tool dispatch straightforward.
+
+---
+
+# Integrating Tool Calls Into the Agent Loop
+
+The runtime must integrate tool calls into the agent loop.
+
+Example flow:
+
+```text
+Reasoning step
+      ↓
+Model outputs tool call
+      ↓
+Runtime dispatches tool
+      ↓
+Tool returns observation
+      ↓
+State updated
+```
+
+The observation becomes part of the agent's context.
+
+---
+
+# Updated Agent Loop
+
+After adding tools, the loop looks like this:
+
+```text
+Goal
+ ↓
+Reason
+ ↓
+Select Tool
+ ↓
+Execute Tool
+ ↓
+Observation
+ ↓
+Update State
+ ↓
+Repeat
+```
+
+This cycle allows the agent to **gather information and solve complex tasks**.
+
+---
+
+# Example Integrated Loop
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+thought = llm.generate(prompt)
+
+action = parse_action(thought)
+
+if action["type"] == "tool":
+
+    observation = dispatch_tool(action)
+
+    state["observations"].append(observation)
+```
+
+</TabItem>
+
+
+</Tabs>
+
+The observation is then fed into the next reasoning step.
+
+---
+
+# Handling Tool Errors
+
+Tools may fail for various reasons:
+
+* network issues
+* invalid inputs
+* API failures
+
+The runtime should handle errors gracefully.
+
+Example strategy:
+
+```text
+Tool failure
+      ↓
+Retry
+      ↓
+Fallback tool
+      ↓
+Return error observation
+```
+
+The agent can then decide how to proceed.
+
+---
+
+# Tool Observations
+
+Every tool call produces an **observation**.
+
+Example observation:
+
+```text
+Search results:
+AMD Instinct MI250X powers the Frontier supercomputer.
+```
+
+Observations become part of the **agent state**.
+
+Example state update:
+
+```text
+Observation → added to context
+```
+
+This allows the agent to reason about new information.
+
+---
+
+# Tool Calling in Modern AI Systems
+
+Most modern agent frameworks support schema-based tool calling.
+
+Examples include:
+
+| System     | Tool Calling Method |
+| ---------- | ------------------- |
+| OpenAI API | function calling    |
+| LangChain  | tool abstractions   |
+| LangGraph  | tool nodes          |
+| AutoGen    | tool messaging      |
+
+Although the APIs differ, the underlying architecture is similar.
+
+---
+
+# The Runtime So Far
+
+After this article, our minimal runtime now includes:
+
+```text
+Agent Runtime
+ ├─ State Machine
+ ├─ Agent Loop
+ ├─ Tool Registry
+ ├─ Tool Dispatcher
+ └─ Observation Handling
+```
+
+This system already resembles the core architecture used by many real agent frameworks.
+
+---
+
+# Looking Ahead
+
+In the next article we will add **time-travel debugging**, a technique that allows developers to replay and analyze agent execution.
+
+This feature is extremely useful when debugging complex agent workflows.
+
+→ Continue to **11.4 — Time-Travel Debugging**

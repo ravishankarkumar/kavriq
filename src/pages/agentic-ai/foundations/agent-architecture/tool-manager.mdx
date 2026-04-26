@@ -1,0 +1,360 @@
+---
+title: The Tool Manager
+description: The system that bridges LLM reasoning with real-world execution
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Large language models are powerful reasoning systems. However, they are **fundamentally isolated**, which means they do not have an understanding of the real world. They only know the data they were trained on.
+
+Technically, they cannot:
+- access real-time data
+- execute code
+- query databases
+- interact with files
+- call APIs
+
+To act on the world, they need **tools**. The system responsible for enabling this is the **Tool Manager**.
+
+But before we dive deeper, let’s first understand what tools are.
+
+---
+
+## Tools
+
+A tool is any external function or system that an agent can call to perform an action or retrieve information. Examples include:
+
+- APIs (e.g., weather API, search API)
+- Code execution (e.g., Python REPL)
+- Database queries (e.g., SQL)
+- File operations (e.g., read/write files)
+- System commands (e.g., shell commands)
+
+---
+
+## How does it all work?
+
+When you create an agent, you define a set of tools it can use. The agent then informs the LLM about the tools available to it—for example, the availability of a weather API or a database connection.
+
+The LLM, acting as the reasoning engine, attempts to respond to the user’s query. If it can solve the problem on its own, it does not need any tools. However, if it determines that it needs external information or capabilities, it requests the Tool Manager (or the agent runtime) to call a tool and return the result.
+
+This additional information allows the LLM to produce a more accurate and useful response.
+
+One way to think about this is:
+
+```text
+Reasoning (LLM)
+↓
+Tool Manager
+↓
+Execution (APIs / Code / Systems)
+````
+
+The Tool Manager is the **bridge between thought and action**.
+
+---
+
+## Why Tools Change Everything
+
+Without tools:
+
+```shell
+Agent = reasoning only
+```
+
+With tools:
+
+```shell
+Agent = reasoning + action
+```
+
+Example:
+
+> “What is the weather in Tokyo right now?”
+
+A model alone can only guess.
+
+With a tool:
+
+```text
+Thought: I need real-time data
+Action: weather_api(city="Tokyo")
+```
+
+Now the agent becomes **grounded in reality**.
+
+---
+
+## Responsibilities of the Tool Manager
+
+The Tool Manager controls the full lifecycle:
+
+1. **Discovery** — What tools exist?
+2. **Selection** — Which tool should be used?
+3. **Validation** — Are the arguments correct?
+4. **Execution Control** — Timeouts, retries, policies
+5. **Observability** — Logging and metrics
+
+---
+
+## Tool Discovery & Registration
+
+Agents can only use tools they are aware of. These tools are registered when creating the agent using structured metadata. This process is called **tool registration**.
+
+Here is an example of a tool definition for a web search tool:
+
+```json
+{
+  "name": "web_search",
+  "description": "Search the web for current information",
+  "parameters": {
+    "query": "string"
+  }
+}
+```
+
+This metadata is stored with the agent and injected into the model’s context.
+
+---
+
+### Runtime Registration
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+tools = {
+    "web_search": web_search,
+    "calculator": calculator,
+    "read_file": read_file,
+}
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+## Tool Selection
+
+The agent must decide **which tool to use**. There are multiple ways to make this decision:
+
+1. **Rule-based selection**
+   A rule-based system triggers specific tools based on patterns in the query.
+   For example, if the query contains the word “weather,” it triggers the weather API.
+   This approach is deterministic but can fail when queries are ambiguous or contain errors (e.g., “wether” instead of “weather”).
+
+2. **LLM-driven selection**
+   The model decides which tool to call based on the query and context.
+   This is more flexible but can result in incorrect tool selection if the model misunderstands the query.
+
+3. **Hybrid approach**
+   Combines rule-based filtering with LLM-based selection.
+   Rules narrow down the options, and the LLM selects from the remaining tools.
+
+Most modern systems rely on **LLM-driven selection**:
+
+```text
+Thought: Need current weather
+Action: weather_api
+Arguments: {"city": "Tokyo"}
+```
+
+The Tool Manager parses this and routes execution.
+
+---
+
+### Selection Strategies
+
+| Strategy   | Use Case                |
+| ---------- | ----------------------- |
+| LLM-driven | Flexible reasoning      |
+| Rule-based | Deterministic workflows |
+| Hybrid     | Complex systems         |
+
+---
+
+## ⚠️ The Tool Explosion Problem
+
+As systems scale, the number of tools grows:
+
+```
+3 tools → easy  
+10 tools → manageable  
+50+ tools → chaos
+```
+
+Problems:
+
+* context bloat
+* incorrect tool selection
+* increased hallucination
+
+### Solution: Tool Retrieval
+
+Before selection:
+
+1. Rank tools by relevance
+2. Provide only the top-k tools (3–5)
+
+This significantly improves performance.
+
+If this is not sufficient, you can re-architect the system:
+
+* use multiple agents with smaller toolsets
+* introduce a **meta-agent** that selects a sub-agent first
+
+Many systems are moving toward **modular agent architectures** to address this.
+
+However, there is a trade-off: excessive modularity can lead to over-engineering and increased complexity. The goal is to find the right balance between modularity and simplicity.
+
+---
+
+## Schema Validation
+
+LLMs are not perfect, and they can generate **invalid tool calls**.
+
+Example:
+
+> LLM requested the following tool call:
+
+```json
+{
+  "tool": "weather_api",
+  "arguments": {
+    "temperature": "Tokyo"
+  }
+}
+```
+
+But the tool expects:
+
+```json
+{ "city": "Tokyo" }
+```
+
+To handle this, the Tool Manager should include a **validation layer** that checks tool calls before execution. This can be implemented using JSON Schema or custom validation logic.
+
+
+### Validation Layer
+
+<Tabs>
+<TabItem label="Python" icon="seti:python">
+
+```python
+from jsonschema import validate, ValidationError
+
+def validate_args(schema, args):
+    try:
+        validate(instance=args, schema=schema)
+        return True
+    except ValidationError as e:
+        return str(e)
+```
+
+</TabItem>
+
+</Tabs>
+
+---
+
+## Reliability: Real Systems Fail
+
+In agentic systems, LLMs are not the only unreliable component—tools can fail as well.
+
+Failures include:
+
+* network errors
+* timeouts
+* rate limits
+* partial responses
+
+Software systems have always been imperfect, and agent systems are no exception. Therefore, we must design systems that handle failures gracefully.
+
+
+### Retry with Backoff
+
+```python
+import time
+
+def retry(tool, args, retries=3):
+    for i in range(retries):
+        try:
+            return tool(**args)
+        except Exception:
+            time.sleep(2 ** i)
+    raise RuntimeError("Tool failed")
+```
+
+
+### Timeouts
+
+Every tool must have limits:
+
+| Tool Type      | Timeout |
+| -------------- | ------- |
+| Web search     | 5s      |
+| DB query       | 10s     |
+| Code execution | 30s+    |
+
+
+### Advanced Patterns
+
+* **Fallback tools**
+* **Circuit breakers**
+* **Sandboxing**
+* **Least privilege access**
+
+---
+
+## Observability
+
+In traditional systems, you can debug using logs, metrics, and traces. In most cases, if you know the input that caused an issue, you can reproduce it.
+
+However, LLMs are not deterministic. They may produce different outputs for the same input, making debugging more difficult.
+
+Because of this, observability becomes critical.
+
+You need visibility into:
+
+* what the model was reasoning
+* which tools were called
+* how long they took
+* whether they succeeded or failed
+
+You should track:
+
+* tool usage frequency
+* latency
+* error rates
+* retries
+
+Additionally, depending on your needs, you may log:
+
+* raw tool inputs and outputs
+* model reasoning steps (or summaries)
+* Reasoning traces
+
+Example:
+
+```json
+{
+  "tool": "web_search",
+  "duration_ms": 420,
+  "success": true
+}
+```
+
+---
+
+## The Big Picture
+
+The Tool Manager is not a helper. It is a **critical system boundary**.
+
+It determines whether your agent is a demo or a production system.
+
+---
+
+→ Next: **[Execution Engine](/agentic-ai/foundations/agent-architecture/execution-engine)**

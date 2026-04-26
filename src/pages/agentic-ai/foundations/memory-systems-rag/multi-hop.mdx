@@ -1,0 +1,181 @@
+---
+title: Multi-Hop Retrieval
+description: How AI agents connect and synthesize information across multiple documents and knowledge sources using chained retrieval
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Many complex questions cannot be answered from a single document. The answer must be **assembled** by connecting facts from multiple sources.
+
+Example question:
+
+> “Which company designed the GPU used in the fastest AI supercomputer in 2026?”
+
+To answer this, an agent needs to:
+
+1. Identify the fastest AI supercomputer
+2. Find which GPU it uses
+3. Determine the company that designed that GPU
+
+This type of **chained reasoning across documents** is called **multi-hop retrieval**.
+
+---
+
+## What Is a Retrieval Hop?
+
+A **hop** is one retrieval step that produces an intermediate piece of information used to formulate the next query.
+
+Example chain:
+
+**Hop 1**:  
+Query → “Fastest AI supercomputer in 2026”  
+→ Observation: “El Capitan supercomputer”
+
+**Hop 2**:  
+Query → “GPU used in El Capitan supercomputer”  
+→ Observation: “AMD Instinct MI300X”
+
+**Hop 3**:  
+Query → “Company that designed AMD Instinct MI300X”  
+→ Observation: “AMD”
+
+**Final Answer**: AMD designed the GPU used in the fastest AI supercomputer.
+
+Each hop depends on the result of the previous one, forming a **knowledge chain**.
+
+---
+
+## Why Multi-Hop Retrieval Matters
+
+Traditional single-shot RAG often fails on questions that require linking concepts, tracing relationships, or combining evidence from disparate sources. Multi-hop retrieval enables agents to:
+
+- Perform deep technical analysis
+- Conduct scientific or historical research
+- Answer enterprise questions that span internal documents
+- Build comprehensive understanding from fragmented knowledge
+
+It turns semantic memory from a simple lookup store into a **connected knowledge network**.
+
+---
+
+## Multi-Hop Retrieval vs Agentic RAG
+
+| Technique           | Focus                                      | Typical Use Case                     |
+|---------------------|--------------------------------------------|--------------------------------------|
+| Agentic RAG         | Iterative retrieval + self-critique        | Refining relevance and coverage      |
+| Multi-Hop Retrieval | Chaining dependent retrieval steps         | Connecting facts across sources      |
+
+In practice, the two are often combined: Agentic RAG provides the control loop, while multi-hop retrieval provides the chaining logic.
+
+---
+
+## Multi-Hop Retrieval Architecture
+
+A typical multi-hop pipeline includes:
+
+```text
+User Query
+   ↓
+Initial Retrieval
+   ↓
+Reasoning + Query Decomposition / Refinement
+   ↓
+Next-Hop Retrieval (using intermediate result)
+   ↓
+Context Accumulation + Summarization
+   ↓
+Repeat or Synthesize Final Answer
+```
+
+Advanced systems add **reflection** between hops to verify facts and reduce error propagation.
+
+---
+
+## Graph-Augmented Multi-Hop Retrieval
+
+In 2026, many production systems move beyond sequential hops to **Graph RAG** (Graph Retrieval-Augmented Generation). Knowledge is stored as a graph where documents or entities are nodes, and relationships are edges.
+
+This allows efficient traversal:
+
+```text
+Supercomputer → Uses GPU → Manufactured by Company
+```
+
+Graph-based approaches reduce query drift and improve consistency across long reasoning chains.
+
+---
+
+## Example Implementation
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+def multi_hop_retrieval(question: str, retriever, llm, max_hops=4):
+    context = []
+    current_query = question
+
+    for hop in range(max_hops):
+        docs = retriever.hybrid_search(current_query)
+        context.extend([doc["text"] for doc in docs])
+
+        # Reflect and decide next hop
+        reflection = llm.invoke(
+            f"Question: {question}\nCurrent context: {context}\n"
+            f"What additional information is needed for the next hop?"
+        )
+
+        if "enough information" in reflection.lower():
+            break
+
+        current_query = llm.invoke(f"Generate next search query: {reflection}")
+
+    # Final synthesis
+    return llm.invoke(f"Answer the question using this context:\n{context}")
+```
+
+</TabItem>
+
+
+</Tabs>
+
+This pattern combines retrieval with reasoning and can be further enhanced with procedural memory (predefined hop strategies) or episodic memory (learning from past multi-hop successes/failures).
+
+---
+
+## Challenges of Multi-Hop Retrieval
+
+- **Error propagation** — A mistake in one hop can corrupt the entire chain.
+- **Query drift** — Intermediate queries may diverge from the original intent.
+- **Latency and cost** — Multiple retrieval + LLM calls increase both time and expense.
+- **Context overload** — Accumulating documents can exceed context windows (mitigated by summarization between hops).
+
+**Best practices** include using hybrid search, adding reflection steps, limiting hop count, and combining with graph-based indexing.
+
+---
+
+## The Evolution of Retrieval
+
+```text
+Keyword Search → Vector Search → Basic RAG 
+      ↓
+Agentic RAG (iterative + critique) 
+      ↓
+Multi-Hop Retrieval (chained + graph-augmented)
+```
+
+Each stage expands an agent’s ability to reason over larger, more interconnected knowledge spaces.
+
+---
+
+## Looking Ahead
+
+In this article we explored **multi-hop retrieval** — how agents chain multiple retrieval steps to connect information across documents and build complex answers.
+
+In the next module we will begin exploring **Multi-Agent Systems**, where multiple specialized agents collaborate to solve problems that exceed the capability of a single agent.
+
+Topics will include manager–worker architectures, swarm intelligence, debate-based reasoning, and agent communication protocols.
+
+→ Continue to **[Module 6: Multi-Agent Systems](/agentic-ai/foundations/multi-agent)**

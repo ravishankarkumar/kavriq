@@ -1,0 +1,525 @@
+---
+
+title: Working Memory and the Scratchpad
+description: How AI agents maintain short-term reasoning state
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Reasoning rarely happens in a single step.
+
+When humans solve problems, we often write intermediate thoughts:
+
+* notes on paper
+* calculations
+* bullet-point reasoning
+* diagrams
+
+This temporary workspace is our **working memory**.
+
+AI agents require the same capability.
+
+Without it, they cannot perform **multi-step reasoning**.
+
+---
+
+# What Is Working Memory in Agents?
+
+Working memory is the **short-term state used during a single task**.
+
+It stores information such as:
+
+* intermediate reasoning
+* tool outputs
+* partial plans
+* observations
+* sub-goals
+
+Unlike long-term memory systems (which we will study later), working memory is **temporary**.
+
+It typically exists only for the duration of a task.
+
+---
+
+# The Memory Hierarchy of Agents
+
+Agent systems usually maintain **three levels of memory**.
+
+```text
+Long-Term Memory
+    ↓
+Retrieved Context
+    ↓
+Working Memory
+    ↓
+Scratchpad
+```
+
+Each layer serves a different purpose.
+
+| Memory Type       | Purpose                       |
+| ----------------- | ----------------------------- |
+| Long-Term Memory  | Persistent knowledge          |
+| Retrieved Context | Relevant external information |
+| Working Memory    | Current task state            |
+| Scratchpad        | Reasoning workspace           |
+
+The scratchpad is the **most dynamic component**.
+
+---
+
+# Why Working Memory Matters
+
+Without working memory, agents behave like **stateless chatbots**.
+
+Stateless systems can only respond to the latest prompt.
+
+But agents must track evolving state:
+
+Example task:
+
+> "Find the cheapest flight to Tokyo next month and summarize the best options."
+
+The agent must remember:
+
+* search results
+* price comparisons
+* airline options
+* user constraints
+
+All of this information lives in **working memory**.
+
+---
+
+# The Reasoning Scratchpad Pattern
+
+One of the most important design patterns in agent systems is the **scratchpad**.
+
+The scratchpad is a structured space where the agent writes its reasoning.
+
+Example:
+
+```bash
+Goal: summarize research paper
+
+Thought: I should extract the main sections first.
+
+Action: parse_document
+
+Observation: Document contains 5 sections.
+
+Thought: Next I should summarize each section.
+```
+
+This running log of thoughts and actions helps the agent:
+
+* track progress
+* avoid repeating steps
+* maintain logical coherence
+
+---
+
+# Scratchpad Structure
+
+Most modern agents represent scratchpads as **structured logs**.
+
+```bash
+Thought
+Action
+Observation
+```
+
+This structure was popularized by the **ReAct framework**.
+
+Example:
+
+```bash
+Thought: Need population data for France
+Action: web_search("France population 2024")
+Observation: 67 million
+```
+
+The scratchpad becomes part of the **prompt for the next reasoning step**.
+
+---
+
+# How Scratchpads Improve Reasoning
+
+Scratchpads provide several important advantages.
+
+## 1 — Multi-Step Problem Solving
+
+Complex tasks require **step-by-step reasoning**.
+
+Scratchpads allow the agent to build solutions incrementally.
+
+---
+
+## 2 — Tool Integration
+
+When tools return results, those results must be remembered.
+
+Example:
+
+```bash
+Tool: web_search
+Result: GDP growth rate 3.2%
+```
+
+The scratchpad records this information.
+
+---
+
+## 3 — Debuggability
+
+Scratchpads make agent decisions **transparent**.
+
+Instead of a mysterious output, we see the full reasoning chain.
+
+Example:
+
+```
+Thought → Action → Observation → Thought
+```
+
+This is extremely useful when debugging agents.
+
+---
+
+# Managing Short-Term Context
+
+Working memory must be carefully managed because **context windows are limited**.
+
+Modern models may support:
+
+* 128k tokens
+* 200k tokens
+* 1M tokens
+
+But large contexts still introduce problems:
+
+* higher cost
+* slower inference
+* increased hallucination risk
+
+Therefore agents must **compress or prune working memory**.
+
+---
+
+# Context Management Strategies
+
+Several strategies exist for managing short-term memory.
+
+---
+
+## Strategy 1 — Sliding Window
+
+The agent keeps only the **most recent reasoning steps**.
+
+Example:
+
+``` text
+Step 12
+Step 13
+Step 14
+Step 15
+```
+
+Older steps are discarded.
+
+---
+
+## Strategy 2 — Summarization
+
+Older reasoning steps are compressed into summaries.
+
+Example:
+
+``` text
+Summary:
+The agent already collected three market reports
+and extracted key economic indicators.
+```
+
+This preserves knowledge while reducing token usage.
+
+---
+
+## Strategy 3 — State Representation
+
+Instead of storing raw text, the agent stores **structured state**.
+
+Example:
+
+```json id="ubmxg0"
+{
+  "goal": "compare GPUs",
+  "products": ["A100", "H100"],
+  "benchmark_data": [...]
+}
+```
+
+Structured state is often more efficient than raw conversation logs.
+
+---
+
+# Implementing a Scratchpad
+
+Let us implement a minimal scratchpad system.
+
+<Tabs>
+
+<TabItem label="Python" icon="seti:python">
+
+```python
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from ollama import chat
+from pydantic import BaseModel, ValidationError
+
+MODEL = "qwen3.5:9b"
+MAX_STEPS = 6
+
+
+@dataclass
+class Step:
+    thought: str
+    action: str
+    observation: str
+
+
+class AgentAction(BaseModel):
+    thought: str
+    action: str  # "web_search" | "finish"
+    input: str
+
+
+class Scratchpad:
+    def __init__(self, max_steps: int = 8):
+        self.max_steps = max_steps
+        self.steps: list[Step] = []
+
+    def add(self, thought: str, action: str, observation: str) -> None:
+        self.steps.append(Step(thought=thought, action=action, observation=observation))
+        # Sliding window to keep working memory bounded.
+        self.steps = self.steps[-self.max_steps :]
+
+    def build_prompt(self, goal: str) -> str:
+        memory_lines = []
+        for s in self.steps:
+            memory_lines.append(f"Thought: {s.thought}")
+            memory_lines.append(f"Action: {s.action}")
+            memory_lines.append(f"Observation: {s.observation}")
+            memory_lines.append("")
+        memory_text = "\n".join(memory_lines) if memory_lines else "(empty)"
+        return f"""
+You are an agent planner.
+Given GOAL and WORKING MEMORY, return ONLY JSON:
+{{
+  "thought": string,
+  "action": "web_search" | "finish",
+  "input": string
+}}
+
+GOAL:
+{goal}
+
+WORKING MEMORY:
+{memory_text}
+""".strip()
+
+    def render(self) -> str:
+        if not self.steps:
+            return "(empty)"
+        lines = []
+        for i, s in enumerate(self.steps, start=1):
+            lines.append(f"{i}. Thought: {s.thought}")
+            lines.append(f"   Action: {s.action}")
+            lines.append(f"   Observation: {s.observation}")
+        return "\n".join(lines)
+
+
+def web_search(query: str) -> str:
+    # Replace with real tool integration if needed.
+    return f"[mock-search-result] {query}: RTX 4090 has strong local value; H100 leads datacenter throughput."
+
+
+def parse_action(raw: str) -> AgentAction:
+    """Parse model output robustly even if it includes extra text."""
+    try:
+        return AgentAction.model_validate_json(raw)
+    except ValidationError:
+        # Fallback: extract first JSON object from mixed output.
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise ValueError(f"Model returned non-JSON output: {raw[:200]}")
+        return AgentAction.model_validate_json(raw[start : end + 1])
+
+
+def run_agent(goal: str) -> str:
+    scratchpad = Scratchpad(max_steps=10)
+
+    for step_no in range(1, MAX_STEPS + 1):
+        prompt = scratchpad.build_prompt(goal)
+        response = chat(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            format=AgentAction.model_json_schema(),
+            options={"temperature": 0.2},
+        )
+
+        try:
+            action = parse_action(response.message.content)
+        except Exception:
+            scratchpad.add(
+                "Parser failure",
+                "finish",
+                "Model output was not valid JSON. Retrying with stricter prompt is recommended.",
+            )
+            print(f"[step {step_no}/{MAX_STEPS}] parse_error")
+            print("[scratchpad]")
+            print(scratchpad.render())
+            return "Stopped: model did not return valid structured output."
+
+        thought = action.thought
+        action_name = action.action
+        action_input = action.input
+
+        if action_name == "finish":
+            scratchpad.add(thought, "finish", action_input)
+            print(f"[step {step_no}/{MAX_STEPS}] finished")
+            print("[scratchpad]")
+            print(scratchpad.render())
+            return action_input
+
+        if action_name == "web_search":
+            tool_result = web_search(action_input)
+            scratchpad.add(thought, f"web_search({action_input})", tool_result)
+            print(f"[step {step_no}/{MAX_STEPS}] tool=web_search")
+            print("[scratchpad]")
+            print(scratchpad.render())
+            continue
+
+        scratchpad.add(thought, action_name, "Unknown action. Ask model to finish.")
+        print(f"[step {step_no}/{MAX_STEPS}] tool=unknown")
+        print("[scratchpad]")
+        print(scratchpad.render())
+
+    return "Stopped: reached max iterations without final answer."
+
+
+if __name__ == "__main__":
+    final_answer = run_agent("Find the best laptop GPU choice for local ML and explain why.")
+    print("\nFinal answer:")
+    print(final_answer)
+```
+
+</TabItem>
+
+
+</Tabs>
+
+This scratchpad becomes part of the **agent prompt** at every step.
+
+---
+
+# Example Agent Reasoning
+
+Below is what a full reasoning cycle might look like.
+
+``` plaintext
+Goal: Find best laptop for machine learning
+
+Thought: I should compare GPUs first
+Action: web_search("best GPU for ML training")
+
+Observation: RTX 4090 and H100 commonly used
+
+Thought: Now compare benchmarks
+Action: web_search("RTX 4090 vs H100 ML benchmark")
+
+Observation: H100 significantly faster
+```
+
+Each step updates the working memory.
+
+---
+
+# Common Mistakes in Working Memory Design
+
+Designing working memory incorrectly can break agent reasoning.
+
+Common mistakes include:
+
+### Storing Too Much Context
+
+Too many reasoning steps cause **context overflow**.
+
+---
+
+### Storing Too Little Context
+
+If earlier steps are lost, the agent may **repeat work**.
+
+---
+
+### Mixing State With Reasoning
+
+Separating:
+
+```
+reasoning
+state
+tool results
+```
+
+improves clarity.
+
+---
+
+# Working Memory vs Long-Term Memory
+
+Working memory should not be confused with **long-term memory systems**.
+
+| Feature  | Working Memory | Long-Term Memory      |
+| -------- | -------------- | --------------------- |
+| Lifetime | task duration  | persistent            |
+| Storage  | prompt context | database/vector store |
+| Purpose  | reasoning      | knowledge             |
+
+Long-term memory will be explored in **Module 5 — Memory Systems & RAG 2.0**.
+
+---
+
+# The Central Role of Working Memory
+
+In practice, working memory is the **glue connecting all agent components**.
+
+It integrates:
+
+* perception outputs
+* reasoning steps
+* tool results
+* planning state
+
+Without working memory, agents cannot perform **complex multi-step tasks**.
+
+---
+
+# Looking Ahead
+
+In this article we explored **working memory and the reasoning scratchpad**, which allow agents to maintain state across reasoning steps.
+
+We examined:
+
+* the role of working memory in agents
+* the scratchpad reasoning pattern
+* strategies for managing short-term context
+
+In the next article we will explore the **Planner / Reasoner**, the component responsible for transforming goals into executable plans.
+
+→ Continue to **2.4 — [The Planner / Reasoner](/agentic-ai/foundations/agent-architecture/the-planner-reasoner)**

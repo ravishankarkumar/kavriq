@@ -1,15 +1,13 @@
 ---
-title: A Comprehensive Guide to Agentic AI
+title: Agentic AI
 layout: ../../layouts/TutorialPage.astro
 ---
 
 import agenticAiHighlightLoop from "@/assets/images/agentic_ai_highlight_loop.gif";
 
-Whether you are just beginning your journey into Agentic AI or already have some exposure to it, this guide is designed to help you build a deep and structured understanding of the field. We start from first principles and gradually move toward advanced concepts, modern techniques, and the latest developments in the Agentic AI ecosystem.
+Agentic AI is one of the most important shifts in modern artificial intelligence. The useful question is no longer only whether a model can respond well, but whether a system can reason, act, remember, recover, and remain controlled over time.
 
-Agentic AI is one of the most important shifts in modern artificial intelligence. It is not just a passing trend. The ideas, tools, and design patterns you learn here will remain valuable as the field continues to evolve.
-
-To make the journey easier, this guide is organized as a 12-part series. By following it step by step, you will develop a solid foundation in Agentic AI — from core concepts to the advanced systems and architectures that matter today.
+Kavriq's Agentic AI curriculum is organized into two connected series.
 
 <img
   src={agenticAiHighlightLoop.src}
@@ -18,146 +16,28 @@ To make the journey easier, this guide is organized as a 12-part series. By foll
   style={{ width: "100%", borderRadius: "1rem", margin: "1.5rem 0" }}
 />
 
-> **This is a living roadmap.** Articles are written and published one by one. Items listed without a link are planned and coming. Linked items are published and ready to read.
+## Agentic AI Foundations
+
+The 12-part core curriculum for learning the building blocks of agent systems.
+
+This series covers agent loops, cognitive architecture, planning, tools, MCP, memory, multi-agent systems, guardrails, evaluation, runtime internals, and capstone projects.
+
+[Explore Agentic AI Foundations](/agentic-ai/foundations)
 
 ---
 
-## Prerequisite
-- [Setting up Environment](/agentic-ai/prerequisite/setting-up)
+## Engineering Agent Systems
 
-## Module 1 — Foundations
-The cognitive and computational foundations of modern agent systems.
+The systems-level follow-up for understanding how agents behave in production.
 
-- [What is an Agent?](/agentic-ai/foundations/what-is-an-agent)
-- [Cognitive Architecture of Agents](/agentic-ai/foundations/cognitive-architecture)
-- [The Inference-Time Compute Revolution](/agentic-ai/foundations/inference-time-compute)
-- [Modern LLM Primitives](/agentic-ai/foundations/modern-llm-primitives)
+This series focuses on uncertainty, execution over time, state drift, retries, state machines, bounded autonomy, tool contracts, safety, observability, and practical recommendations for reliable production design.
+
+[Explore Engineering Agent Systems](/agentic-ai/engineering-agent-systems)
 
 ---
 
-## Module 2 — Internal Agent Architecture
-The internal components that make an AI system behave like an autonomous agent.
+## Recommended Path
 
-- [The Anatomy of an Agent](/agentic-ai/agent-architecture/the-anatomy-of-an-agent)
-- [The Perception Layer](/agentic-ai/agent-architecture/the-perception-layer)
-- [Working Memory and the Scratchpad](/agentic-ai/agent-architecture/working-memory-and-the-scratchpad)
-- [The Planner / Reasoner](/agentic-ai/agent-architecture/the-planner-reasoner)
-- [The Tool Manager](/agentic-ai/agent-architecture/tool-manager)
-- [The Execution Engine](/agentic-ai/agent-architecture/execution-engine)
-- [The Observation Processor](/agentic-ai/agent-architecture/observation-processor)
-- [Reflection and Termination](/agentic-ai/agent-architecture/reflection-and-termination)
+Start with [Agentic AI Foundations](/agentic-ai/foundations) if you want the components.
 
----
-
-## Module 3 — Planning Systems
-Techniques that allow agents to solve complex tasks through multi-step reasoning.
-
-- [Why Planning Matters](/agentic-ai/planning-systems/why-planning-matters)
-- [ReAct: Reason + Act](/agentic-ai/planning-systems/react)
-- [Chain-of-Thought Planning](/agentic-ai/planning-systems/chain-of-thought)
-- [Tree-of-Thought Reasoning](/agentic-ai/planning-systems/tree-of-thought)
-- [Execution Graphs](/agentic-ai/planning-systems/execution-graphs)
-- [Building Agents with LangGraph - Python](/agentic-ai/planning-systems/langgraph)
-
----
-
-## Module 4 — Tool Use & Protocols
-How agents interact with APIs, databases, and external systems.
-
-- [Why Tools Make Agents Powerful](/agentic-ai/tool-use-protocols/why-tools)
-- [Designing Reliable Tools](/agentic-ai/tool-use-protocols/designing-reliable-tools)
-- [The Model Context Protocol (MCP)](/agentic-ai/tool-use-protocols/mcp)
-
----
-
-## Module 5 — Memory Systems & RAG
-How agents store knowledge and retrieve information across interactions.
-
-- [The Memory Hierarchy of Agents](/agentic-ai/memory-systems-rag/memory-hierarchy)
-- [Episodic Memory](/agentic-ai/memory-systems-rag/episodic-memory)
-- [Semantic Memory](/agentic-ai/memory-systems-rag/semantic-memory)
-- [Procedural Memory](/agentic-ai/memory-systems-rag/procedural-memory)
-- [Agentic RAG](/agentic-ai/memory-systems-rag/agentic-rag)
-- [Multi-Hop Retrieval](/agentic-ai/memory-systems-rag/multi-hop)
-
----
-
-## Module 6 — Multi-Agent Systems
-Architectures where multiple agents collaborate to solve problems.
-
-- [Why Multi-Agent Systems Exist](/agentic-ai/multi-agent/why-multi-agent)
-- [Manager–Worker Coordination](/agentic-ai/multi-agent/manager-worker-pattern)
-- [Handoff Pattern (Swarm)](/agentic-ai/multi-agent/handoff-swarm)
-- [Debate Pattern](/agentic-ai/multi-agent/debate-pattern)
-- [Agent-to-Agent Communication (A2A)](/agentic-ai/multi-agent/a2a-agent-to-agent)
-
----
-
-## Module 7 — Computer Use & Vision
-Agents that interact with software interfaces and visual environments.
-
-- [Computer Use Agents](/agentic-ai/computer-use-vision/computer-use-agents)
-- [GUI Navigation](/agentic-ai/computer-use-vision/gui-navigation)
-- [Visual Grounding](/agentic-ai/computer-use-vision/visual-grounding)
-
----
-
-## Module 8 — Guardrails & Safety
-Designing safe and reliable agent systems.
-
-- [Prompt Injection Attacks](/agentic-ai/guardrails-safety/prompt-injection)
-- [Tool Permission Systems](/agentic-ai/guardrails-safety/tool-permissions)
-- [Human-in-the-Loop](/agentic-ai/guardrails-safety/human-in-the-loop)
-- [Sandboxing Agent Execution](/agentic-ai/guardrails-safety/sandboxing)
-
----
-
-## Module 9 — Evaluation & Metrics
-How to measure agent performance and reliability.
-
-- [Why Agent Evaluation Is Hard](/agentic-ai/evaluation-metrics/why-evaluation-is-hard)
-- [LLM-as-a-Judge](/agentic-ai/evaluation-metrics/llm-judge)
-- [Trajectory Evaluation](/agentic-ai/evaluation-metrics/trajectory-eval)
-- [Building Evaluation Pipelines](/agentic-ai/evaluation-metrics/building-eval-pipelines)
-
----
-
-## Module 10 — High-Performance Engineering
-Engineering techniques for scalable, high-performance agent systems.
-
-- [The Small Model Strategy](/agentic-ai/high-perf-engineering/small-model)
-- [Observability for Agents](/agentic-ai/high-perf-engineering/observability)
-
----
-
-## Module 11 — Agent Internals
-Understanding how agents actually work by building a minimal runtime from scratch.
-
-- [Why Build Your Own Agent Runtime](/agentic-ai/agent-internals/why-build-agent-runtime)
-- [Designing a Simple Agent State Machine](/agentic-ai/agent-internals/state-machine)
-- [Implementing Tool Calling & MCP Integration](/agentic-ai/agent-internals/tool-calling)
-- [Adding Time-Travel Debugging](/agentic-ai/agent-internals/time-travel)
-- [A Production-Ready 300-Line Agent Runtime](/agentic-ai/agent-internals/minimal-runtime)
-
----
-
-## Module 12 — Capstone Projects
-Real-world applications built using agentic architectures.
-
-- [The Computer-Use Researcher](/agentic-ai/capstone-projects/computer-use-researcher)
-- [The Multi-Agent Coding Pipeline](/agentic-ai/capstone-projects/multi-agent-coding)
-- [The Privacy-First Local Butler](/agentic-ai/capstone-projects/privacy-first-butler)
-
----
-
-## What You Will Learn
-
-By the end of this guide you will understand how to build:
-
-- Autonomous AI agents
-- Tool-using reasoning systems
-- Multi-agent collaboration architectures
-- Production-grade agent infrastructure
-- Privacy-first local AI assistants
-
-This series provides a **complete technical foundation for modern agentic AI systems**.
+Continue into [Engineering Agent Systems](/agentic-ai/engineering-agent-systems) when you want the production worldview: how those components behave together under uncertainty, time, state, failure, and control.

@@ -1,0 +1,225 @@
+---
+pubDatetime: 2026-04-26T00:00:00Z
+modDatetime: 2026-04-26T00:00:00Z
+title: Kavriq Recommendations for Building Reliable Agentic Systems
+description: A practical checklist for building reliable agentic systems around uncertainty, state, execution, tools, control, and observability.
+layout: ../../../layouts/TutorialPage.astro
+---
+
+The previous articles in this series defined the systems view of agent engineering. Agent systems are closed-loop systems operating under uncertainty over time. They fail when execution is not engineered, when state is not managed, when chains cannot represent recovery, and when action is not controlled.
+
+This final piece turns that worldview into recommendations.
+
+If you are building agentic systems for production, start with a modest assumption: the model will sometimes be wrong, the tools will sometimes fail, and the environment will sometimes change. Reliability comes from designing around those facts rather than hoping they disappear.
+
+At Kavriq, we recommend treating every production agent as a controlled execution system.
+
+---
+
+## 1. Design the Action Surface First
+
+Before optimizing prompts, models, or orchestration frameworks, decide what the agent is allowed to do.
+
+The action surface defines the real boundary of the system. It includes the tools the agent can call, the data it can access, the files it can modify, the APIs it can trigger, and the external side effects it can create.
+
+If the action surface is too broad, every reasoning mistake becomes more dangerous. If it is too vague, the system becomes hard to secure, debug, and govern.
+
+Start by asking:
+
+- What actions are read-only?
+- What actions change external state?
+- What actions are irreversible?
+- What actions require approval?
+- What actions should never be available to this agent?
+
+The safest agent is not the one that promises to behave. It is the one whose capabilities are shaped by design.
+
+---
+
+## 2. Expose Tools Through Contracts
+
+Tools are not just functions. They are contracts between the agent and the external world.
+
+Every production tool should have:
+
+- a clear name
+- a precise purpose
+- an input schema
+- a structured output format
+- explicit error types
+- known side effects
+- permission requirements
+- retry behavior
+- validation rules
+
+This is where JSON Schema, typed inputs, structured outputs, and consistent error envelopes matter. They turn model intent into controlled execution.
+
+If a tool can change the world, the system should know exactly what the tool accepts, what it returns, what it can break, and whether it is safe to retry.
+
+---
+
+## 3. Separate Read From Write
+
+Reading information, drafting recommendations, and changing the world should not share the same permission level.
+
+Read actions are usually lower risk. Write actions create consequences. External actions create even more risk because they may affect users, customers, systems, money, or production data.
+
+A useful pattern is to separate actions into tiers:
+
+- **Read**: inspect data, search, retrieve, summarize.
+- **Draft**: prepare an email, plan, patch, query, or recommendation.
+- **Propose**: request permission to take an action.
+- **Execute**: change external state.
+
+Many agents should spend most of their time in read, draft, and propose modes. Execution should be explicit, scoped, logged, and gated.
+
+---
+
+## 4. Make Autonomy Scoped and Revocable
+
+Autonomy should not be global. It should be scoped to the current task, current user, current environment, and current risk level.
+
+A coding agent may be allowed to edit files in a workspace, but not push to production. A support agent may be allowed to draft refund recommendations, but not approve refunds above a threshold. A research agent may be allowed to browse public sources, but not access private customer data.
+
+Capabilities should also be revocable. If the task changes, the user withdraws permission, the agent behaves suspiciously, or the system detects repeated failure, the runtime should be able to narrow or remove access.
+
+Bounded autonomy is not a limitation. It is what makes autonomy deployable.
+
+---
+
+## 5. Gate High-Risk Actions
+
+High-risk actions should pass through gates.
+
+Destructive, irreversible, external, financial, user-visible, privileged, or compliance-sensitive actions should not execute only because the model proposed them. They should pass through schema validation, permission checks, risk assessment, and, when necessary, human approval.
+
+Action gating gives the system a chance to ask:
+
+- Is this action valid?
+- Is this action allowed?
+- Is this action necessary?
+- Is this action reversible?
+- Does this action require human approval?
+- Has this action already been attempted?
+
+The model can propose. The system should decide whether execution is allowed.
+
+---
+
+## 6. Persist Execution State
+
+Agent state should outlive a single model call.
+
+The system should know what the goal is, what steps were attempted, which tools were called, what succeeded, what failed, what changed externally, what assumptions were made, and what remains unresolved.
+
+Without persisted state, partial execution becomes dangerous. The system cannot reliably resume, retry, roll back, escalate, or explain what happened.
+
+State is not just context. Context is what the model sees right now. State is what the system preserves and uses to control execution over time.
+
+---
+
+## 7. Validate at Every Boundary
+
+Validation should happen wherever uncertainty crosses a boundary.
+
+Validate model outputs before treating them as structured data. Validate tool inputs before execution. Validate tool outputs before feeding them back into the agent. Validate state transitions before moving the runtime forward. Validate final results before presenting them as complete.
+
+A useful production posture is simple:
+
+> Never trust raw output just because it is fluent.
+
+Fluent text can hide invalid assumptions, malformed data, unsafe actions, and incomplete reasoning. Validation is how the system turns uncertain output into usable state.
+
+---
+
+## 8. Bound Retries and Loops
+
+Retries are necessary, but unbounded retries are not reliability. They are drift.
+
+A retry should be informed by state. The system should know what failed, why it failed, whether the failure is transient or permanent, how many attempts remain, and what will be different on the next attempt.
+
+Loops should have:
+
+- maximum attempts
+- timeout limits
+- progress checks
+- escalation rules
+- stop conditions
+- failure states
+
+The goal is not to make agents loop forever. The goal is to make agents loop with purpose, and stop when continuing is no longer useful.
+
+---
+
+## 9. Trace the Full Trajectory
+
+Production agents need full execution traces, not just final answers.
+
+Logs should show:
+
+- user goals
+- model decisions
+- state transitions
+- tool calls
+- tool inputs and outputs
+- validation results
+- retries
+- permission checks
+- approvals
+- terminal outcomes
+
+This is how teams debug failures, tune policies, measure reliability, and understand where agents drift. Without observability, a failed agent run becomes a story reconstructed after the fact. With observability, it becomes an inspectable trajectory.
+
+---
+
+## 10. Treat Prompts as Guidance, Not Enforcement
+
+Prompts matter, but prompts are not a security boundary.
+
+A prompt can tell an agent not to delete files. A permission system can make deletion impossible. A prompt can ask the agent to validate outputs. A runtime can require validation before state moves forward.
+
+Anthropic makes this risk concrete in the [Claude Mythos Preview System Card](https://www-cdn.anthropic.com/08ab9158070959f88f296514c21b7facce6f52bc.pdf). On page 15 of the PDF viewer, they describe rare cases of models taking "clearly disallowed actions" and, in rarer cases, appearing to hide them. The engineering lesson is not that prompts are useless. It is that instructions can reduce risk, but they cannot guarantee behavior.
+
+An agent may still attempt something it was explicitly told not to do if the surrounding system gives it the ability to do so.
+
+Production safety should live in the runtime, permission layer, tool layer, state model, validation system, and observability stack. The prompt can guide behavior, but the system must enforce boundaries.
+
+---
+
+## 11. Enforce Security Outside the Model
+
+Security should also exist outside the agent's instructions.
+
+Do not rely only on system prompts, policies, or agent instructions to prevent dangerous behavior. Those controls matter, but they sit inside the reasoning layer. A reliable system also limits what the agent host can access in the first place.
+
+The agent machine should run with the minimum access required for the task. Its filesystem access should be scoped. Its network access should be limited. Its API tokens should be narrow, short-lived when possible, and separated by task or environment. Secrets that are not needed for the current workflow should not be available to the agent at all.
+
+Use external controls such as:
+
+- least-privilege service accounts
+- scoped API tokens
+- sandboxed file access
+- restricted network access
+- allowlisted tools and endpoints
+- separate credentials for read and write actions
+- permission checks outside the model runtime
+
+The practical rule is simple: what the agent cannot access, it cannot misuse.
+
+Prompts can say no. Permissions can make no real.
+
+---
+
+## The Kavriq Test
+
+The practical test is simple:
+
+> If the model ignores an instruction or proposes a bad next action, does the system still remain safe?
+
+If the answer is yes, you are engineering the agent.
+
+If the answer is no, you are only trusting it.
+
+Reliable agentic systems are not built by assuming the model will always reason correctly. They are built by surrounding probabilistic reasoning with state, validation, contracts, recovery, observability, external permissions, and control.
+
+That is the core idea behind this series: agent systems are closed-loop systems operating under uncertainty over time. The job of engineering is to make that loop reliable enough to act in the real world.
