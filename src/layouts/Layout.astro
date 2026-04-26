@@ -35,6 +35,7 @@ const {
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.url);
+const googleAnalyticsId = SITE.googleAnalyticsId;
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -131,6 +132,34 @@ const structuredData = {
           name="google-site-verification"
           content={PUBLIC_GOOGLE_SITE_VERIFICATION}
         />
+      )
+    }
+
+    {
+      googleAnalyticsId && (
+        <>
+          <script
+            async
+            is:inline
+            src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+          />
+          <script is:inline define:vars={{ googleAnalyticsId }}>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+              dataLayer.push(arguments);
+            }
+            window.gtag = gtag;
+            gtag("js", new Date());
+
+            document.addEventListener("astro:page-load", () => {
+              gtag("config", googleAnalyticsId, {
+                page_title: document.title,
+                page_location: window.location.href,
+                page_path: window.location.pathname + window.location.search,
+              });
+            });
+          </script>
+        </>
       )
     }
 

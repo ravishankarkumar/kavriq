@@ -6,6 +6,7 @@ export const SITE = {
   title: "KAVRIQ",
   navTitle: "KAVRIQ",
   ogImage: "kavriq.jpg",
+  googleAnalyticsId: "G-V8BNZV4KJF",
   lightAndDarkMode: true,
   postPerIndex: 4,
   postPerPage: 4,
