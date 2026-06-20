@@ -11,9 +11,9 @@ As AI agents grow more capable, they require access to many external tools and d
 
 Historically, every agent framework handled these integrations differently, leading to fragmentation and duplicated work. The **Model Context Protocol (MCP)** solves this by providing an open, standardized protocol for connecting AI applications to tools and data.
 
-Originally introduced by Anthropic in late 2024, MCP is now governed by the Linux Foundation’s Agentic AI Foundation and has become the de-facto standard supported by Claude, Cursor, VS Code Copilot, Gemini, and many others.
+Originally introduced by Anthropic in late 2024, MCP is now governed through the Linux Foundation's agentic AI standardization work and has become the de-facto standard supported by Claude, Cursor, VS Code Copilot, Gemini, and many others.
 
-MCP enables **dynamic tool discovery**, standardized schemas, secure access, and true interoperability.
+MCP enables **dynamic tool discovery**, standardized schemas, shared resources, reusable prompts, and broader interoperability across agent hosts and tool servers.
 
 ---
 
@@ -68,9 +68,17 @@ MCP builds directly on reliable tool design principles:
 - Rich JSON Schema for inputs/outputs
 - Structured success/error responses
 - Support for idempotency and retries
-- Built-in security (OAuth-style permissions, sandboxing)
+- Clear separation between hosts, clients, servers, tools, resources, and prompts
 
 It turns custom tool integrations into a plug-and-play ecosystem.
+
+The important update for 2026 is that MCP is no longer only "tool calling with a standard wrapper." The current specification describes:
+
+- **Server features**: tools, resources, and prompts exposed by MCP servers.
+- **Client features**: roots, sampling, and elicitation offered by MCP clients.
+- **Operational utilities**: progress, cancellation, error reporting, logging, and capability negotiation.
+
+These features make MCP more powerful, but they also expand the trust boundary.
 
 ---
 
@@ -208,15 +216,34 @@ The MCP Client inside the host handles the protocol, feeding results back into t
 
 ---
 
+## MCP Threat Model
+
+MCP standardizes integration, but it does not make every integration safe by default. A production host must still decide which servers are trusted, which tools are allowed, what data can be exposed, and when the user must approve an action.
+
+Important risks include:
+
+- **Tool poisoning**: a malicious or compromised server can advertise misleading tool descriptions that influence the model.
+- **Resource poisoning**: retrieved documents or resources can contain prompt-injection instructions.
+- **Registry trust**: public MCP registries may contain abandoned, lookalike, or malicious servers.
+- **Filesystem exposure**: a server with broad file access can leak sensitive project or user data.
+- **Cross-server composition**: two individually safe tools can become unsafe when chained together.
+- **Sampling abuse**: server-initiated sampling requests need explicit user and host controls.
+
+Good hosts treat tool descriptions, resource contents, and server metadata as untrusted unless they come from a trusted source. The runtime should enforce the policy even when the model suggests a risky call.
+
+---
+
 ## Production Considerations
 
 Real-world MCP servers should include:
 - Full protocol compliance via official SDKs
-- Authentication (OAuth 2.0 style)
+- Authentication and explicit authorization flows
 - Rate limiting and observability
 - Sandboxing and permission scoping
 - Idempotency support for mutations
 - Caching for expensive operations
+- User consent for sensitive data access and tool invocation
+- Clear audit logs that connect model intent, tool arguments, approvals, and results
 
 Python with FastMCP is ideal for rapid development and data-centric tools.
 
@@ -230,6 +257,7 @@ In this article we covered:
 - MCP architecture (Host → Client → Server)
 - Why MCP is superior to plain REST for agents
 - Practical implementation of tools, SQLite, and filesystem access in Python
+- Why MCP servers need a real security model around trust, consent, permissions, and auditability
 
 By combining MCP with the reliable tool design principles from the previous article, you can build powerful, secure, and future-proof agent systems.
 

@@ -7,5 +7,6 @@ Agent safety is not only about model behavior; it is also runtime control over w
 
 - [Prompt Injection Attacks](/agentic-ai/foundations/guardrails-safety/prompt-injection)
 - [Tool Permission Systems](/agentic-ai/foundations/guardrails-safety/tool-permissions)
+- [Agent Identity, Delegation, and Provenance](/agentic-ai/foundations/guardrails-safety/agent-identity-delegation-provenance)
 - [Human-in-the-Loop (HITL)](/agentic-ai/foundations/guardrails-safety/human-in-the-loop)
 - [Sandboxing Agent Execution](/agentic-ai/foundations/guardrails-safety/sandboxing)

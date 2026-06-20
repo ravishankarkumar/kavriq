@@ -65,14 +65,24 @@ Visit the official download page → https://ollama.com/download
 
 ---
 
-## 3. Pull the Model We Will Use
+## 3. Pull the Tested Local Baseline
 
 ```bash
-# Pull Qwen 3.5 (9B) — excellent balance of speed and reasoning
+# Pull the tested local baseline used by this series
 ollama pull qwen3.5:9b
 ```
 
-This model runs well on most recent laptops (8GB+ RAM recommended).
+This series uses `qwen3.5:9b` as a **tested local baseline**: small enough for practical local experimentation, strong enough for agent and tool examples, and stable enough that the code remains reproducible across the curriculum.
+
+It is not meant to be a permanent claim about the single best local model. Local model rankings change quickly, so treat this as the model the examples are tested against.
+
+| Need | Suggested setup | Why |
+|------|-----------------|-----|
+| Reproduce the tutorials | `qwen3.5:9b` with Ollama | Tested baseline for the series |
+| Lower-memory machine | Smaller Qwen/Gemma-class local model | Useful when the 9B model is too slow |
+| Stronger reasoning or multimodal work | Hosted model or current multimodal local model | Better speed, vision, and long-context behavior |
+
+This model runs well on many recent laptops (8GB+ RAM recommended), but performance depends heavily on CPU/GPU, memory bandwidth, quantization, and background load.
 
 ---
 

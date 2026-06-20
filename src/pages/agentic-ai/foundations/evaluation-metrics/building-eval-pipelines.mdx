@@ -12,7 +12,7 @@ Agent systems evolve rapidly. New prompts, model versions, tool updates, memory 
 
 **Evaluation pipelines** solve this by automatically running agents against curated test suites and surfacing performance changes before they reach users.
 
-A mature evaluation pipeline acts as the **continuous integration system for agents**.
+A mature evaluation pipeline acts as the **continuous integration system for agents**: Agent CI.
 
 ---
 
@@ -25,6 +25,7 @@ A production-grade pipeline typically includes:
 3. **Multi-dimensional Evaluation** — Using LLM judges + rule-based metrics.
 4. **Regression Detection** — Comparing current results against historical baselines.
 5. **Visualization & Alerting** — Dashboards and notifications for the team.
+6. **Replay Harness** — Re-running saved trajectories against new prompts, models, tools, and policies.
 
 ---
 
@@ -79,8 +80,27 @@ Simple success-rate comparison is not enough. Good regression systems track mult
 - Did tool efficiency worsen?
 - Did safety violations increase?
 - Did average trajectory length grow?
+- Did tool arguments change in a risky way?
+- Did the agent ignore an approval gate or permission boundary?
 
 Even small regressions in reasoning quality or efficiency can indicate a meaningful degradation.
+
+---
+
+## Agent CI
+
+Agent CI treats every prompt, model, tool, memory, and policy change like a software change that can regress.
+
+A practical Agent CI suite includes:
+
+- **Golden trajectories**: known-good runs with expected tool calls, observations, and final outcomes.
+- **Trace diffing**: comparisons of plans, tool calls, retries, refusals, and final answers.
+- **Prompt-injection regression tests**: adversarial documents, tool outputs, and memory records that try to override instructions.
+- **Cost and latency budgets**: maximum token use, step count, tool calls, wall-clock time, and model spend.
+- **Safety gates**: automatic failures for unauthorized tools, missing approvals, unsafe filesystem access, or policy violations.
+- **Replay tests**: deterministic replays where tool outputs are fixed so behavior changes are easier to isolate.
+
+The goal is not to make agents perfectly deterministic. The goal is to notice when their behavior changes in ways that matter.
 
 ---
 
@@ -91,6 +111,8 @@ Even small regressions in reasoning quality or efficiency can indicate a meaning
 - Implement cost-aware evaluation (track tokens and dollars spent per task).
 - Version golden datasets alongside agent versions.
 - Set automatic gates in CI/CD: block deployment if key metrics drop below thresholds.
+- Keep adversarial and safety regression suites separate from ordinary quality tests so failures are easier to triage.
+- Store raw traces for failed runs so developers can replay the exact execution path.
 
 ---
 

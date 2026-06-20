@@ -11,7 +11,7 @@ As AI agents become more capable and widely deployed, they increasingly need to 
 
 A coding agent, a research agent, a financial analysis agent, and an enterprise workflow agent may all need to collaborate — even if they were built by different companies and run on different infrastructure.
 
-This requirement has driven the development of **Agent-to-Agent (A2A) communication protocols** — standardized ways for agents to discover each other, advertise capabilities, negotiate tasks, and exchange information securely.
+This requirement has driven the development of **Agent-to-Agent (A2A) communication protocols**: standardized ways for agents to discover each other, advertise capabilities, delegate tasks, stream progress, and exchange results securely.
 
 ---
 
@@ -46,24 +46,52 @@ These functions build directly on the coordination patterns we’ve already cove
 
 Agents first need to announce themselves and describe what they can do.
 
-Example discovery response:
+In the emerging A2A ecosystem, this is usually represented by an **Agent Card**: a metadata document that tells other agents how to reach the agent, what skills it offers, what authentication it requires, and which interaction modes it supports.
+
+Example Agent Card shape:
 
 ```json
 {
-  "agent_id": "finance_analyzer_v2",
+  "name": "finance_analyzer_v2",
   "provider": "acme_corp",
-  "capabilities": [
-    "market_trend_analysis",
-    "revenue_forecasting",
-    "risk_assessment"
+  "endpoint": "https://agents.example.com/finance",
+  "skills": [
+    {
+      "name": "revenue_forecasting",
+      "description": "Forecast revenue from structured financial inputs",
+      "input_modes": ["application/json"],
+      "output_modes": ["application/json", "text/markdown"]
+    }
   ],
-  "input_schema": { ... },
-  "output_schema": { ... },
-  "supported_protocols": ["a2a-v1", "mcp"]
+  "auth": {
+    "schemes": ["oauth2"]
+  }
 }
 ```
 
 Discovery can happen via registries, directories, or peer-to-peer announcements, much like service discovery in microservices.
+
+---
+
+## Task Lifecycle
+
+A2A systems are built around tasks, not just chat messages. A typical task lifecycle looks like this:
+
+```text
+Discover agent
+      ↓
+Inspect Agent Card
+      ↓
+Create task with context and constraints
+      ↓
+Stream progress or intermediate artifacts
+      ↓
+Receive final result
+      ↓
+Record provenance and audit trail
+```
+
+This matters because agent collaboration often takes time. A delegated task may require retrieval, tool calls, approvals, or long-running background work. Modern A2A implementations therefore need asynchronous operation, progress updates, cancellation, and structured final artifacts.
 
 ---
 
@@ -116,7 +144,9 @@ Trust models are still evolving — some systems use reputation scores, cryptogr
 
 ## Current State and Future Vision (2026)
 
-As of 2026, A2A is still an emerging space with multiple competing proposals and early implementations from major players and open-source communities. No single universal standard has achieved dominance yet, but the direction is clear: toward an **Internet of Agents** where specialized agents dynamically discover and collaborate across organizational boundaries.
+As of June/July 2026, A2A is still early, but it has moved from a loose idea into an emerging standard with Linux Foundation governance, public protocol documentation, SDKs, and a growing partner ecosystem.
+
+The direction is clear: toward an **Internet of Agents** where specialized agents dynamically discover and collaborate across organizational boundaries. The practical lesson is to design multi-agent systems around explicit contracts, identity, authorization, task state, and audit trails instead of assuming every agent shares the same memory or runtime.
 
 This vision combines the coordination patterns from this module with standardized discovery and communication — enabling far more powerful, scalable, and resilient AI systems.
 

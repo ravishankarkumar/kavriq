@@ -1,7 +1,7 @@
 {
   "name": "kavriq",
   "type": "module",
-  "version": "5.5.1",
+  "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/",
@@ -21,12 +21,13 @@
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^6.1.1",
-    "astro-embed": "^0.12.0",
+    "astro-embed": "^0.13.0",
     "dayjs": "^1.11.19",
     "katex": "^0.16.44",
     "lodash.kebabcase": "^4.1.1",
     "rehype-katex": "^7.0.1",
     "remark-collapse": "^0.1.2",
+    "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "remark-toc": "^9.0.0",
     "satori": "^0.18.3",
@@ -49,6 +50,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0"
+    "typescript-eslint": "^8.51.0",
+    "vite": "^7.3.5"
   }
 }

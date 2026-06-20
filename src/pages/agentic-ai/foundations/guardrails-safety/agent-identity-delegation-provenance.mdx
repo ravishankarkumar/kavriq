@@ -1,0 +1,179 @@
+---
+title: Agent Identity, Delegation, and Provenance
+description: How identity, scoped delegation, provenance, and audit trails make MCP and A2A agent systems safer to operate
+layout: ../../../../layouts/TutorialPage.astro
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+As agents move from single-user demos into tool-rich and multi-agent systems, a new question becomes unavoidable:
+
+> Who is acting, on whose behalf, with what authority, and how do we prove it later?
+
+Prompting alone cannot answer that. The runtime needs explicit identity, scoped delegation, provenance, and audit records.
+
+---
+
+## Why Identity Matters for Agents
+
+In simple tutorials, the agent is usually just "the assistant." In production systems, that is too vague.
+
+An agent may:
+
+- Call tools through MCP servers
+- Delegate work to another agent through A2A
+- Read user-scoped memory
+- Access private files or databases
+- Execute code in a sandbox
+- Ask a human for approval
+
+Each action needs an actor and an authority. The system must know whether the action is being performed by the user, by a specific agent, by a delegated sub-agent, or by a tool server acting on the agent's behalf.
+
+---
+
+## Identity vs Authorization
+
+Identity answers:
+
+```text
+Who is making this request?
+```
+
+Authorization answers:
+
+```text
+What is this requester allowed to do?
+```
+
+Agents need both. A named agent without permissions is only a label. A permission without identity is hard to audit and easy to misuse.
+
+---
+
+## Delegation
+
+Delegation happens when one actor allows another actor to perform a narrower task.
+
+Example:
+
+```text
+User
+  delegates "summarize this repository"
+      ↓
+Research agent
+  delegates "read these selected files"
+      ↓
+Filesystem MCP server
+```
+
+The delegated permission should be narrower than the original authority. If the user grants read access to one project folder, the research agent should not be able to delegate full home-directory access to another server.
+
+Good delegation is:
+
+- **Scoped**: limited to specific tools, resources, directories, accounts, or records
+- **Time-limited**: expires after the task or a short window
+- **Attenuated**: downstream agents receive less authority, not more
+- **Revocable**: the host can cancel access when risk changes
+- **Auditable**: each hop is recorded
+
+---
+
+## Provenance
+
+Provenance records where an action, claim, file, or result came from.
+
+For agent systems, useful provenance includes:
+
+- User request that started the task
+- Agent or sub-agent that made each decision
+- Tool or MCP server that produced each observation
+- Memory records or retrieved documents used as evidence
+- Human approvals or denials
+- Final output and the trace that led to it
+
+Without provenance, debugging becomes guesswork. With provenance, a team can inspect which actor introduced a bad fact, unsafe tool call, or wrong assumption.
+
+---
+
+## A Minimal Delegation Token
+
+Production systems may use OAuth, signed JWTs, Macaroons, Biscuit-style tokens, or internal capability tokens. The pattern is more important than the exact format:
+
+```json
+{
+  "subject": "agent:researcher",
+  "delegated_by": "user:ravi",
+  "task_id": "task_2026_07_12_001",
+  "capabilities": [
+    {
+      "tool": "filesystem.read",
+      "scope": "/workspace/kavriq",
+      "expires_at": "2026-07-12T10:30:00Z"
+    }
+  ],
+  "constraints": {
+    "may_delegate": false,
+    "network_access": false
+  }
+}
+```
+
+The execution layer checks this token before each tool call. The model can request an action, but the runtime decides whether the request is allowed.
+
+---
+
+## Where This Fits with MCP and A2A
+
+MCP and A2A solve different integration problems:
+
+| Layer | Main question |
+|-------|---------------|
+| MCP | How does an agent connect to tools, resources, and prompts? |
+| A2A | How does one agent communicate with another agent? |
+| Identity and delegation | Who is allowed to do what across those boundaries? |
+
+MCP and A2A make agent systems composable. Identity and delegation make that composition governable.
+
+---
+
+## Audit Trails
+
+Every privileged action should produce an audit event:
+
+```json
+{
+  "time": "2026-07-12T10:11:42Z",
+  "task_id": "task_2026_07_12_001",
+  "actor": "agent:researcher",
+  "delegated_by": "user:ravi",
+  "tool": "filesystem.read",
+  "arguments": {
+    "path": "/workspace/kavriq/src/pages/agentic-ai/index.mdx"
+  },
+  "decision": "allowed",
+  "policy": "project_read_only"
+}
+```
+
+Audit logs are not just for security incidents. They also support evaluation, debugging, compliance, and replay.
+
+---
+
+## Best Practices in 2026
+
+- Give every agent, tool server, and delegated sub-agent a stable identity.
+- Treat tool calls as privileged actions, not plain model output.
+- Use scoped, expiring capabilities for task-specific access.
+- Preserve delegation chains when one agent calls another.
+- Log denied actions, not only successful ones.
+- Attach provenance to final answers when the task is high-stakes.
+- Keep authorization enforcement outside the prompt.
+
+---
+
+## Looking Ahead
+
+In this article we explored **Agent Identity, Delegation, and Provenance**: the control layer that makes tool-rich and multi-agent systems accountable.
+
+In the next article we will examine **Human-in-the-Loop (HITL)** systems, which add explicit human approval for high-risk decisions.
+
+→ Continue to **[8.4 — Human-in-the-Loop (HITL)](/agentic-ai/foundations/guardrails-safety/human-in-the-loop)**

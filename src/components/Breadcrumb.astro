@@ -10,8 +10,10 @@ const breadcrumbList = currentUrlPath.split("/").slice(1);
 const labelMapping: Record<string, string> = {
   blogs: "Blogs",
   "agentic-ai": "Agentic AI",
+  "engineering-agent-systems": "Engineering Agent Systems",
   "prerequisite": "Prerequisites",
   "foundations": "Foundations",
+  "core-concepts": "Core Concepts",
   "agent-architecture": "Agent Architecture",
   "planning-systems": "Planning Systems",
   "tool-use-protocols": "Tool Use Protocols",
@@ -26,14 +28,19 @@ const labelMapping: Record<string, string> = {
 
   //
   "ml-essentials": "ML Essentials",
+  "ai-engineering": "AI Engineering",
+  "vector-databases": "Vector Databases",
+  "interview-prep": "Interview Prep",
+  db: "Databases",
+  about: "About",
+  archives: "Archives",
+  disclaimer: "Disclaimer",
+  privacy: "Privacy",
+  search: "Search",
+  tags: "Tags",
 
   // Module 0
   "setting-up": "Setting Up Your Environment",
-
-  // Module 1 — Agentic AI Overview
-  "introduction-to-agents": "Introduction to Agents",
-  "llm-basics-for-agents": "LLM Basics for Agents",
-  "core-agentic-principles": "Core Agentic Principles",
 
   // Module 2 — Foundations
   "what-is-an-agent": "What is an Agent?",
@@ -63,7 +70,6 @@ const labelMapping: Record<string, string> = {
   "why-tools": "Why Tools Make Agents Powerful",
   "designing-reliable-tools": "Designing Reliable Tools",
   "mcp": "Model Context Protocol (MCP)",
-  "mcp-rust": "Building an MCP Server in Rust",
 
   // Module 6 — Memory Systems
   "memory-hierarchy": "Memory Hierarchy of Agents",
@@ -75,7 +81,7 @@ const labelMapping: Record<string, string> = {
 
   // Module 7 — Multi-Agent
   "why-multi-agent": "Why Multi-Agent Systems Exist",
-  "centralised-coordination": "Manager–Worker Coordination",
+  "manager-worker-pattern": "Manager-Worker Coordination",
   "handoff-swarm": "Handoff Pattern (Swarm)",
   "debate-pattern": "Debate Pattern",
   "a2a-agent-to-agent": "Agent-to-Agent Communication (A2A)",
@@ -90,6 +96,7 @@ const labelMapping: Record<string, string> = {
   "tool-permissions": "Tool Permission Systems",
   "human-in-the-loop": "Human-in-the-Loop",
   "sandboxing": "Sandboxing Agent Execution",
+  "agent-identity-delegation-provenance": "Agent Identity, Delegation & Provenance",
 
   // Module 10 — Evaluation Metrics
   "why-evaluation-is-hard": "Why Agent Evaluation Is Hard",
@@ -115,6 +122,23 @@ const labelMapping: Record<string, string> = {
 
   // Blog
   "04-26-open-weights-vs-open-source-ai": "Open Weights vs Open Source AI",
+  "05-03-hidden-data-problem-agentic-ai": "The Hidden Data Problem in Agentic AI",
+
+  // AI Engineering
+  "how-vector-search-works": "How Vector Search Works",
+  "hnsw-and-ivf-pq": "HNSW and IVF-PQ",
+  "scaling-vector-search": "Scaling Vector Search",
+  "vector-db-storage-and-ingestion": "Vector DB Storage and Ingestion",
+
+  // Interview Prep
+  "vector-database": "Vector Database",
+
+  // Engineering Agent Systems
+  "why-agents-fail-execution-gap": "Why Agents Fail: The Execution Gap",
+  "the-engineering-of-uncertainty": "The Engineering of Uncertainty",
+  "from-dags-to-state-machines": "From DAGs to State Machines",
+  "controlled-agency-tools-safety": "Controlled Agency: Tools & Safety",
+  "kavriq-recommendations-reliable-agentic-systems": "Kavriq Recommendations for Reliable Agentic Systems",
 };
 
 // if breadcrumb is Home > Posts > 1 <etc>

@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
 import remarkToc from "remark-toc";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import remarkCollapse from "remark-collapse";
 import mdx from "@astrojs/mdx";
@@ -29,6 +30,7 @@ export default defineConfig({
     }),
     mdx({
       remarkPlugins: [
+        remarkGfm,
         remarkMath,
         remarkToc,
         [remarkCollapse, { test: "Table of contents" }],
@@ -47,6 +49,7 @@ export default defineConfig({
   ],
   markdown: {
     remarkPlugins: [
+      remarkGfm,
       remarkMath,
       remarkToc,
       [remarkCollapse, { test: "Table of contents" }],

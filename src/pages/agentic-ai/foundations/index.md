@@ -110,6 +110,7 @@ Designing safe and reliable agent systems.
 
 - [Prompt Injection Attacks](/agentic-ai/foundations/guardrails-safety/prompt-injection)
 - [Tool Permission Systems](/agentic-ai/foundations/guardrails-safety/tool-permissions)
+- [Agent Identity, Delegation, and Provenance](/agentic-ai/foundations/guardrails-safety/agent-identity-delegation-provenance)
 - [Human-in-the-Loop](/agentic-ai/foundations/guardrails-safety/human-in-the-loop)
 - [Sandboxing Agent Execution](/agentic-ai/foundations/guardrails-safety/sandboxing)
 
@@ -143,7 +144,7 @@ Understanding how agents actually work by building a minimal runtime from scratc
 - [Designing a Simple Agent State Machine](/agentic-ai/foundations/agent-internals/state-machine)
 - [Implementing Tool Calling & MCP Integration](/agentic-ai/foundations/agent-internals/tool-calling)
 - [Adding Time-Travel Debugging](/agentic-ai/foundations/agent-internals/time-travel)
-- [A Production-Ready 300-Line Agent Runtime](/agentic-ai/foundations/agent-internals/minimal-runtime)
+- [A 300-Line LangGraph Alternative](/agentic-ai/foundations/agent-internals/langgraph-alternative)
 
 ---
 
@@ -168,4 +169,3 @@ By the end of this guide you will understand how to build:
 - Privacy-first local AI assistants
 
 This series provides a complete technical foundation for modern agentic AI systems.
-
