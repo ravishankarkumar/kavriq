@@ -20,6 +20,7 @@ type Props = {
   pubDatetime?: Date;
   modDatetime?: Date | null;
   scrollSmooth?: boolean;
+  schemaType?: "BlogPosting" | "WebPage" | "CollectionPage";
 };
 
 const {
@@ -32,17 +33,24 @@ const {
   pubDatetime,
   modDatetime,
   scrollSmooth = false,
+  schemaType,
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.url);
 const googleAnalyticsId = SITE.googleAnalyticsId;
+const structuredDataType =
+  schemaType ?? (pubDatetime ? "BlogPosting" : "WebPage");
 
 const structuredData = {
   "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: `${title}`,
+  "@type": structuredDataType,
+  ...(structuredDataType === "BlogPosting"
+    ? { headline: title }
+    : { name: title }),
+  description,
+  url: `${canonicalURL}`,
   image: `${socialImageURL}`,
-  datePublished: `${pubDatetime?.toISOString()}`,
+  ...(pubDatetime && { datePublished: pubDatetime.toISOString() }),
   ...(modDatetime && { dateModified: modDatetime.toISOString() }),
   author: [
     {
@@ -51,6 +59,11 @@ const structuredData = {
       ...(profile && { url: profile }),
     },
   ],
+  publisher: {
+    "@type": "Organization",
+    name: SITE.title,
+    logo: `${socialImageURL}`,
+  },
 };
 ---
 

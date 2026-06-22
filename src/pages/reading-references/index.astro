@@ -1,0 +1,280 @@
+---
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Layout from "@/layouts/Layout.astro";
+import { SITE } from "@/config";
+
+const currentlyReading = [
+  {
+    title: "Kubernetes in Action, Second Edition",
+    type: "Book",
+    author: "Marko Luksa",
+  },
+  {
+    title: "IIT Bombay Certificate in Agentic AI for Working Professionals",
+    type: "Certification",
+    author: "IIT Bombay / Great Learning",
+    href: "https://www.mygreatlearning.com/iit-bombay-agentic-ai",
+  },
+];
+
+const finishedReading = [
+  {
+    title: "Head First Design Patterns",
+    type: "Book",
+    author: "Eric Freeman, Elisabeth Robson, Bert Bates, and Kathy Sierra",
+  },
+  {
+    title: "Design Patterns: Elements of Reusable Object-Oriented Software",
+    type: "Book",
+    author: "Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides",
+  },
+  {
+    title: "System Design Interview: An Insider's Guide",
+    type: "Book",
+    author: "Alex Xu / ByteByteGo",
+  },
+  {
+    title: "System Design Interview: An Insider's Guide, Volume 2",
+    type: "Book",
+    author: "Alex Xu / ByteByteGo",
+  },
+  {
+    title: "The Hundred-Page Machine Learning Book",
+    type: "Book",
+    author: "Andriy Burkov",
+  },
+  {
+    title: "An Intuitive Introduction to Probability",
+    type: "Course",
+    author: "University of Zurich",
+    href: "https://www.coursera.org/account/accomplishments/verify/Z9B06UTIC0QB",
+  },
+  {
+    title: "Mathematics for Machine Learning",
+    type: "Specialization",
+    author: "Imperial College London",
+    href: "https://www.coursera.org/account/accomplishments/specialization/NPL2JFFPCHVS",
+  },
+  {
+    title: "Mathematics for Machine Learning and Data Science",
+    type: "Specialization",
+    author: "DeepLearning.AI",
+    href: "https://www.coursera.org/account/accomplishments/specialization/Z86ELYTGH8FU",
+  },
+  {
+    title: "Architecting with Google Compute Engine",
+    type: "Specialization",
+    author: "Google Cloud Training on Coursera",
+    href: "https://www.coursera.org/account/accomplishments/specialization/certificate/TURAT6YCLTUY",
+  },
+  {
+    title: "Architecting with Google Kubernetes Engine",
+    type: "Specialization",
+    author: "Google Cloud Training on Coursera",
+    href: "https://www.coursera.org/account/accomplishments/specialization/certificate/C62WUTMSHGDS",
+  },
+];
+
+const recommendedReading = [
+  {
+    title: "The Hundred-Page Machine Learning Book",
+    type: "Book",
+    author: "Andriy Burkov",
+    note: "Best used as a concise revision guide after developing foundational ML knowledge. I would not recommend it as a first introduction to machine learning.",
+  },
+];
+
+const notesAndMargins = [
+  {
+    title: "Open Weights vs Open Source AI",
+    type: "Note",
+    author: "KAVRIQ",
+    href: "/blogs/2026/04-26-open-weights-vs-open-source-ai",
+  },
+];
+---
+
+<Layout
+  title={`Reading & References | ${SITE.title}`}
+  description="Books, courses, certifications, and notes that shape KAVRIQ's thinking on AI, machine learning, Kubernetes, infrastructure, and system design."
+  schemaType="CollectionPage"
+>
+  <Header />
+  <Breadcrumb />
+  <main id="main-content" class="app-layout pt-6 pb-16" data-pagefind-body>
+    <section class="pb-8">
+      <p
+        class="tech-label text-xs font-semibold tracking-[0.18em] text-accent uppercase"
+      >
+        Library
+      </p>
+      <h1
+        class="mt-3 max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl"
+      >
+        Reading & References
+      </h1>
+      <p class="mt-4 max-w-3xl text-lg leading-8 text-foreground/70">
+        Materials from my desk that shape how I think about AI, machine
+        learning, infrastructure, and system design.
+      </p>
+    </section>
+
+    <aside aria-label="Reading principle" class="pb-9">
+      <p class="max-w-3xl text-sm leading-7 text-foreground/56 italic">
+        The purpose of computing is insight, not numbers.
+      </p>
+      <p
+        class="mt-2 text-xs font-medium tracking-[0.12em] text-foreground/36 uppercase"
+      >
+        Richard Hamming
+      </p>
+    </aside>
+
+    <section class="min-w-0 space-y-20 pt-12" aria-label="Reading entries">
+      <div id="currently-reading" class="scroll-mt-28">
+        <div>
+          <p
+            class="tech-label text-xs font-semibold tracking-[0.16em] text-accent uppercase"
+          >
+            Active stack
+          </p>
+          <h2
+            class="mt-2 text-2xl font-semibold tracking-tight text-foreground/92"
+          >
+            In Progress
+          </h2>
+        </div>
+
+        <ul class="space-y-6 pt-6">
+          {
+            currentlyReading.map(item => (
+              <li>
+                <div class="min-w-0">
+                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
+                    {item.type}
+                  </p>
+                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        class="transition-colors hover:text-accent"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      item.title
+                    )}
+                  </h3>
+                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div id="finished-reading" class="scroll-mt-28">
+        <div>
+          <p
+            class="tech-label text-xs font-semibold tracking-[0.16em] text-accent uppercase"
+          >
+            Completed shelf
+          </p>
+          <h2
+            class="mt-2 text-2xl font-semibold tracking-tight text-foreground/92"
+          >
+            Studied & Finished
+          </h2>
+        </div>
+
+        <ul class="space-y-6 pt-6">
+          {
+            finishedReading.map(item => (
+              <li>
+                <div class="min-w-0">
+                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
+                    {item.type}
+                  </p>
+                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        class="transition-colors hover:text-accent"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      item.title
+                    )}
+                  </h3>
+                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <section id="notes-margins" class="scroll-mt-28">
+        <h2 class="text-2xl font-semibold tracking-tight text-foreground/92">
+          Notes & Margins
+        </h2>
+        <ul class="space-y-6 pt-6">
+          {
+            notesAndMargins.map(item => (
+              <li>
+                <div class="min-w-0">
+                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
+                    {item.type}
+                  </p>
+                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
+                    <a
+                      href={item.href}
+                      class="transition-colors hover:text-accent"
+                    >
+                      {item.title}
+                    </a>
+                  </h3>
+                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section id="recommended-reading" class="scroll-mt-28">
+        <h2 class="text-2xl font-semibold tracking-tight text-foreground/92">
+          Recommended Reading
+        </h2>
+        <ul class="space-y-6 pt-6">
+          {
+            recommendedReading.map(item => (
+              <li>
+                <div class="min-w-0">
+                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
+                    {item.type}
+                  </p>
+                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
+                    {item.title}
+                  </h3>
+                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
+                  <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/48">
+                    {item.note}
+                  </p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </section>
+  </main>
+  <Footer />
+</Layout>

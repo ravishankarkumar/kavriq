@@ -29,9 +29,7 @@ const isActive = (path: string) => {
   Skip to content
 </a>
 
-<header
-  class="app-layout pt-4"
->
+<header class="app-layout pt-4">
   <div
     id="top-nav-wrap"
     class:list={[
@@ -89,7 +87,10 @@ const isActive = (path: string) => {
             href="/search"
             class:list={[
               "focus-outline flex rounded-lg p-3 text-foreground/70 hover:bg-muted/60 hover:text-foreground sm:p-2",
-              { "bg-muted/60 [&>svg]:stroke-accent text-foreground": isActive("/search") },
+              {
+                "bg-muted/60 text-foreground [&>svg]:stroke-accent":
+                  isActive("/search"),
+              },
             ]}
             title="Search"
             aria-label="search"
