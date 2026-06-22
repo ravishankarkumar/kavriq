@@ -46,6 +46,12 @@ const finishedReading = [
     author: "Andriy Burkov",
   },
   {
+    title: "Principles of Building AI Agents",
+    type: "Book",
+    author: "Sam Bhagwat / Mastra",
+    href: "https://mastra.ai/books/principles-of-building-ai-agents",
+  },
+  {
     title: "An Intuitive Introduction to Probability",
     type: "Course",
     author: "University of Zurich",
@@ -78,6 +84,13 @@ const finishedReading = [
 ];
 
 const recommendedReading = [
+  {
+    title: "Principles of Building AI Agents",
+    type: "Book",
+    author: "Sam Bhagwat / Mastra",
+    href: "https://mastra.ai/books/principles-of-building-ai-agents",
+    note: "A useful overview of how to build agentic AI applications. The ideas are not limited to Mastra; the core concepts transfer well to other languages, runtimes, and frameworks.",
+  },
   {
     title: "The Hundred-Page Machine Learning Book",
     type: "Book",
@@ -262,7 +275,18 @@ const notesAndMargins = [
                     {item.type}
                   </p>
                   <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
-                    {item.title}
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        class="transition-colors hover:text-accent"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      item.title
+                    )}
                   </h3>
                   <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
                   <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/48">
