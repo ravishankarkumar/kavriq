@@ -13,23 +13,27 @@
 
 :root,
 html[data-theme="light"] {
-  --background: #f5f2eb;
+  --background: #f8f7f3;
   --foreground: #18212b;
-  --accent: #1f4b6e;
-  --muted: #ebe6dc;
-  --border: #d7d0c4;
-  --surface: rgba(252, 250, 246, 0.88);
-  --surface-strong: rgba(255, 253, 249, 0.96);
+  --accent: #c75a16;
+  --structure: #27638a;
+  --ambient: rgba(39, 99, 138, 0.07);
+  --muted: #ece9e2;
+  --border: #d9d5cb;
+  --surface: rgba(255, 255, 255, 0.8);
+  --surface-strong: rgba(255, 255, 255, 0.94);
 }
 
 html[data-theme="dark"] {
-  --background: #0f172a;
-  --foreground: #e5e7eb;
-  --accent: #f97316;
-  --muted: #182235;
+  --background: #0e1524;
+  --foreground: #e8eaf0;
+  --accent: #e87326;
+  --structure: #8bb9d6;
+  --ambient: rgba(232, 115, 38, 0.07);
+  --muted: #192438;
   --border: rgba(148, 163, 184, 0.18);
-  --surface: rgba(15, 23, 42, 0.72);
-  --surface-strong: rgba(15, 23, 42, 0.9);
+  --surface: rgba(14, 21, 36, 0.72);
+  --surface-strong: rgba(14, 21, 36, 0.9);
 }
 
 @theme inline {
@@ -41,6 +45,7 @@ html[data-theme="dark"] {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-structure: var(--structure);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-surface: var(--surface);
@@ -62,7 +67,7 @@ html[data-theme="dark"] {
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
     background-image:
-      radial-gradient(circle at top, rgba(249, 115, 22, 0.08), transparent 28rem),
+      radial-gradient(circle at top, var(--ambient), transparent 28rem),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent 20rem);
   }
   a,

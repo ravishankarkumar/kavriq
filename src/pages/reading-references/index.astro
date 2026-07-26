@@ -7,106 +7,123 @@ import { SITE } from "@/config";
 
 const currentlyReading = [
   {
-    title: "Kubernetes in Action, Second Edition",
+    title: "An Introduction to Statistical Learning: with Applications in Python",
     type: "Book",
-    author: "Marko Luksa",
+    author:
+      "Gareth James, Daniela Witten, Trevor Hastie, Robert Tibshirani, and Jonathan Taylor",
+    focus: "Building a more rigorous statistical foundation for machine learning work.",
   },
   {
     title: "IIT Bombay Certificate in Agentic AI for Working Professionals",
     type: "Certification",
     author: "IIT Bombay / Great Learning",
     href: "https://www.mygreatlearning.com/iit-bombay-agentic-ai",
+    focus: "A structured way to test and strengthen my understanding of agentic systems.",
   },
 ];
 
 const finishedReading = [
   {
+    title: "Kubernetes in Action, Second Edition",
+    type: "Book",
+    author: "Marko Luksa",
+    status: "Selective Study",
+    subject: "Systems & Infrastructure",
+  },
+  {
     title: "Head First Design Patterns",
     type: "Book",
     author: "Eric Freeman, Elisabeth Robson, Bert Bates, and Kathy Sierra",
+    status: "Studied",
+    subject: "Software Engineering",
   },
   {
     title: "Design Patterns: Elements of Reusable Object-Oriented Software",
     type: "Book",
     author: "Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides",
+    status: "Reference",
+    subject: "Software Engineering",
   },
   {
     title: "System Design Interview: An Insider's Guide",
     type: "Book",
     author: "Alex Xu / ByteByteGo",
+    status: "Studied",
+    subject: "Software Engineering",
   },
   {
     title: "System Design Interview: An Insider's Guide, Volume 2",
     type: "Book",
     author: "Alex Xu / ByteByteGo",
+    status: "Studied",
+    subject: "Software Engineering",
   },
   {
     title: "The Hundred-Page Machine Learning Book",
     type: "Book",
     author: "Andriy Burkov",
+    status: "Studied",
+    subject: "AI & Machine Learning",
   },
   {
     title: "Principles of Building AI Agents",
     type: "Book",
     author: "Sam Bhagwat / Mastra",
     href: "https://mastra.ai/books/principles-of-building-ai-agents",
+    status: "Studied",
+    subject: "AI & Machine Learning",
   },
   {
     title: "An Intuitive Introduction to Probability",
     type: "Course",
     author: "University of Zurich",
     href: "https://www.coursera.org/account/accomplishments/verify/Z9B06UTIC0QB",
+    status: "Studied",
+    subject: "Mathematics",
   },
   {
     title: "Mathematics for Machine Learning",
     type: "Specialization",
     author: "Imperial College London",
     href: "https://www.coursera.org/account/accomplishments/specialization/NPL2JFFPCHVS",
+    status: "Studied",
+    subject: "Mathematics",
   },
   {
     title: "Mathematics for Machine Learning and Data Science",
     type: "Specialization",
     author: "DeepLearning.AI",
     href: "https://www.coursera.org/account/accomplishments/specialization/Z86ELYTGH8FU",
+    status: "Studied",
+    subject: "Mathematics",
   },
   {
     title: "Architecting with Google Compute Engine",
     type: "Specialization",
     author: "Google Cloud Training on Coursera",
     href: "https://www.coursera.org/account/accomplishments/specialization/certificate/TURAT6YCLTUY",
+    status: "Studied",
+    subject: "Systems & Infrastructure",
   },
   {
     title: "Architecting with Google Kubernetes Engine",
     type: "Specialization",
     author: "Google Cloud Training on Coursera",
     href: "https://www.coursera.org/account/accomplishments/specialization/certificate/C62WUTMSHGDS",
+    status: "Studied",
+    subject: "Systems & Infrastructure",
   },
 ];
 
-const recommendedReading = [
-  {
-    title: "Principles of Building AI Agents",
-    type: "Book",
-    author: "Sam Bhagwat / Mastra",
-    href: "https://mastra.ai/books/principles-of-building-ai-agents",
-    note: "A useful overview of how to build agentic AI applications. The ideas are not limited to Mastra; the core concepts transfer well to other languages, runtimes, and frameworks.",
-  },
-  {
-    title: "The Hundred-Page Machine Learning Book",
-    type: "Book",
-    author: "Andriy Burkov",
-    note: "Best used as a concise revision guide after developing foundational ML knowledge. I would not recommend it as a first introduction to machine learning.",
-  },
-];
-
-const notesAndMargins = [
-  {
-    title: "Open Weights vs Open Source AI",
-    type: "Note",
-    author: "KAVRIQ",
-    href: "/blogs/2026/04-26-open-weights-vs-open-source-ai",
-  },
-];
+const librarySections = [
+  "Software Engineering",
+  "AI & Machine Learning",
+  "Mathematics",
+  "Systems & Infrastructure",
+].map(subject => ({
+  subject,
+  items: finishedReading.filter(item => item.subject === subject),
+}));
 ---
 
 <Layout
@@ -145,30 +162,27 @@ const notesAndMargins = [
       </p>
     </aside>
 
-    <section class="min-w-0 space-y-20 pt-12" aria-label="Reading entries">
-      <div id="currently-reading" class="scroll-mt-28">
-        <div>
-          <p
-            class="tech-label text-xs font-semibold tracking-[0.16em] text-accent uppercase"
-          >
-            Active stack
-          </p>
+    <section class="min-w-0 space-y-16 pt-3" aria-label="Reading entries">
+      <section id="currently-reading" class="scroll-mt-28">
+        <div class="mb-6">
           <h2
-            class="mt-2 text-2xl font-semibold tracking-tight text-foreground/92"
+            class="text-2xl font-semibold tracking-tight text-foreground/92"
           >
-            In Progress
+            Currently Exploring
           </h2>
         </div>
 
-        <ul class="space-y-6 pt-6">
+        <ul class="space-y-3">
           {
             currentlyReading.map(item => (
-              <li>
-                <div class="min-w-0">
-                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
-                    {item.type}
-                  </p>
-                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
+              <li class="surface-panel rounded-lg border border-border p-6 sm:p-7">
+                <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.65fr)] md:gap-8">
+                  <div class="min-w-0">
+                    <p class="mb-2 text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/52 uppercase">
+                      {item.type}
+                      {item.href && <span class="text-foreground/35"> / External</span>}
+                    </p>
+                    <h3 class="text-xl font-semibold tracking-tight text-foreground/88">
                     {item.href ? (
                       <a
                         href={item.href}
@@ -182,79 +196,11 @@ const notesAndMargins = [
                       item.title
                     )}
                   </h3>
-                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <div id="finished-reading" class="scroll-mt-28">
-        <div>
-          <p
-            class="tech-label text-xs font-semibold tracking-[0.16em] text-accent uppercase"
-          >
-            Completed shelf
-          </p>
-          <h2
-            class="mt-2 text-2xl font-semibold tracking-tight text-foreground/92"
-          >
-            Studied & Finished
-          </h2>
-        </div>
-
-        <ul class="space-y-6 pt-6">
-          {
-            finishedReading.map(item => (
-              <li>
-                <div class="min-w-0">
-                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
-                    {item.type}
+                    <p class="mt-2 text-sm text-foreground/52">{item.author}</p>
+                  </div>
+                  <p class="border-l-0 text-sm leading-6 text-foreground/58 md:border-l md:border-border md:pl-6">
+                    {item.focus}
                   </p>
-                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
-                    {item.href ? (
-                      <a
-                        href={item.href}
-                        class="transition-colors hover:text-accent"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {item.title}
-                      </a>
-                    ) : (
-                      item.title
-                    )}
-                  </h3>
-                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <section id="notes-margins" class="scroll-mt-28">
-        <h2 class="text-2xl font-semibold tracking-tight text-foreground/92">
-          Notes & Margins
-        </h2>
-        <ul class="space-y-6 pt-6">
-          {
-            notesAndMargins.map(item => (
-              <li>
-                <div class="min-w-0">
-                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
-                    {item.type}
-                  </p>
-                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
-                    <a
-                      href={item.href}
-                      class="transition-colors hover:text-accent"
-                    >
-                      {item.title}
-                    </a>
-                  </h3>
-                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
                 </div>
               </li>
             ))
@@ -262,41 +208,67 @@ const notesAndMargins = [
         </ul>
       </section>
 
-      <section id="recommended-reading" class="scroll-mt-28">
-        <h2 class="text-2xl font-semibold tracking-tight text-foreground/92">
-          Recommended Reading
-        </h2>
-        <ul class="space-y-6 pt-6">
+      <section id="finished-reading" class="scroll-mt-28">
+        <div class="mb-6">
+          <h2
+            class="text-2xl font-semibold tracking-tight text-foreground/92"
+          >
+            Reading Shelf
+          </h2>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/58">
+            Books, courses, and references I have studied, selectively studied,
+            or return to while working.
+          </p>
+        </div>
+
+        <div class="space-y-10">
           {
-            recommendedReading.map(item => (
-              <li>
-                <div class="min-w-0">
-                  <p class="mb-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-accent/70 uppercase">
-                    {item.type}
-                  </p>
-                  <h3 class="text-sm font-semibold tracking-tight text-foreground/74">
-                    {item.href ? (
-                      <a
-                        href={item.href}
-                        class="transition-colors hover:text-accent"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {item.title}
-                      </a>
-                    ) : (
-                      item.title
-                    )}
-                  </h3>
-                  <p class="mt-1 text-sm text-foreground/42">{item.author}</p>
-                  <p class="mt-2 max-w-2xl text-sm leading-6 text-foreground/48">
-                    {item.note}
-                  </p>
-                </div>
-              </li>
+            librarySections.map(section => (
+              <section aria-labelledby={`library-${section.subject.toLowerCase().replaceAll(" ", "-").replaceAll("&", "and")}`}>
+                <h3
+                  id={`library-${section.subject.toLowerCase().replaceAll(" ", "-").replaceAll("&", "and")}`}
+                  class="border-b border-border pb-3 text-sm font-semibold tracking-tight text-structure"
+                >
+                  {section.subject}
+                </h3>
+                <ul class="grid gap-x-10 md:grid-cols-2">
+                  {
+                    section.items.map(item => (
+                      <li class="border-b border-border/70 py-5">
+                        <div class="min-w-0">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <p class="text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/52 uppercase">
+                              {item.type}
+                              {item.href && <span class="text-foreground/35"> / External</span>}
+                            </p>
+                            <span class="rounded-full border border-border px-2 py-0.5 text-[0.65rem] font-medium text-foreground/52">
+                              {item.status}
+                            </span>
+                          </div>
+                          <h4 class="mt-2 text-sm font-semibold tracking-tight text-foreground/80">
+                            {item.href ? (
+                              <a
+                                href={item.href}
+                                class="transition-colors hover:text-accent"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {item.title}
+                              </a>
+                            ) : (
+                              item.title
+                            )}
+                          </h4>
+                          <p class="mt-1 text-sm text-foreground/46">{item.author}</p>
+                        </div>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </section>
             ))
           }
-        </ul>
+        </div>
       </section>
     </section>
   </main>

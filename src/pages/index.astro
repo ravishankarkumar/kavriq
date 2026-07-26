@@ -1,7 +1,6 @@
 ---
 import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
-type BlogData = { featured?: boolean };
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -12,7 +11,15 @@ import getSortedPosts from "@/utils/getSortedPosts";
 const posts: CollectionEntry<"blog">[] = await getCollection<"blog">("blog");
 
 const sortedPosts = getSortedPosts(posts);
-const featuredPosts = sortedPosts.filter(p => (p.data as unknown as BlogData).featured);
+const featuredPostSlugs = [
+  "07-26-introducing-the-word-ai-tadka",
+  "06-27-ai-hype-vs-reality-mid-2026-check-in",
+  "05-03-hidden-data-problem-agentic-ai",
+];
+
+const featuredPosts = featuredPostSlugs
+  .map(slug => sortedPosts.find(post => post.id.endsWith(slug)))
+  .filter((post): post is CollectionEntry<"blog"> => Boolean(post));
 ---
 
 <Layout>
@@ -27,8 +34,8 @@ const featuredPosts = sortedPosts.filter(p => (p.data as unknown as BlogData).fe
           Master AI Systems.
         </h1>
         <p class="mt-5 max-w-2xl text-lg text-foreground/72">
-          Led by curiosity. Built for engineers who want depth, precision, and
-          durable intuition across modern AI systems.
+          Kavriq helps engineers learn the foundations, build reliable systems,
+          and follow the ideas shaping modern AI work.
         </p>
       </div>
 
@@ -37,77 +44,94 @@ const featuredPosts = sortedPosts.filter(p => (p.data as unknown as BlogData).fe
           Focus
         </p>
         <ul class="mt-4 space-y-3 text-sm text-foreground/72">
-          <li>First-principles explanations without trend-chasing.</li>
-          <li>Python-first implementation paths for serious learners.</li>
-          <li>Coverage across models, agents, tooling, and evaluation.</li>
+          <li>
+            First-principles explanations that favor durable mental models over trend-chasing.
+          </li>
+          <li>
+            Versioned learning paths for serious learners who want sequence, depth, and practice.
+          </li>
+          <li>
+            Engineering handbooks for production AI systems, written as reference material.
+          </li>
+          <li>
+            Point-in-time essays, notes, and reflections on how the field is actually changing.
+          </li>
         </ul>
-        <div class="mt-6 flex flex-wrap gap-3 text-sm">
-          <LinkButton class="rounded-full border border-border px-4 py-2 hover:border-accent hover:text-accent" href="/agentic-ai">
-            Agentic AI
-          </LinkButton>
+      </div>
+    </section>
+
+    <section class="border-y border-border py-8">
+      <div class="mb-6 max-w-3xl">
+        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
+          Choose your path
+        </p>
+        <h2 class="mt-2 text-3xl font-semibold tracking-tight">
+          Three ways into the same body of work.
+        </h2>
+      </div>
+      <div class="grid gap-5 md:grid-cols-3">
+        <a
+          href="/learning"
+          class="surface-panel block rounded-2xl border border-border p-5 transition-colors hover:border-accent/50"
+        >
+          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-accent">
+            Learning
+          </p>
+          <h3 class="mt-3 text-xl font-semibold">Structured curricula</h3>
+          <p class="mt-2 text-sm leading-6 text-foreground/68">
+            Versioned paths for moving from chapter one to working intuition.
+          </p>
+        </a>
+        <a
+          href="/engineering"
+          class="surface-panel block rounded-2xl border border-border p-5 transition-colors hover:border-accent/50"
+        >
+          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-accent">
+            Engineering
+          </p>
+          <h3 class="mt-3 text-xl font-semibold">Operational handbooks</h3>
+          <p class="mt-2 text-sm leading-6 text-foreground/68">
+            Reference material for designing, debugging, and maintaining AI systems.
+          </p>
+        </a>
+        <a
+          href="/blogs"
+          class="surface-panel block rounded-2xl border border-border p-5 transition-colors hover:border-accent/50"
+        >
+          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-accent">
+            Blogs
+          </p>
+          <h3 class="mt-3 text-xl font-semibold">Essays and field notes</h3>
+          <p class="mt-2 text-sm leading-6 text-foreground/68">
+            Point-in-time commentary, reading notes, and evolving technical opinions.
+          </p>
+        </a>
+      </div>
+    </section>
+
+    <section id="featured" class="py-10">
+      <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
+            Selected reading
+          </p>
+          <h2 class="mt-2 text-3xl font-semibold tracking-tight">
+            Essays that frame the current Kavriq conversation.
+          </h2>
         </div>
+        <LinkButton
+          class="text-sm font-medium text-accent underline-offset-4 hover:underline"
+          href="/blogs"
+        >
+          View all blogs
+        </LinkButton>
       </div>
+      <ul>
+        {featuredPosts.map(data => (
+          <Card variant="h3" {...data} />
+        ))}
+      </ul>
     </section>
-
-    <section class="grid gap-6 border-y border-border py-6 text-sm text-foreground/70 sm:grid-cols-3">
-      <div>
-        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
-          What this is
-        </p>
-        <p class="mt-2 leading-6">
-          A systems-first learning platform for engineers building real AI systems.
-        </p>
-      </div>
-      <div>
-        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
-          How it's built
-        </p>
-        <p class="mt-2 leading-6">
-          Systems thinking, rigorous breakdowns, and implementation-first learning for builders.
-        </p>
-      </div>
-      <div>
-        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
-          What you'll find
-        </p>
-        <p class="mt-2 leading-6">
-          From essays to 
-          <LinkButton
-            class="ms-1 underline decoration-1 decoration-foreground/30 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent/45"
-            href="https://github.com/ravishankarkumar/kavriq-examples"
-          >
-          code 
-          </LinkButton>
-          to system visualizations — learn by seeing and building.
-        </p>
-      </div>
-    </section>
-
-    {
-      featuredPosts.length > 0 && (
-        <section id="featured" class="py-10">
-          <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
-                Selected Reading
-              </p>
-              <h2 class="mt-2 text-3xl font-semibold tracking-tight">
-                Start with the clearest entry points.
-              </h2>
-            </div>
-            <p class="max-w-xl text-sm leading-6 text-foreground/65">
-              A few high-signal pieces that show how KAVRIQ approaches AI systems:
-              serious, structured, and implementation-aware.
-            </p>
-          </div>
-          <ul>
-            {featuredPosts.map(data => (
-              <Card variant="h3" {...data} />
-            ))}
-          </ul>
-        </section>
-      )
-    }
 
   </main>
   <Footer />

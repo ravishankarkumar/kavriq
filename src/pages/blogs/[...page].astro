@@ -1,5 +1,6 @@
 ---
 import type { GetStaticPaths } from "astro";
+import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 import Main from "@/layouts/Main.astro";
 import Layout from "@/layouts/Layout.astro";
@@ -7,7 +8,9 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
 import Pagination from "@/components/Pagination.astro";
+import Tag from "@/components/Tag.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
+import getUniqueTags from "@/utils/getUniqueTags";
 import { SITE } from "@/config";
 
 export const getStaticPaths = (async ({ paginate }) => {
@@ -16,14 +19,112 @@ export const getStaticPaths = (async ({ paginate }) => {
 }) satisfies GetStaticPaths;
 
 const { page } = Astro.props;
+const allPosts = getSortedPosts(
+  await getCollection("blog", ({ data }) => !data.draft)
+);
+const tags = getUniqueTags(allPosts);
+const tagCounts = new Map<string, number>();
+
+allPosts.forEach(post => {
+  getUniqueTags([post]).forEach(({ tag }) => {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  });
+});
+
+const topTags = tags
+  .sort((tagA, tagB) => {
+    const countDiff = (tagCounts.get(tagB.tag) ?? 0) - (tagCounts.get(tagA.tag) ?? 0);
+    return countDiff || tagA.tagName.localeCompare(tagB.tagName);
+  })
+  .slice(0, 14);
+
+const featuredPostSlugs = [
+  "07-26-introducing-the-word-ai-tadka",
+  "06-27-ai-hype-vs-reality-mid-2026-check-in",
+  "05-03-hidden-data-problem-agentic-ai",
+];
+
+const featuredPosts = featuredPostSlugs
+  .map(slug => allPosts.find(post => post.id.endsWith(slug)))
+  .filter((post): post is CollectionEntry<"blog"> => Boolean(post))
+  .slice(0, 3);
+
+const years = Array.from(
+  new Set(allPosts.map(post => post.data.pubDatetime.getFullYear()))
+).sort((yearA, yearB) => yearB - yearA);
+
+const isFirstPage = page.currentPage === 1;
 ---
 
 <Layout title={`Blogs | ${SITE.title}`}>
   <Header />
-  <Main pageTitle="Blogs" pageDesc="Notes, explainers, and deep dives published on KAVRIQ.">
-    <ul>
+  <Main
+    pageTitle="Blogs"
+    pageDesc="Essays, field notes, and technical reflections from KAVRIQ."
+  >
+    {
+      isFirstPage && (
+        <>
+          <section class="mb-12">
+            <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 class="text-2xl font-semibold tracking-tight">Start Here</h2>
+                <p class="mt-2 max-w-2xl text-foreground/68">
+                  A curated entry point for the essays that frame the current Kavriq conversation.
+                </p>
+              </div>
+            </div>
+            <ul class="grid gap-x-10 md:grid-cols-3">
+              {featuredPosts.map(data => <Card {...data} variant="h3" />)}
+            </ul>
+          </section>
+
+          <section class="mb-12 border-t border-border pt-8">
+            <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 class="text-2xl font-semibold tracking-tight">Browse By Topic</h2>
+                <p class="mt-2 max-w-2xl text-foreground/68">
+                  Follow recurring threads across the blog without depending on publish order.
+                </p>
+              </div>
+              <a class="text-sm font-medium text-accent underline-offset-4 hover:underline" href="/tags/">
+                View all topics
+              </a>
+            </div>
+            <ul class="flex flex-wrap gap-3">
+              {topTags.map(({ tag, tagName }) => <Tag {tag} {tagName} size="sm" />)}
+            </ul>
+          </section>
+
+          <section class="mb-12 border-t border-border pt-8">
+            <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] md:items-end">
+              <div>
+                <h2 class="text-2xl font-semibold tracking-tight">Timeline</h2>
+                <p class="mt-2 max-w-2xl text-foreground/68">
+                  Read chronologically when you want to follow how the ideas evolved over time.
+                </p>
+              </div>
+              <div class="surface-panel border border-border p-4">
+                <p class="text-sm uppercase tracking-wide text-foreground/50">Archive years</p>
+                <p class="mt-2 text-lg font-semibold">{years.join(" / ")}</p>
+                <a class="mt-3 inline-block text-sm font-medium text-accent underline-offset-4 hover:underline" href="/archives/">
+                  Open chronological archive
+                </a>
+              </div>
+            </div>
+          </section>
+        </>
+      )
+    }
+
+    <section class:list={[{ "border-t border-border pt-8": isFirstPage }]}>
+      <h2 class="text-2xl font-semibold tracking-tight">
+        {isFirstPage ? "Latest Posts" : `Blog Posts: Page ${page.currentPage}`}
+      </h2>
+      <ul class="mt-2">
       {page.data.map(data => <Card {...data} />)}
-    </ul>
+      </ul>
+    </section>
   </Main>
 
   <Pagination {page} />
