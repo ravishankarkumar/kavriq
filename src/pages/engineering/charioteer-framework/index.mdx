@@ -1,0 +1,83 @@
+---
+title: Charioteer Framework
+layout: ../../../layouts/TutorialPage.astro
+pubDatetime: 2026-07-26T04:00:00Z
+modDatetime: 2026-07-26T05:11:00Z
+tags:
+  - AI
+  - Software Engineering
+  - Engineering Productivity
+---
+
+Charioteer is a framework for human-AI collaboration. It is for systems in which an AI can interpret, reason, plan, and use tools, while the human remains responsible for intent, authority, and the consequences of action.
+
+It is a way to think about building these systems as well as working with them.
+
+*Developed by Ravi Shankar at Kavriq in June and July 2026.*
+
+---
+
+## Introduction
+
+AI systems are becoming capable of more than answering questions. They can inspect context, form plans, select tools, take actions, and adapt when the world does not respond as expected. That capability changes the engineering problem. The important question is no longer only what a model can do, but how its reasoning is directed once it can act.
+
+Charioteer offers one answer. It treats the model as a collaborator with meaningful judgment, not as a passive tool. But it does not ask the model to become the final authority over a system. The human and the software around the model remain responsible for where the system goes, what it is allowed to do, and how it recovers when something goes wrong.
+
+## The Chariot
+
+The framework takes its name from a chariot. A chariot moves because several roles work together: horses provide force, the charioteer directs that force, and the passenger or warrior decides the destination and purpose.
+
+| Element | In an AI system | Responsibility |
+| --- | --- | --- |
+| Passenger or warrior | The human | Sets intent, defines acceptable outcomes, and retains ultimate authority. |
+| Charioteer | The AI model or LLM | Interprets context, reasons, proposes plans, and makes bounded decisions. |
+| Horses | MCP servers, tools, and other capabilities | Provide the means to observe, retrieve, calculate, and act. |
+| Chariot | The application and its control system | Holds state, applies policy, coordinates execution, and makes recovery possible. |
+
+The model does not create the force of the horses, and it does not choose the destination on its own. It directs available capability within the constraints set by the human and the system. That is the role Charioteer is designed to support.
+
+## Two Decision-Makers
+
+At the core of Charioteer is a simple assumption: the passenger and the charioteer are both decision-makers. They do not hold the same authority, but they work collaboratively. The passenger determines the destination, the purpose, and the acceptable boundaries. The charioteer reads the situation, chooses how to maneuver, and makes decisions within those boundaries.
+
+This is similar to human-AI collaboration. A human provides intent, judgment, and accountability. An AI contributes interpretation, reasoning, and adaptive choices. Neither role is useful in isolation when a system must operate in a changing environment; the value comes from their coordination.
+
+Traditional software design often assumed deterministic software and a human as the only meaningful decision-maker. That model remains useful for many systems. But AI systems introduce another source of judgment into the architecture. Charioteer was developed to take that reality seriously: to treat AI as an important, intelligent collaborator without confusing collaboration with unbounded authority.
+
+This framing moves the work away from fear of an AI challenger and toward the practical question of how humans and AI can make better decisions together.
+
+## An AI Collaborator, Not a Challenger
+
+Charioteer does not assume that intelligence and control must belong to the same actor. A capable model can contribute judgment: it can identify options, weigh evidence, revise a plan, and explain its reasoning. Those are valuable forms of collaboration.
+
+Yet a system still needs an accountable source of authority. The human decides the purpose. The application makes policy explicit. The model operates within those boundaries. This is not about limiting AI because it is weak; it is about making responsibility clear even when AI is powerful.
+
+## From Reasoning to Action
+
+Language models are probabilistic components. A prompt alone is not a durable control plane. Important system responsibilities should not be left implicit in conversational history, hidden callbacks, or an expectation that the model will always infer the right boundary.
+
+In a Charioteer system, the path from reasoning to action stays visible:
+
+- The model can propose, plan, and explain.
+- The human or deterministic system defines what is permitted.
+- State that matters to progress, intent, and recovery is represented explicitly.
+- Tool access, budgets, and stopping conditions are designed as constraints.
+- Execution, evaluation, observability, and intervention are treated as part of the architecture.
+
+The goal is not more ceremony. It is a system whose behavior can be inspected, governed, and changed without having to reverse-engineer a chain of prompts and framework glue.
+
+## Built for Changing Capabilities
+
+Charioteer is deliberately agnostic to the underlying model, tool, and implementation stack. It does not depend on a model remaining limited. A more capable model may take on more reasoning work, but it does not receive authority by default.
+
+This makes the framework useful as capabilities evolve. New models, new tools, and new forms of AI may change what the charioteer can do. They do not remove the need for clear intent, visible state, bounded authority, and deliberate control flow.
+
+## Scope
+
+Charioteer is one way to build AI systems, not a claim that every system needs more orchestration. Some tasks are simple and should remain simple. But when a system is allowed to act in the world, the path from reasoning to action should remain understandable and governable.
+
+## Principles
+
+The principles turn Charioteer's philosophy into decisions that can guide how a human-AI system is designed and operated.
+
+- [Sarathi Principle](/engineering/charioteer-framework/principles/sarathi-principle) — Treat AI as a respected, bounded collaborator: delegate useful judgment while keeping human intent and accountability explicit.
