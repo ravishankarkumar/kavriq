@@ -26,7 +26,15 @@ export default defineConfig({
       },
     }),
     sitemap({
-      filter: page => SITE.showArchives || !page.endsWith("/archives"),
+      filter: page => {
+        const pathname = new URL(page).pathname;
+
+        return (
+          (SITE.showArchives || pathname !== "/archives/") &&
+          !pathname.startsWith("/agentic-ai/") &&
+          pathname !== "/learning/agentic-ai/"
+        );
+      },
     }),
     mdx({
       remarkPlugins: [

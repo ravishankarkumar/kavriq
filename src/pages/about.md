@@ -1,51 +1,48 @@
 ---
 layout: ../layouts/AboutLayout.astro
-title: "About Kavriq"
+title: "About KAVRIQ"
 ---
 
-Kavriq is an attempt to explain modern AI, especially Agentic AI, from first principles with an engineering mindset.
+KAVRIQ is a technical publication for engineers who want to understand the science behind AI.
 
-Kavriq is a technical publication for engineers who want to master AI systems from first principles to production.
+Much of today's AI content focuses on tools, demos, and surface-level abstractions. KAVRIQ takes a different approach: explaining the mathematics, models, and systems behind modern AI from first principles.
 
-Most AI content focuses on tools, demos, and surface-level abstractions. Kavriq takes a different approach: understanding how systems work, how they are built, and how they behave in real settings.
+The goal is not simply to keep up with the latest framework, but to understand how things work underneath: the probability, optimization, representation, reasoning, and engineering ideas that shape AI systems.
 
-The goal is to build durable mental models, not just keep up with the latest framework.
+## About Me
 
-## How Kavriq Is Organized
+I am Ravi Shankar, a software engineer working across AI systems, developer platforms, and cloud infrastructure.
 
-Kavriq is organized around three reader intents:
+I graduated in Computer Science from MNNIT Allahabad and have worked across startups, product engineering, cloud infrastructure, and large-scale platform environments. My experience includes THB, Urban Company, Flynote, Trinkerr, Oracle, and Salesforce.
 
-- **Learning**: structured curricula and versioned learning paths for building understanding step by step.
-- **Engineering**: handbooks and reference material for designing, debugging, and operating AI systems.
-- **Blogs**: essays, notes, and reflections on what is changing in AI and software engineering.
+KAVRIQ is where I document what I am learning, building, and trying to understand. My current areas of study include machine learning, deep learning, agentic AI, retrieval, evaluation, AI infrastructure, and the mathematical ideas behind these systems.
 
-The sections are meant to connect with each other. A blog post may introduce a perspective, an engineering guide may turn it into operational judgment, and a learning path may turn it into a structured walkthrough.
+I care deeply about clarity, depth, mathematical intuition, practical judgment, and the distance between an impressive demonstration and dependable engineering.
 
-## About the Author
+## Why KAVRIQ Exists
 
-I am Ravi Shankar, a software engineer working on AI systems and developer platforms.
+I am the son of a teacher, and teaching has always held a quiet place in my imagination.
 
-Kavriq is where I document what I am learning, building, and trying to understand about modern AI systems. I care about clarity, depth, practical judgment, and the gap between impressive demos and reliable engineering.
+Growing up, teaching was just one of many ambitions. I also wanted to become a physicist, mathematician, author, entrepreneur, and someone who built ambitious things. Over the years, I pursued projects, built products, opened a small coaching center in Greater Noida while working full-time in Gurugram, and eventually left my job to prepare for the UPSC civil-services examination.
 
-## Background
+Some of those attempts failed. Others simply did not become what I had imagined. Beneath many of them was a desire not only to do meaningful work, but also to be known for it.
 
-I graduated in Computer Science from NIT Allahabad and have worked across startups, product engineering, cloud infrastructure, and large-scale platform environments.
+In trying so hard to become something, I gradually lost touch with people I had met along the way: college friends, schoolmates, and former colleagues. Human connection, something I cared about deeply, became one of the casualties of my ambition.
 
-My experience includes product startups such as THB, Urban Company, Flynote, and Trinkerr, followed by platform and infrastructure engineering at Oracle. I currently work in AI engineering at Salesforce.
+I look for different things now: simplicity, human connection, a sense of community, and work that becomes more meaningful with time. I have become more aware that a life is finite. Not every ambition can become a life's work, and not every effort needs to become an identity. I would rather be known by a small circle of people for something honest, and remain connected to them, than chase a larger idea and become a machine.
 
-## What I Study
+KAVRIQ emerged from that realization.
 
-My ongoing study is focused on the foundations and engineering practice behind AI systems: machine learning, agentic AI, retrieval, evaluation, infrastructure, and software engineering in the LLM era.
+It gives me a place to learn in public, teach what I understand, and remain connected to people who care about understanding and building things well. Articles allow me to work through difficult ideas. Conversations and podcasts allow me to learn from others while making their knowledge useful to a wider audience.
 
-Some formal learning paths I have worked through include:
+Teaching and learning give KAVRIQ its form. The desire to understand things deeply gives it direction. Human connection gives it its purpose.
 
-- Mathematics for Machine Learning Specialization, Imperial College London
-- Mathematics for Machine Learning and Data Science Specialization, DeepLearning.AI
+KAVRIQ may be a technical publication, but it is built with a human need for connection.
 
-## Philosophy
+KAVRIQ may never become a large identity. A small, honest one would be enough.
 
-Kavriq is built on a simple idea:
+## A Working Philosophy
 
-> Understanding systems deeply is more valuable than chasing tools.
+> Understanding how things work is more valuable than chasing tools.
 
-The goal is not to keep up with trends, but to build a mental model that lasts.
+The goal is not to keep up with trends, but to build a mental model that lasts: mathematical where needed, practical where useful, and honest about uncertainty.
