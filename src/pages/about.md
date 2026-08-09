@@ -33,7 +33,7 @@ I look for different things now: simplicity, human connection, a sense of commun
 
 KAVRIQ emerged from that realization.
 
-It gives me a place to learn in public, teach what I understand, and remain connected to people who care about understanding and building things well. Articles allow me to work through difficult ideas. Conversations and podcasts allow me to learn from others while making their knowledge useful to a wider audience.
+It gives me a place to learn in public, teach what I understand, and remain connected to people who care about understanding and building things well. It also gives me a constructive way to deal with loneliness—something I have increasingly felt while living and working in Bangalore, and something I suspect many other professionals experience too. Articles allow me to work through difficult ideas. Conversations and podcasts allow me to learn from others while making their knowledge useful to a wider audience.
 
 Teaching and learning give KAVRIQ its form. The desire to understand things deeply gives it direction. Human connection gives it its purpose.
 
