@@ -20,7 +20,7 @@ interface Social {
 export const SOCIALS: Social[] = [
   {
     name: "GitHub",
-    href: "https://github.com/ravishankarkumar/kavriq-examples",
+    href: "https://github.com/ravishankarkumar/kavriq",
     linkTitle: `${SITE.title} on GitHub`,
     icon: IconGitHub,
   },
