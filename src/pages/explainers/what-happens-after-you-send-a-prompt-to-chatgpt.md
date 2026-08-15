@@ -10,13 +10,35 @@ tags:
   - AI Explainers
 ---
 
-You type a question into ChatGPT and press **Send**. A few moments later, a response begins appearing on your screen.
+LLMs are becoming difficult to avoid. Even if you do not open ChatGPT yourself, you may still interact with language models through search, customer support, writing tools, developer tools, or automated systems inside products you already use.
 
-It can feel as though ChatGPT read the question, thought about it, and wrote an answer in the same way a person might. But the mechanism underneath is very different.
+In short, many of us already use AI directly or indirectly. That makes it worth understanding, at least at a high level, what happens when we send a prompt.
 
-Your prompt is first broken into small pieces called **tokens**. Those tokens are converted into numerical representations and processed together with the available conversation context. The model then calculates which token could come next, selects one, adds it to the sequence, and repeats the process. The readable answer you see is assembled from these generated tokens.
+It can feel as if you are talking to a person. You type a question into ChatGPT, or any similar LLM-based product, press **Send**, and a few moments later a response begins appearing on the screen. Many chat interfaces stream the answer gradually, which makes the reply feel conversational rather than mechanical.
 
-In its simplest form, the journey looks like this:
+But the mechanism underneath is not human conversation. It is a repeated process of turning text into tokens, processing those tokens as numbers, and generating the response one token at a time.
+
+Your prompt is first broken into small pieces called **tokens**. For example, the sentence:
+
+```text
+Tokenization is cool!
+```
+
+might be split into something like:
+
+```text
+["Token", "ization", " is", " cool", "!"]
+```
+
+The exact split depends on the tokenizer, but the basic idea is simple: the model does not process your sentence as one whole object. It works with smaller text units.
+
+After tokenization, each token is converted into numbers. In mathematics and machine learning, a list of numbers that represents something is often called a **vector**. For this explainer, you can think of a vector as an array of numbers.
+
+How tokens become useful vectors is a beautiful subject on its own, but we do not need to go that deep here.
+
+Once the model has these vectors, it processes them together with the available context. The result is a probability distribution over possible next tokens. One token is selected, added to the growing response, and the process repeats.
+
+Those generated tokens become the answer. At a high level, the journey looks like this:
 
 ```text
 Prompt
@@ -29,19 +51,23 @@ Prompt
 → Readable response
 ```
 
-Let us follow that journey step by step.
+Tokens are generated iteratively. That is why many LLM chatbots stream replies gradually, making the answer feel as if it is being written in real time.
+
+Now, let us look at the journey step by step.
 
 ## 1. You send a prompt
 
-Suppose you type:
+Suppose you write:
 
 > Why is the sky blue?
 
-When you press **Send**, the text is transmitted to the systems running ChatGPT.
+After you press **Send**, the text is sent to the systems running ChatGPT.
 
-Your sentence is usually not the only information available to the model. The input may also contain relevant parts of the conversation, instructions that guide the assistant's behavior, and results supplied by tools when a feature such as web search is involved.
+It gets interesting right away. Your latest prompt is usually not the only thing the system sends to the model. The input may also include instructions that guide the model's behavior, relevant parts of the previous conversation, and results from tools if a feature such as web search was involved.
 
-We can think of the effective input as something like:
+In other words, the input often contains more than the text you just typed. For now, it is enough to know that the model usually receives a packaged input, not only your latest sentence.
+
+Effectively, the input can be thought of as something like this:
 
 ```text
 Instructions
@@ -51,6 +77,19 @@ Instructions
 ```
 
 The exact composition varies by product, model, settings, and task. For a simple explanation, we will focus on the text of the prompt itself.
+
+### A simple note on tools
+
+A tool is a capability outside the language model that the product can use when text generation alone is not enough.
+
+For example, a system might use:
+
+- web search to look up recent information;
+- a calculator to compute an exact result;
+- a code runner to execute a small program;
+- a file reader to inspect an uploaded document.
+
+The model itself does not become the search engine, calculator, or file reader. Instead, the surrounding product may call one of these tools, collect the result, and add that result back into the context the model can use.
 
 ## 2. The prompt is divided into tokens
 
@@ -74,7 +113,7 @@ This is only an illustration. The actual split depends on the tokenizer used by 
 
 Why use tokens instead of complete words?
 
-There are far too many possible words, spellings, names, numbers, programming expressions, and combinations to treat every possible word as a separate fundamental unit. Tokenisation gives the model a manageable vocabulary from which it can represent both familiar and unfamiliar text.
+There are far too many possible words, spellings, names, numbers, programming expressions, and combinations to treat every possible word as a separate fundamental unit. Tokenization gives the model a manageable vocabulary from which it can represent both familiar and unfamiliar text.
 
 Each token is assigned a numerical identifier. Conceptually, the model receives something closer to this:
 
@@ -111,9 +150,12 @@ The word **blue**, for example, plays different roles in:
 - blue sky;
 - feeling blue;
 - blue cheese;
-- blue screen error.
+- blue screen error;
+- Monday blues.
 
 The surrounding tokens help the model build a representation appropriate to the particular sentence.
+
+Context matters in human communication too. If someone says, "A mother beat her daughter because she was drunk," and then asks, "Who was drunk?", you need surrounding context to answer confidently. Language models also rely on surrounding context, but they process it numerically rather than through human understanding.
 
 ## 4. The model processes the context
 
@@ -134,9 +176,9 @@ IF sentence contains "sky blue"
 THEN explain light scattering
 ```
 
-During training, the model adjusted a very large collection of numerical parameters by learning patterns from text. Those learned parameters now transform the input representations across layer after layer.
+During training, the model adjusted a very large collection of numerical parameters by learning patterns from enormous amounts of text and other training data. In a limited sense, training teaches the model statistical patterns about language and the world as represented in that data.
 
-By the end of this processing, every relevant position contains a context-sensitive numerical representation. The model uses the representation at the current end of the sequence to predict what should come next.
+Those learned parameters are now used to transform the numerical input representations layer by layer. By the end of this processing, the model has built a context-sensitive representation of the sequence. It then uses the representation at the current end of the sequence to estimate which token is most likely to come next.
 
 ## 5. The model calculates probabilities for the next token
 
@@ -266,7 +308,7 @@ This is one reason language models can produce hallucinations. Tools, retrieval,
 
 No. The core model can generate answers using patterns represented in its learned parameters and the context supplied with the request.
 
-For some questions, ChatGPT may use tools such as web search, data analysis, or connected sources. When that happens, the tool results become additional information that the model can use while generating the response.
+For some questions, ChatGPT may use tools such as web search, data analysis, file reading, or connected sources. When that happens, the tool results become additional information that the model can use while generating the response.
 
 Tool use extends the basic pipeline; it does not replace it:
 
@@ -296,7 +338,7 @@ A more useful starting model is:
 
 > ChatGPT repeatedly predicts how a response should continue, using numerical representations built from the available context and patterns learned during training.
 
-This mental model explains several behaviours:
+This mental model explains several behaviors:
 
 - why wording and context affect the answer;
 - why the same prompt can produce different responses;
@@ -309,26 +351,27 @@ It is still a simplified picture. Modern systems may perform additional reasonin
 
 <!--
 
-PLANNED MURALI ANIMATION
+PLANNED MURALI VIDEO
 
-The primary animation should follow one prompt through the entire pipeline without deeply explaining any one stage.
+The primary animation should follow one prompt through the entire pipeline without getting too deep into any single stage. The goal is to make the invisible process feel visible: text becomes tokens, tokens become numbers, the model scores possible next tokens, and the response grows one token at a time.
 
 ### Suggested sequence
 
 1. Show a user typing: **Why is the sky blue?**
 2. Move the prompt into a processing area.
-3. Divide it into visible token blocks.
-4. Replace each token with a vertical vector of numbers.
-5. Show the vectors interacting through several transformer layers.
-6. Display a probability chart for possible first tokens.
-7. Select one token and append it to an output line.
-8. Repeat the probability-and-selection cycle at increasing speed.
-9. Merge the generated token blocks into the readable response.
-10. Zoom out to display the complete pipeline.
+3. Add a small "context package" layer around it: instructions, relevant conversation, prompt, and optional tool results.
+4. Divide the prompt into visible token blocks.
+5. Replace each token with a compact column or row of numbers to represent vectors.
+6. Show the vectors moving through several transformer layers.
+7. Display a probability chart for possible first tokens.
+8. Select one token and append it to the output line.
+9. Repeat the probability-and-selection cycle at increasing speed.
+10. Merge the generated token blocks into a readable response.
+11. Zoom out to display the complete pipeline.
 
 ### Visual constraint
 
-Keep the transformer stage conceptual. Do not imply that tokens merely pass through a single attention operation or that each starting vector permanently contains a word's complete meaning.
+Keep the transformer stage conceptual. Do not imply that tokens merely pass through a single attention operation or that each starting vector permanently contains a word's complete meaning. The visual should suggest context-sensitive transformation, not fixed dictionary lookup.
 
 ### Reuse
 
@@ -337,6 +380,6 @@ The animation can become:
 - the primary visual in this Explainer;
 - a 45–60 second vertical video;
 - the opening animation for the complete Explainers series;
-- a reusable overview inside later articles about tokens, embeddings, sampling, and context windows.
+- a reusable overview inside later articles about tokens, embeddings, sampling, context windows, and tool use.
 
 -->
