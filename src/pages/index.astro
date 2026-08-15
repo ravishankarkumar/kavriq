@@ -1,138 +1,84 @@
 ---
-import { getCollection } from "astro:content";
-import type { CollectionEntry } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import LinkButton from "@/components/LinkButton.astro";
-import Card from "@/components/Card.astro";
-import getSortedPosts from "@/utils/getSortedPosts";
-
-const posts: CollectionEntry<"blog">[] = await getCollection<"blog">("blog");
-
-const sortedPosts = getSortedPosts(posts);
-const featuredPostSlugs = [
-  "07-26-introducing-the-word-ai-tadka",
-  "06-27-ai-hype-vs-reality-mid-2026-check-in",
-  "05-03-hidden-data-problem-agentic-ai",
-];
-
-const featuredPosts = featuredPostSlugs
-  .map(slug => sortedPosts.find(post => post.id.endsWith(slug)))
-  .filter((post): post is CollectionEntry<"blog"> => Boolean(post));
 ---
 
 <Layout>
   <Header />
   <main id="main-content" data-layout="index" class="app-layout">
-    <section id="hero" class="grid gap-8 pt-8 pb-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.9fr)] lg:items-end">
-      <div class="max-w-4xl">
-        <p class="tech-label text-sm font-semibold tracking-[0.22em] text-accent uppercase">
-          KAVRIQ
-        </p>
-        <h1 class="mt-5 max-w-5xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-          Understand the Science Behind AI
+    <section id="hero" class="pt-10 pb-7 sm:pt-12 lg:pt-16">
+      <div class="max-w-5xl">
+        <h1
+          class="max-w-5xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl"
+        >
+          The Science Behind AI
         </h1>
-        <p class="mt-5 max-w-2xl text-lg text-foreground/72">
+        <p class="mt-5 max-w-3xl text-lg leading-8 text-foreground/72">
           First-principles explanations of the mathematics, models, and systems
           behind modern AI.
         </p>
       </div>
-
-      <div class="surface-panel rounded-3xl border border-border p-6">
-        <p class="tech-label text-xs font-semibold tracking-[0.18em] text-foreground/55 uppercase">
-          Focus
-        </p>
-        <ul class="mt-4 space-y-3 text-sm text-foreground/72">
-          <li>
-            First-principles explanations that favor durable mental models over trend-chasing.
-          </li>
-          <li>
-            Versioned learning paths for serious learners who want sequence, depth, and practice.
-          </li>
-          <li>
-            Engineering handbooks for production AI systems, written as reference material.
-          </li>
-          <li>
-            Point-in-time essays, notes, and reflections on how the field is actually changing.
-          </li>
-        </ul>
-      </div>
     </section>
 
-    <section class="border-y border-border py-8">
-      <div class="mb-6 max-w-3xl">
-        <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
-          Choose your path
-        </p>
-        <h2 class="mt-2 text-3xl font-semibold tracking-tight">
-          Three ways into the same body of work.
-        </h2>
-      </div>
-      <div class="grid gap-5 md:grid-cols-3">
+    <section class="pt-5 pb-14 lg:pb-18">
+      <div class="grid gap-4 md:grid-cols-3">
         <a
           href="/learning"
-          class="surface-panel block rounded-2xl border border-border p-5 transition-colors hover:border-accent/50"
+          class="surface-panel group block rounded-2xl border border-border p-6 transition-colors hover:border-accent/50 sm:p-7"
         >
-          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-accent">
-            Learning
+          <p
+            class="tech-label text-xs font-semibold tracking-[0.18em] text-accent uppercase"
+          >
+            01
           </p>
-          <h3 class="mt-3 text-xl font-semibold">Structured curricula</h3>
-          <p class="mt-2 text-sm leading-6 text-foreground/68">
-            Versioned paths for moving from chapter one to working intuition.
+          <h2 class="mt-5 text-2xl font-semibold tracking-tight">Learning</h2>
+          <p class="mt-3 text-sm leading-6 text-foreground/68">
+            Follow structured paths from first principles to working intuition.
           </p>
+          <span class="mt-8 inline-flex text-sm font-medium text-accent">
+            Start learning
+          </span>
         </a>
         <a
           href="/engineering"
-          class="surface-panel block rounded-2xl border border-border p-5 transition-colors hover:border-accent/50"
+          class="surface-panel group block rounded-2xl border border-border p-6 transition-colors hover:border-accent/50 sm:p-7"
         >
-          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-accent">
+          <p
+            class="tech-label text-xs font-semibold tracking-[0.18em] text-accent uppercase"
+          >
+            02
+          </p>
+          <h2 class="mt-5 text-2xl font-semibold tracking-tight">
             Engineering
+          </h2>
+          <p class="mt-3 text-sm leading-6 text-foreground/68">
+            Use practical references for designing, debugging, and maintaining
+            AI systems.
           </p>
-          <h3 class="mt-3 text-xl font-semibold">Operational handbooks</h3>
-          <p class="mt-2 text-sm leading-6 text-foreground/68">
-            Reference material for designing, debugging, and maintaining AI systems.
-          </p>
+          <span class="mt-8 inline-flex text-sm font-medium text-accent">
+            Open handbooks
+          </span>
         </a>
         <a
           href="/blogs"
-          class="surface-panel block rounded-2xl border border-border p-5 transition-colors hover:border-accent/50"
+          class="surface-panel group block rounded-2xl border border-border p-6 transition-colors hover:border-accent/50 sm:p-7"
         >
-          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-accent">
-            Blogs
+          <p
+            class="tech-label text-xs font-semibold tracking-[0.18em] text-accent uppercase"
+          >
+            03
           </p>
-          <h3 class="mt-3 text-xl font-semibold">Essays and field notes</h3>
-          <p class="mt-2 text-sm leading-6 text-foreground/68">
-            Point-in-time commentary, reading notes, and evolving technical opinions.
+          <h2 class="mt-5 text-2xl font-semibold tracking-tight">Blogs</h2>
+          <p class="mt-3 text-sm leading-6 text-foreground/68">
+            Read essays, notes, and observations on how the field is changing.
           </p>
+          <span class="mt-8 inline-flex text-sm font-medium text-accent">
+            Browse essays
+          </span>
         </a>
       </div>
     </section>
-
-    <section id="featured" class="py-10">
-      <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p class="tech-label text-xs font-semibold tracking-[0.18em] uppercase text-foreground/50">
-            Selected reading
-          </p>
-          <h2 class="mt-2 text-3xl font-semibold tracking-tight">
-            Essays that frame the current Kavriq conversation.
-          </h2>
-        </div>
-        <LinkButton
-          class="text-sm font-medium text-accent underline-offset-4 hover:underline"
-          href="/blogs"
-        >
-          View all blogs
-        </LinkButton>
-      </div>
-      <ul>
-        {featuredPosts.map(data => (
-          <Card variant="h3" {...data} />
-        ))}
-      </ul>
-    </section>
-
   </main>
   <Footer />
 </Layout>
