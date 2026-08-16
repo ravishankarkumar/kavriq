@@ -3,7 +3,7 @@ title: "What Happens After You Send a Prompt to ChatGPT?"
 description: "A visual explanation of how ChatGPT turns your prompt into tokens, processes their context, and generates a response one token at a time."
 layout: ../../layouts/TutorialPage.astro
 pubDatetime: 2026-08-15T05:30:00Z
-modDatetime: 2026-08-16T15:00:15.170Z
+modDatetime: 2026-08-16T15:30:00Z
 tags:
   - ChatGPT
   - Large Language Models
@@ -19,7 +19,13 @@ It can feel as if you are talking to a person. You type a question into ChatGPT,
 
 But the mechanism underneath is not human conversation. It is a repeated process of turning text into tokens, processing those tokens as numbers, and generating the response one token at a time.
 
->Before we proceed further, I would liek to tell you that all the concepts that we learn in districbuted systems and regular softwate engineering are stiln valid. But our focus here will be on AI and Mathematics side. As there must be thousands of books and other brilliant resources to cover those aspects. I wil focis on AI.
+Before we go further, one clarification is useful. Everything we know from distributed systems and regular software engineering still matters when a product like ChatGPT serves a request. Networking, latency, scaling, reliability, security, observability, and infrastructure do not disappear.
+
+This explainer, however, focuses on the AI side of the journey: how text becomes tokens, how tokens become numbers, and how a model generates a response from those numerical representations.
+
+More specifically, this article is about **inference**: what happens when ChatGPT responds after you send a prompt. It is not about **training**, the earlier phase where the underlying model learns its parameters from data.
+
+When you chat with ChatGPT, you are interacting with a product built around an already trained large language model. In this article, **model** mostly means that trained mathematical system: a neural network with learned numerical parameters that transform input tokens into predictions about what should come next.
 
 Your prompt is first broken into small pieces called **tokens**. For example, the sentence:
 
@@ -162,9 +168,11 @@ Context matters in human communication too. If someone says, "A mother beat her 
 
 ## 4. The model processes the context
 
-The token representations now pass through many layers of a neural network known as a **transformer**.
+The token representations now pass through many layers of a neural network, usually based on an architecture known as a **transformer**.
 
->Before we proceed further, let me put up straight that understanding how a model works is in itself a very beautiful and wide science. But, how they are developed and trained may not be required in answering what happens when we pronmpt chatGPT, so we will be leaving them out. But don't be mistaken, KAVRIQ is all about the martiage of AI and Maths, so this website will go in great depth for that aspect, but in different articles and posts.
+Understanding how these models are trained is a beautiful and much larger subject. It involves data, loss functions, gradient descent, optimization, scaling, evaluation, alignment, and many other ideas. For this article, we will leave most of that aside because the question is narrower: what happens after you send a prompt?
+
+KAVRIQ will return to the mathematics of training and model architecture in deeper articles. Here, we only need enough transformer intuition to follow the path from prompt to response.
 
 One of the transformer's central mechanisms is **attention**. Attention allows the model to determine which earlier tokens are relevant while processing the sequence.
 
@@ -181,7 +189,7 @@ IF sentence contains "sky blue"
 THEN explain light scattering
 ```
 
-During training, the model adjusted a very large collection of numerical parameters by learning patterns from enormous amounts of text and other training data. In a limited sense, training teaches the model statistical patterns about language and the world as represented in that data.
+During training, the model adjusts a very large collection of numerical parameters by learning patterns from enormous amounts of text and other training data. In a limited sense, training teaches the model statistical structure in language and in the world as represented by that data.
 
 Those learned parameters are now used to transform the numerical input representations layer by layer. By the end of this processing, the model has built a context-sensitive representation of the sequence. It then uses the representation at the current end of the sequence to estimate which token is most likely to come next.
 
@@ -319,7 +327,7 @@ Tool use extends the basic pipeline; it does not replace it:
 
 ```text
 Prompt
-→ Model decides that external information is needed
+→ System determines that external information may help
 → Tool retrieves or calculates information
 → Tool result is added to the context
 → Model generates a response from the expanded context
