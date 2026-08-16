@@ -3,6 +3,7 @@ title: "What Happens After You Send a Prompt to ChatGPT?"
 description: "A visual explanation of how ChatGPT turns your prompt into tokens, processes their context, and generates a response one token at a time."
 layout: ../../layouts/TutorialPage.astro
 pubDatetime: 2026-08-15T05:30:00Z
+modDatetime: 2026-08-16T15:00:15.170Z
 tags:
   - ChatGPT
   - Large Language Models
@@ -17,6 +18,8 @@ In short, many of us already use AI directly or indirectly. That makes it worth 
 It can feel as if you are talking to a person. You type a question into ChatGPT, or any similar LLM-based product, press **Send**, and a few moments later a response begins appearing on the screen. Many chat interfaces stream the answer gradually, which makes the reply feel conversational rather than mechanical.
 
 But the mechanism underneath is not human conversation. It is a repeated process of turning text into tokens, processing those tokens as numbers, and generating the response one token at a time.
+
+>Before we proceed further, I would liek to tell you that all the concepts that we learn in districbuted systems and regular softwate engineering are stiln valid. But our focus here will be on AI and Mathematics side. As there must be thousands of books and other brilliant resources to cover those aspects. I wil focis on AI.
 
 Your prompt is first broken into small pieces called **tokens**. For example, the sentence:
 
@@ -160,6 +163,8 @@ Context matters in human communication too. If someone says, "A mother beat her 
 ## 4. The model processes the context
 
 The token representations now pass through many layers of a neural network known as a **transformer**.
+
+>Before we proceed further, let me put up straight that understanding how a model works is in itself a very beautiful and wide science. But, how they are developed and trained may not be required in answering what happens when we pronmpt chatGPT, so we will be leaving them out. But don't be mistaken, KAVRIQ is all about the martiage of AI and Maths, so this website will go in great depth for that aspect, but in different articles and posts.
 
 One of the transformer's central mechanisms is **attention**. Attention allows the model to determine which earlier tokens are relevant while processing the sequence.
 
