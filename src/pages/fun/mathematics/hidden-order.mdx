@@ -1,0 +1,256 @@
+---
+title: Hidden order
+description: How short formulas reveal patterns in leading digits, escaping numbers, noise, and the next word in a sentence.
+layout: ../../../layouts/DocsLayout.astro
+---
+
+Imagine measuring the lengths of hundreds of rivers. The numbers may look like a random mess. Now imagine repeating a tiny rule: square a number, add another number, and do it again. The results may shoot toward infinity. A huge collection of human writing looks even messier.
+
+Yet each of these messy things hides a pattern. Better still, we can write each pattern with a short piece of mathematics.
+
+That is the game on this page: start with something complicated and find the small rule hiding inside it.
+
+## A digit with a favorite
+
+If you pull a digit from a hat, every digit from 0 to 9 has the same chance of appearing: one chance in ten.
+
+But many lists of numbers from the real world behave differently. Think of city populations, river lengths, house prices, or numbers in a newspaper. These lists can stretch from small numbers to thousands or even millions.
+
+Look only at the **first digit** of each number. You might expect 1 through 9 to appear equally often. Surprisingly, they do not. The digit 1 appears most often.
+
+The pattern is called **[Benford's law](https://en.wikipedia.org/wiki/Benford%27s_law)**:
+
+$$
+\begin{aligned}
+P(d) &= \log_{10}\!\left(1 + \frac{1}{d}\right) \\
+&= \log_{10}(d+1) - \log_{10}(d)
+\end{aligned}
+$$
+
+Here, $d$ is the first digit (or the rightmost digit of the number), which can vary from 1 to 9. $P(d)$ means “the probability that the first digit of the number is $d$.”
+
+The expression $\log_{10}(x)$ asks: **What power must we raise 10 to in order to get $x$?** For example,
+
+$$
+\log_{10}(1)=0, \qquad \log_{10}(10)=1, \qquad \log_{10}(100)=2
+$$
+
+These work because $10^0=1$, $10^1=10$, and $10^2=100$. 
+
+Rather than goign anstract, lets take one example. Given a set of numbers which are not artificially generated. You pick a random number from this set, then what is teh probability that the rightmost digit of this number is 2. We can use Benford's formula to calculate this:
+
+
+$$
+\begin{aligned}
+P(d) &= \log_{10}\!\left(1 + \frac{1}{d}\right) \\
+\end{aligned}
+$$
+
+This is equivalent to:
+
+$$
+\begin{aligned}
+P(2) &= \log_{10}\!\left(1 + \frac{1}{2}\right) = \log_{10}(\frac{2}{2} + \frac{1}{2}) = \log_{10}(\frac{3}{2}) \\
+\end{aligned}
+$$
+
+The equation now becomes:
+$$
+\begin{aligned}
+P(2) &= \log_{10}(\frac{3}{2})  = \log_{10}(3) = \log_{10}(2)  = 0.47712 - 0.30103 = 0.17609 \\
+\end{aligned}
+$$
+
+So, given a set of numbers, if you pick a random number from this set, the probability that the rightmost digit of this number is 2 is 0.17609 or 17.609%.
+
+Isn't this interesting? The probability of the rightmost digit being 2 is not 1/9 (or 11.111%) as one might expect, but rather 17.609%. This shows that in many real-world datasets, lower digits appear more frequently as the leading digit than higher digits, which is a counterintuitive result.
+
+$$
+\log_{10}(2) \approx 0.301
+$$
+
+The formula gives these chances:
+
+| First digit | Chance |
+| ----------- | ------ |
+| 1           | 30.1%  |
+| 2           | 17.6%  |
+| 3           | 12.5%  |
+| 4           | 9.7%   |
+| 5           | 7.9%   |
+| 6           | 6.7%   |
+| 7           | 5.8%   |
+| 8           | 5.1%   |
+| 9           | 4.6%   |
+
+Please note that you can't apply the formula to 0, but probability of zero can be calculated by subtracting the sum of probabilities of 1 to 9 from 1.
+
+So a number from one of these lists begins with 1 about 30 times out of 100. It begins with 9 only about 5 times out of 100. That makes 1 about six times as common as 9.
+
+Why? Think about the number line from 1 to 10. To move from a first digit of 1 to a first digit of 2, a number must double: it must travel from 1 to 2. But to move from a first digit of 8 to a first digit of 9, it grows only from 8 to 9. When numbers grow by multiplication, they spend more room in the “starts with 1” part of each scale.
+
+Logarithms turn multiplication into evenly spaced steps. A number $x$ starts with digit $d$ when the part of $\log_{10}(x)$ after the decimal point lies between $\log_{10}(d)$ and $\log_{10}(d+1)$. The spaces are wider for small digits, especially 1. The formula above simply measures those spaces.
+
+There is another useful clue: changing units does not break the pattern. A river that is 3 kilometres long is 3,000 metres long. The first digit stays 3. Other conversions may change the first digit, but across a large list the overall pattern remains.
+
+Benford's law does **not** work for every list. The heights of children in centimetres stay in a narrow range. Lottery numbers are chosen to be evenly spread. The law works best when values cover several powers of 10—for example, tens, hundreds, thousands, and beyond—and were not assigned by a person.
+
+## The picture left by running away
+
+Now let us use a tiny rule to draw a huge, detailed shape.
+
+Start with $z_0 = 0$. Pick a number $c$, then repeat this rule:
+
+$$
+z_{0} = 0, \qquad z_{n+1} = z_{n}^{2} + c
+$$
+
+The small number below $z$, called a **subscript**, tells us which step we are on. So $z_{n+1}$ is the next answer after $z_n$. The list of answers is called an **orbit**.
+
+Here is a simple example with $c = 1$:
+
+$$
+0 \rightarrow 1 \rightarrow 2 \rightarrow 5 \rightarrow 26 \rightarrow \cdots
+$$
+
+The values quickly grow without stopping. We say this orbit **escapes**.
+
+For the Mandelbrot set, $c$ can be a complex number. You can picture a complex number as a point on a flat map. The value $|z_n|$ is the point's distance from the centre. If that distance ever becomes greater than 2, the orbit will keep running away.
+
+The **Mandelbrot set** contains all the choices of $c$ whose orbits never escape. Those points are usually coloured black. For the points outside, we can count how many steps the orbit takes to pass 2. This count is called the **escape time**.
+
+Give each escape time a different colour and a remarkable picture appears. Points that escape on the same step form coloured bands. Near the edge, those bands twist, split, and grow tiny copies of the larger shape.
+
+The edge is a **fractal**: no matter how far you zoom in, new detail keeps appearing. Its fractal dimension is 2, the same dimension as a filled-in flat shape, even though it is only a boundary. All of that detail comes from one short rule.
+
+There is a close cousin called a **Julia set**. For the Mandelbrot set, we change $c$ and always begin with $z_0 = 0$. For a Julia set, we keep $c$ fixed and change the starting value of $z$. In both cases, the picture marks the border between points that stay bounded and points that escape.
+
+The [fractals](/fun/mathematics/fractals) page makes shapes by copying pieces. The Mandelbrot set makes its shape by keeping score of which points escape.
+
+## A formula that will not settle
+
+A very small formula can also model a population. Let $x$ be the fraction of a habitat being used, so $x$ stays between 0 and 1. For example, $x = 0.25$ means one quarter of the habitat is occupied. Let $r$ control how quickly the population grows.
+
+$$
+x_{n+1} = r\, x_{n}\, (1 - x_{n})
+$$
+
+This is called the **logistic map**. The factor $(1-x_n)$ acts like a brake. When the habitat is nearly full, there is little room left for more growth.
+
+For small enough values of $r$, the population settles at one value:
+
+$$
+x_{*} = 1 - \frac{1}{r}
+$$
+
+The star means “the value where the population settles.” If the population reaches $x_*$, the next step gives the same value again.
+
+Mathematicians test whether this resting value is stable by looking at the slope of the rule there. That slope is
+
+$$
+2-r
+$$
+
+When the slope is between $-1$ and $1$, a small bump away from $x_*$ shrinks on later steps. At $r=3$, the slope reaches $-1$. Then the population stops settling at one value and begins jumping between two values.
+
+Raise $r$ a little more and two values split into four. Then four split into eight, then sixteen, and so on. The gaps between these split points get smaller in a very regular way. The ratio between one gap and the next approaches
+
+$$
+\delta \approx 4.669
+$$
+
+This number is called **Feigenbaum's constant**. It appears in many different rules that rise once and then fall, not only in this population rule.
+
+After many splits, near $r \approx 3.57$, the values look mixed up and hard to predict. This is **chaos**. Chaos does not mean there is no rule—the rule is perfectly clear. It means that tiny differences in the starting value can grow into very different results.
+
+Even inside the chaos, neat patterns return for a while. Near $r=3.83$, the population repeats a cycle of three values. Then those values split again and the chaos returns.
+
+At $r=4$, we cannot easily predict where the 1,000th step will land. But we can still predict where the orbit spends most of its time. Its distribution has this shape:
+
+$$
+\rho(x) = \frac{1}{\pi \sqrt{x\,(1-x)}}
+$$
+
+The symbol $\rho(x)$ describes how crowded the visits are near $x$. The orbit visits values near the middle less often and spends more time near 0 and 1. We may not know the next value, but we can know the long-term pattern. Even chaos has an order.
+
+## Enough noise becomes a bell
+
+Imagine dropping a ball through a board filled with pegs. Each time the ball hits a peg, it has an equal chance of bouncing left or right. One ball follows an unpredictable path. But if we drop thousands of balls, they pile up in a smooth bell shape: most land near the middle, and fewer land near the sides.
+
+This is an example of the **central limit theorem**. Suppose we add many independent little changes, written as $X_1, X_2, \ldots, X_n$. “Independent” means one change does not control the next. Each change has an average value $\mu$ and a typical amount of spread $\sigma$.
+
+To compare sums of different sizes, we centre and resize the total:
+
+$$
+Z_{n} = \frac{(X_{1} + \cdots + X_{n}) - n\mu}{\sigma \sqrt{n}}
+$$
+
+Here is what each part does:
+
+- $X_1 + \cdots + X_n$ adds all the changes.
+- Subtracting $n\mu$ moves the average to 0.
+- Dividing by $\sigma\sqrt{n}$ puts the spread on a common scale.
+
+As $n$ becomes large, the histogram of $Z_n$ gets closer to the same bell curve:
+
+$$
+\frac{1}{\sqrt{2\pi}}\, e^{-z^{2}/2}
+$$
+
+The individual changes do not have to look like a bell. They might be coin flips, small measurement errors, or left-right bounces. As long as a few important conditions are met—especially independence and a finite spread—their resized sum moves toward this curve.
+
+The prime numbers offer another kind of hidden order. One gap between primes may look unrelated to the next. But if we count how many primes are less than a large number $n$, the answer is close to the smooth formula
+
+$$
+\frac{n}{\ln n}
+$$
+
+Here $\ln n$ is a logarithm. The exact primes are bumpy and irregular, but their total count follows a simple trend.
+
+## A sentence from a heap of text
+
+Human writing is messier than balls bouncing through pegs. People change topics, disagree, make jokes, and leave thoughts unfinished. A language model learns one useful pattern from this giant pile of writing: given the pieces of text so far, what piece is likely to come next?
+
+A piece might be a word or part of a word. It is often called a **token**. We will write the pieces as $w_1, w_2, \ldots, w_n$.
+
+The probability of a whole sentence can be broken into a chain of next-piece guesses:
+
+$$
+\begin{aligned}
+P(w_{1}, \ldots, w_{n}) =\;
+& P(w_{1})\, P(w_{2} \mid w_{1}) \\
+& P(w_{3} \mid w_{1}, w_{2}) \cdots
+\end{aligned}
+$$
+
+The vertical line $\mid$ means “given.” So $P(w_3 \mid w_1,w_2)$ means “the chance of the third piece, given the first two pieces.” Each guess uses everything that came before it.
+
+Inside the model are many layers of numbers. A typical layer takes a list of numbers called a vector, multiplies it by a grid of numbers called a matrix, adds a shift, and passes the result through a rule that can bend it. One layer by itself does not understand a sentence. But many trained layers can build useful patterns together.
+
+During training, the model sees a piece of real text and tries to guess the next token. A wrong or unlikely guess receives a larger score called **loss**:
+
+$$
+L = -\sum_{t} \log p(w_{t} \mid w_{1}, \ldots, w_{t-1})
+$$
+
+The $\sum$ sign means “add these up.” The formula adds the surprise of every correct next token. Training changes the model's numbers to make this total surprise smaller.
+
+After seeing an enormous amount of text, the model can produce sentences that people can read and discuss. No single box inside it is labelled “joke,” “sadness,” or “promise.” Those ideas are spread across many connections because the model has learned which pieces of language tend to appear together.
+
+We can write the training rule and watch the output arrive one token at a time. It is still difficult to give a short, complete explanation for why billions of learned numbers chose one exact sentence. Once again, a simple goal—predict the next piece—creates behaviour much richer than the rule sounds.
+
+The same general idea can work with other kinds of data. Predict pieces of images and a model can make pictures. Predict pieces of sound and it can make audio. The surprising part is that practising the next small guess can teach a system large patterns.
+
+## What they share
+
+| Example        | What looks messy                  | The hidden order                                   |
+| -------------- | --------------------------------- | -------------------------------------------------- |
+| Benford's law  | measurements across many sizes    | $P(d) = \log_{10}(1 + 1/d)$                        |
+| Mandelbrot set | number orbits that may escape     | escape time for $z \mapsto z^{2} + c$              |
+| Logistic map   | a population that will not settle | $\delta \approx 4.669$ and a distribution at $r=4$ |
+| Bell curve     | many independent little changes   | one curve after resizing by $\sqrt{n}$             |
+| Language model | a huge pile of human writing      | the probability of the next token                  |
+
+These formulas do not make every detail predictable. Instead, each one finds something steady inside the mess: how often a digit appears, whether a point escapes, when a population splits, where random sums gather, or which token may come next.
+
+That is hidden order: a pattern large enough to surprise us, produced by a rule small enough to write down.

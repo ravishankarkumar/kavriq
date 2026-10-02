@@ -1,0 +1,27 @@
+---
+interface Props {
+  src: string;
+  poster: string;
+  title: string;
+  caption: string;
+}
+
+const { src, poster, title, caption } = Astro.props;
+const captionId = `fractal-short-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+---
+
+<figure class="not-prose mx-auto my-8 w-full max-w-[22rem]">
+  <video
+    class="block aspect-[9/16] w-full rounded-2xl bg-[#070b14] object-cover shadow-[0_18px_50px_rgb(0_0_0/0.28)]"
+    controls
+    playsinline
+    preload="metadata"
+    poster={poster}
+    aria-labelledby={captionId}
+  >
+    <source src={src} type="video/mp4" />
+  </video>
+  <figcaption id={captionId} class="mt-3 text-center text-sm leading-relaxed text-foreground/70">
+    {caption}
+  </figcaption>
+</figure>

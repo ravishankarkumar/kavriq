@@ -126,6 +126,12 @@
     li {
       @apply text-[1.04rem] leading-8 text-foreground/86;
     }
+
+    /* Display math sits outside the paragraph color, so prose leaves it
+       on the light-theme gray. Match the surrounding text in both themes. */
+    .katex {
+      color: color-mix(in srgb, var(--foreground) 86%, transparent);
+    }
   }
 
   .astro-code {

@@ -1,0 +1,327 @@
+---
+title: Fractals
+description: The simple repeating rules behind the Koch snowflake, the Sierpinski triangle, and a branching tree.
+layout: ../../../layouts/DocsLayout.astro
+---
+
+Imagine a drawing machine that knows only one instruction. It follows that instruction, then follows it again on every new piece it just made. A surprisingly detailed shape can grow from that one repeated rule.
+
+That kind of shape is called a **fractal**. When you zoom in on a fractal, smaller parts often look like the larger shape. This is called **self-similarity**.
+
+The three short films on this page show a rule being repeated one round at a time. A round is also called an **iteration**. The formulas help us count what changes: the number of pieces, their sizes, the total length, and the area.
+
+## One rule, repeated
+
+The basic recipe is simple:
+
+1. Start with one shape.
+2. Replace it with $N$ smaller copies.
+3. Make each copy $s$ times the original size.
+4. Repeat the same steps on every new copy.
+
+Here, $N$ means the **number of copies**, and $s$ means the **scale** of each copy. Because the copies are smaller, $s$ is less than 1.
+
+For example, split a line segment into two equal halves. You now have $N=2$ copies, each at scale $s=1/2$. Split a square into four equal smaller squares. You have $N=4$ copies, each with side length $s=1/2$ of the original.
+
+Fractals have a number called the **similarity dimension**:
+
+$$
+D = \frac{\log N}{\log (1/s)}
+$$
+
+The logarithms in this formula help compare how fast the number of copies grows with how fast their size shrinks. The same rule can also be written as
+
+$$
+N \cdot s^{D} = 1
+$$
+
+This says that when size is measured using the right dimension $D$, all the small copies add up to one whole shape.
+
+For an ordinary line, $N=2$ and $s=1/2$, so $D=1$. A line is one-dimensional. For a square, $N=4$ and $s=1/2$, so $D=2$. A square is two-dimensional.
+
+But a fractal's dimension can sit between 1 and 2. It can be more detailed than a smooth line without completely filling a flat area.
+
+After $n$ rounds, the repeating rule gives us two useful counts:
+
+$$
+\begin{aligned}
+\text{number of pieces} &= N^{n} \\
+\text{size of one piece} &= s^{n}
+\end{aligned}
+$$
+
+The small raised $n$ means “multiply by the same number $n$ times.” For example, $4^3=4\times4\times4=64$.
+
+As the number of pieces grows, each piece shrinks. That tug-of-war can make total length and total area behave in very different ways.
+
+## Koch snowflake
+
+<figure class="not-prose mx-auto my-8 w-full max-w-[22rem]">
+  <iframe
+    class="block aspect-[9/16] w-full rounded-2xl bg-[#070b14] shadow-[0_18px_50px_rgb(0_0_0/0.28)]"
+    src="https://www.youtube.com/embed/b4XTI_mfYiI"
+    title="Koch snowflake animation"
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  ></iframe>
+  <figcaption class="mt-3 text-center text-sm leading-relaxed text-foreground/70">
+    Each side becomes four. The animation draws the triangle, then six rounds of
+    the rule.
+    <a href="https://www.youtube.com/shorts/b4XTI_mfYiI">
+      Watch it on YouTube.
+    </a>
+  </figcaption>
+</figure>
+
+The Koch snowflake begins with an equilateral triangle—a triangle whose three sides have equal length. Helge von Koch described its repeating curve in 1904.
+
+Apply this rule to every side:
+
+1. Divide the side into three equal pieces.
+2. Replace the middle piece with two sides of a tiny equilateral triangle.
+
+One straight segment becomes four smaller segments. Each new segment is one third as long as the old one. So for this rule,
+
+$$
+N=4, \qquad s=\frac{1}{3}
+$$
+
+Then we apply the same rule to every new segment. The film shows six rounds.
+
+Suppose each side of the starting triangle has length $a$. After $n$ rounds,
+
+$$
+\begin{aligned}
+\text{number of sides} &= 3 \cdot 4^{n} \\
+\text{length of one side} &= \frac{a}{3^{n}} \\
+\text{perimeter} &= 3a \left(\frac{4}{3}\right)^{n}
+\end{aligned}
+$$
+
+Let us check the first round. The original triangle has 3 sides. Each side becomes 4, giving
+
+$$
+3\times4=12 \text{ sides}
+$$
+
+Each new side has length $a/3$, so the new perimeter is
+
+$$
+12\times\frac{a}{3}=4a
+$$
+
+The old perimeter was $3a$. The new one is $4a$, so each round multiplies the perimeter by $4/3$. Because $4/3$ is greater than 1, the perimeter keeps growing forever.
+
+That sounds impossible at first. The snowflake fits inside a limited part of the page, yet its edge becomes infinitely long. Each added bump is tiny, but there are more and more bumps.
+
+### What happens to the area?
+
+The starting triangle has area
+
+$$
+A_0 = \frac{\sqrt{3}}{4}\,a^2
+$$
+
+Here, $A_0$ means “the area at round zero,” before we add any bumps. The symbol $\sqrt{3}$ means the square root of 3.
+
+At round $n$, the snowflake adds $3\cdot4^{n-1}$ tiny triangles. Each new triangle has area $A_0/9^n$. The sides become one third as long, and area depends on length squared, so the area becomes $(1/3)^2=1/9$ as large.
+
+The total added area is
+
+$$
+\begin{aligned}
+\sum_{n=1}^{\infty} 3 \cdot 4^{n-1} \cdot \frac{A_0}{9^{n}}
+&= \frac{A_0}{3} \sum_{k=0}^{\infty} \left(\frac{4}{9}\right)^{k} \\
+&= \frac{A_0}{3} \cdot \frac{1}{1 - 4/9} \\
+&= \frac{3}{5} A_0
+\end{aligned}
+$$
+
+The $\sum$ sign means “add all these pieces.” The $\infty$ symbol means we imagine continuing forever. Each round adds only $4/9$ as much area as the round before it, so the added amounts shrink quickly enough to have a finite total.
+
+The finished snowflake therefore has area
+
+$$
+A_{\infty} = A_0 \left(1 + \frac{3}{5}\right)
+= \frac{8}{5}A_0
+= \frac{2\sqrt{3}}{5}\,a^2
+$$
+
+Its area stops growing at $8/5$, or 1.6 times, the starting area. So the snowflake has an **infinite perimeter but a finite area**. You could fill it with a limited amount of paint, but you could never finish tracing its perfect edge.
+
+Its similarity dimension is
+
+$$
+D = \frac{\log 4}{\log 3} \approx 1.262
+$$
+
+That is a little more than the dimension of a line, which is 1, but much less than the dimension of a filled area, which is 2. The number matches what we see: the edge is extremely crinkly, but it does not fill the page.
+
+## Sierpinski triangle
+
+<aside class="not-prose my-8 rounded-2xl border border-foreground/10 bg-foreground/[0.03] px-5 py-4 text-center">
+  <p class="m-0 font-medium">Sierpinski triangle video coming soon.</p>
+  <p class="mt-1 mb-0 text-sm text-foreground/70">
+    It will show six rounds of removing the middle triangle.
+  </p>
+</aside>
+
+The Sierpinski triangle begins with a filled equilateral triangle. Wacław Sierpiński described this fractal in 1915.
+
+Its repeating rule is:
+
+1. Mark the middle of each side.
+2. Join those three middle points.
+3. Remove the upside-down triangle in the centre.
+4. Repeat inside each of the three triangles that remain.
+
+After the first round, three corner triangles remain. Each has sides half as long as the original. Therefore,
+
+$$
+N=3, \qquad s=\frac{1}{2}
+$$
+
+After $n$ rounds, $3^n$ small triangles remain. Their total painted area is
+
+$$
+A_n = A_0 \left(\frac{3}{4}\right)^n
+$$
+
+Why $3/4$? Dividing the original triangle creates four equal small triangles, but we keep only three of them. Every round keeps three quarters of the area that was there before.
+
+The first round leaves $3/4$ of the paint. The second leaves
+
+$$
+\frac{3}{4}\times\frac{3}{4}=\frac{9}{16}
+$$
+
+of the original paint. Continue forever and the painted area gets closer and closer to zero.
+
+The boundary does the opposite. Every new hole adds more edges. Its total length after $n$ rounds is
+
+$$
+P_n = 3a \left(\frac{3}{2}\right)^n
+$$
+
+Here, $P_n$ is the total boundary length and $a$ is the side length of the starting triangle. Because $3/2$ is greater than 1, the boundary grows without limit.
+
+The finished fractal has almost no painted area, yet its boundary is infinitely long. This is the reverse of what we might expect from an ordinary triangle.
+
+Its similarity dimension is
+
+$$
+D = \frac{\log 3}{\log 2} \approx 1.585
+$$
+
+This is larger than the Koch snowflake's dimension of about 1.262. Three half-size copies pack together more densely than four one-third-size copies, so the Sierpinski triangle comes closer to filling a flat area.
+
+### A surprising way to draw it
+
+There is another way to make the Sierpinski triangle, sometimes called the **chaos game**:
+
+1. Choose any starting point.
+2. Randomly choose one corner of the triangle.
+3. Move halfway from your current point toward that corner.
+4. Mark the new point and repeat.
+
+The choices are random, but after many jumps the marked points form the Sierpinski triangle.
+
+Call the three corner points $\mathbf{v}_1$, $\mathbf{v}_2$, and $\mathbf{v}_3$. Call the current point $\mathbf{x}$. One jump toward corner $i$ is written as
+
+$$
+f_i(\mathbf{x}) = \frac{\mathbf{x} + \mathbf{v}_i}{2}
+$$
+
+The bold letters stand for positions on the page. Adding the current point to a corner and dividing by 2 finds the point exactly halfway between them.
+
+Random steps create an orderly picture because every move follows the same “jump halfway” rule. The centre never fills in: each jump keeps the point inside one of the three smaller corner triangles.
+
+## Recursive tree
+
+<aside class="not-prose my-8 rounded-2xl border border-foreground/10 bg-foreground/[0.03] px-5 py-4 text-center">
+  <p class="m-0 font-medium">Recursive tree video coming soon.</p>
+  <p class="mt-1 mb-0 text-sm text-foreground/70">
+    It will show a trunk followed by nine rounds of branching.
+  </p>
+</aside>
+
+This fractal starts with one trunk. At its tip, the trunk splits into two shorter branches. Each new branch turns by an angle $\theta$ and then splits in exactly the same way.
+
+The film uses
+
+$$
+\theta=30^\circ, \qquad r=0.68
+$$
+
+The Greek letter $\theta$, pronounced “theta,” is the turning angle. The number $r$ is the scale of each child branch. So every child is 68% as long as its parent. The film draws the trunk and then nine rounds of splitting.
+
+Let $\ell$ stand for the trunk's length. At level $k$ there are
+
+$$
+2^k
+$$
+
+branches, because every branch splits into two. Each branch has length
+
+$$
+\ell r^k
+$$
+
+For example, level 2 has $2^2=4$ branches, and each one is $r^2$ times the trunk's length.
+
+The total length through level $n$ is
+
+$$
+L_n = \ell \sum_{k=0}^{n}(2r)^k
+= \ell\,\frac{(2r)^{n+1}-1}{2r-1}
+$$
+
+This is a **geometric series**: each level's total length is the previous level's total multiplied by the same number. That number is $2r$, because there are twice as many branches and each is $r$ times as long.
+
+For the tree in the film,
+
+$$
+2r=2\times0.68=1.36
+$$
+
+So every level contains 1.36 times as much branch length as the level before it. Each individual branch gets shorter, but the number of branches grows even faster. If the tree kept splitting forever, its total branch length would become infinite.
+
+If $r$ were less than $1/2$, then $2r$ would be less than 1. Each level would add less total length than the previous one, and the infinite tree would have a finite total length.
+
+Treating the leafy top as two smaller copies of itself gives the similarity dimension
+
+$$
+D = \frac{\log 2}{\log(1/0.68)} \approx 1.797
+$$
+
+This is close to 2, the dimension of a filled area. That helps explain why the later rounds look thick and leafy even though the tree is made only from thin line segments.
+
+### How to draw one branch
+
+Suppose a branch starts at point $\mathbf{p}$, points in direction $\mathbf{u}$, and has length $\ell$. The direction $\mathbf{u}$ is a **unit vector**, meaning an arrow with length 1. The branch's tip is
+
+$$
+\mathbf{p}+\ell\mathbf{u}
+$$
+
+From that tip, create two new directions: rotate $\mathbf{u}$ by $+\theta$ for one child and by $-\theta$ for the other. Give each child length $r\ell$, then repeat the instructions at both new tips.
+
+A computer only needs those few steps to grow the whole tree.
+
+## Side by side
+
+All three fractals are controlled by the same two choices: how many copies to make and how much to shrink them.
+
+| Fractal             | Copies $N$ | Scale $s$ | Dimension $D$ | Surprising result                        |
+| ------------------- | ---------: | --------: | ------------: | ---------------------------------------- |
+| Koch snowflake      |          4 |     $1/3$ |       $1.262$ | infinite perimeter, finite area          |
+| Sierpinski triangle |          3 |     $1/2$ |       $1.585$ | infinite boundary, area approaching zero |
+| Recursive tree      |          2 |    $0.68$ |       $1.797$ | infinite total branch length             |
+
+The films stop after a few rounds because the pieces quickly become too small for a screen to show. The mathematical rules do not have to stop. We can imagine them repeating forever.
+
+That is what makes fractals so surprising: a rule small enough to say in one sentence can create detail that never ends.
+
+The same search for simple rules continues in [Hidden order](/fun/mathematics/hidden-order), where digits, escaping numbers, noise, and language all reveal patterns of their own.

@@ -611,6 +611,27 @@ export const docsNavSections: DocsNavSection[] = [
     ],
   },
   {
+    title: "Fun",
+    href: "/fun",
+    items: [
+      { title: "Overview", href: "/fun" },
+      {
+        title: "Mathematics",
+        href: "/fun/mathematics",
+        children: [
+          {
+            title: "Fractals",
+            href: "/fun/mathematics/fractals",
+          },
+          {
+            title: "Hidden order",
+            href: "/fun/mathematics/hidden-order",
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: "Explainers",
     href: "/explainers",
     items: [
