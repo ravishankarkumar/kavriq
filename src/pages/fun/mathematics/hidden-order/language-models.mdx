@@ -1,0 +1,100 @@
+---
+title: "Hidden order: Language models"
+description: How repeatedly predicting the next token can produce complete sentences from a large and messy collection of writing.
+layout: ../../../../layouts/DocsLayout.astro
+---
+
+Human writing is messy. People change topics, disagree, make jokes, invent words, and leave thoughts unfinished. Yet a language model can learn useful patterns from this enormous collection of text.
+
+Its basic training task sounds surprisingly small:
+
+> Given the pieces of text so far, which piece is likely to come next?
+
+## Words become tokens
+
+A language model does not always read one whole word at a time. It divides text into pieces called **tokens**. A token might be a whole word, part of a word, punctuation, or even a space.
+
+We can write a sequence of tokens as
+
+$$
+w_1,w_2,\ldots,w_n
+$$
+
+Here, $w_1$ is the first token, $w_2$ is the second, and so on.
+
+The probability of the complete sequence can be broken into a chain of next-token guesses:
+
+$$
+\begin{aligned}
+P(w_1,\ldots,w_n)=\;&P(w_1)\,P(w_2\mid w_1) \\
+&P(w_3\mid w_1,w_2)\cdots
+\end{aligned}
+$$
+
+The vertical line $\mid$ means “given.” For example,
+
+$$
+P(w_3\mid w_1,w_2)
+$$
+
+means “the probability of the third token, given the first two tokens.” Each new guess uses the tokens that came before it.
+
+## A tiny example
+
+Suppose the text begins:
+
+> The cat sat on the …
+
+The model might give possible next tokens probabilities such as:
+
+| Possible next token | Example probability |
+| ------------------- | ------------------: |
+| mat                 |                 45% |
+| floor               |                 25% |
+| chair               |                 15% |
+| moon                |                  1% |
+
+These numbers are only an illustration, not the output of a particular model. They show the main idea: the model does not store one guaranteed next word. It assigns a probability to many possibilities.
+
+After choosing one token, the model adds it to the text and predicts again. Repeating this step grows a sentence one token at a time.
+
+## What happens inside the model?
+
+Inside a language model are many layers of numbers. A typical layer takes a list of numbers called a **vector**, multiplies it by a grid of numbers called a **matrix**, adds a shift, and passes the result through another mathematical rule.
+
+One layer by itself does not understand a sentence. But many trained layers can build useful patterns together. Early calculations may track nearby token relationships, while the whole network can represent larger patterns involving grammar, topic, style, and context.
+
+## Learning by measuring surprise
+
+During training, the model sees real text and tries to predict each next token. An unlikely guess for the token that actually appeared receives a larger score called **loss**:
+
+$$
+L=-\sum_t\log p(w_t\mid w_1,\ldots,w_{t-1})
+$$
+
+The $\sum$ sign means “add these values.” The formula adds the surprise of every correct next token.
+
+- If the model gave the correct token a high probability, the surprise is small.
+- If it gave the correct token a very low probability, the surprise is large.
+
+Training changes the model's internal numbers to make the total surprise smaller.
+
+## How can prediction produce meaning?
+
+After training on an enormous amount of text, the model can produce sentences that people can read and discuss. No single box inside it is labelled “joke,” “sadness,” or “promise.” These ideas are spread across many connections because the model has learned which language patterns tend to appear together.
+
+We can write the training rule and watch output arrive one token at a time. It is still difficult to give a short, complete explanation for why billions of learned numbers chose one exact sentence.
+
+Once again, a simple goal creates behaviour much richer than the goal sounds. Predicting the next small piece, repeated at a huge scale, can produce a complete passage.
+
+The same broad idea works with other kinds of data. Predict pieces of images and a model can make pictures. Predict pieces of sound and it can make audio.
+
+## What should you remember?
+
+- Text is divided into pieces called tokens.
+- A language model assigns probabilities to possible next tokens.
+- A sentence is built by making one next-token choice after another.
+- Training reduces the surprise of the tokens that people actually wrote.
+- A small prediction task can create large and complicated behaviour.
+
+You have reached the end of the series. Return to the [Hidden order overview](/fun/mathematics/hidden-order), or revisit [Benford's law](/fun/mathematics/hidden-order/benfords-law).

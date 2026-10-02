@@ -1,0 +1,101 @@
+---
+title: "Hidden order: The logistic map"
+description: How one population equation moves from a steady value to repeating cycles and chaos.
+layout: ../../../../layouts/DocsLayout.astro
+---
+
+Can a rule be completely clear but still produce results that are difficult to predict? The **logistic map** shows that it can.
+
+It uses one small equation to model a population:
+
+$$
+x_{n+1}=r\,x_n(1-x_n)
+$$
+
+Let $x_n$ be the fraction of a habitat occupied at step $n$. It stays between 0 and 1. For example, $x_n=0.25$ means that one quarter of the habitat is occupied.
+
+The value $r$ controls how quickly the population grows. The factor $(1-x_n)$ acts like a brake: when the habitat is nearly full, little room remains for more growth.
+
+<figure class="not-prose mx-auto my-8 w-full max-w-3xl overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.03] shadow-[0_18px_50px_rgb(0_0_0/0.16)]">
+  <iframe
+    class="block aspect-video w-full bg-[#070b14]"
+    src="https://www.youtube.com/embed/ovJcsL7vyrk"
+    title="This equation will change how you see the world — the logistic map"
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  ></iframe>
+  <figcaption class="px-5 py-4 text-sm leading-relaxed text-foreground/70">
+    <strong class="text-foreground">A visual guide to the logistic map.</strong>
+    This video explores how the equation moves from steady growth to repeating
+    patterns and chaos.
+    <a href="https://www.youtube.com/watch?v=ovJcsL7vyrk">
+      Watch it on YouTube.
+    </a>
+  </figcaption>
+</figure>
+
+## When the population settles
+
+For suitable small values of $r$, the population settles at one value:
+
+$$
+x_*=1-\frac{1}{r}
+$$
+
+The star means “the value where the population settles.” If the population reaches $x_*$, the next step gives exactly the same value.
+
+Mathematicians test whether this resting value is stable by looking at the slope of the rule there. That slope is
+
+$$
+2-r
+$$
+
+When the slope lies between $-1$ and $1$, a small push away from $x_*$ becomes smaller on later steps. The orbit returns to the resting value.
+
+At $r=3$, the slope reaches $-1$. The resting value is no longer stable. Instead of settling at one value, the population begins alternating between two values.
+
+## Two becomes four, then eight
+
+Raise $r$ a little more and the two repeating values split into four. Then four split into eight, eight into sixteen, and so on. This is called a **period-doubling cascade**.
+
+The gaps between the split points become smaller in a regular way. The ratio between one gap and the next approaches
+
+$$
+\delta\approx4.669
+$$
+
+This number is called **Feigenbaum's constant**. It appears in many different rules that rise once and then fall, not only in this population model.
+
+## A clear rule creates chaos
+
+After many splits, near $r\approx3.57$, the values look mixed up and become hard to predict. This behaviour is called **chaos**.
+
+Chaos does not mean that there is no rule. The equation is still perfectly clear. It means that tiny differences in the starting value can grow until they produce very different results.
+
+Even inside the chaotic region, neat patterns can return for a while. Near $r=3.83$, the population repeats a cycle of three values. Those values later split again, and chaos returns.
+
+## Chaos still has a shape
+
+At $r=4$, predicting the 1,000th step is extremely difficult. But we can still predict where the orbit spends most of its time. Its long-term distribution is
+
+$$
+\rho(x)=\frac{1}{\pi\sqrt{x(1-x)}}
+$$
+
+The symbol $\rho(x)$, pronounced “rho of x,” describes how crowded the visits are near $x$. The orbit visits values near the middle less often and spends more time near 0 and 1.
+
+We may not know the next value, but we can know the long-term pattern. Even chaos has an order.
+
+## What should you remember?
+
+- The logistic map repeats one population equation.
+- Changing $r$ changes the population's behaviour.
+- One resting value can split into cycles of 2, 4, 8, and more.
+- A precise rule can produce chaos.
+- Chaotic results can still have a predictable long-term distribution.
+
+**Next:** [Why random sums create a bell curve →](/fun/mathematics/hidden-order/central-limit-theorem)
+
+[Back to the Hidden order series](/fun/mathematics/hidden-order)

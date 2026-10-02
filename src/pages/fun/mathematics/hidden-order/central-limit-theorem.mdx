@@ -1,0 +1,108 @@
+---
+title: "Hidden order: The central limit theorem"
+description: Why adding many independent random changes often produces the same familiar bell curve.
+layout: ../../../../layouts/DocsLayout.astro
+---
+
+Imagine dropping a ball through a board filled with pegs. Each time the ball hits a peg, it has an equal chance of bouncing left or right.
+
+One ball follows an unpredictable path. But if we drop thousands of balls, they form a smooth pile: most land near the middle, and fewer land near the sides. The pile looks like a bell.
+
+Why does randomness create such an orderly shape?
+
+## Turning bounces into numbers
+
+We can represent each bounce with a number:
+
+$$
+X_i=
+\begin{cases}
+-1 & \text{for a bounce to the left} \\
++1 & \text{for a bounce to the right}
+\end{cases}
+$$
+
+The small $i$ labels the bounce. $X_1$ is the first bounce, $X_2$ is the second, and so on.
+
+Adding all the bounces tells us where the ball finishes:
+
+$$
+X_1+X_2+\cdots+X_n
+$$
+
+Left and right bounces mostly cancel. After 100 bounces, the typical distance from the middle is on the scale of
+
+$$
+\sqrt{100}=10
+$$
+
+steps, not 100 steps.
+
+## The central limit theorem
+
+The **central limit theorem** describes what happens when we add many independent random changes.
+
+“Independent” means that knowing one change does not tell us what the next change will be. Let every change have average $\mu$, pronounced “mu,” and a typical spread $\sigma$, pronounced “sigma.”
+
+To compare sums of different sizes, we centre and resize the total:
+
+$$
+Z_n=\frac{(X_1+\cdots+X_n)-n\mu}{\sigma\sqrt{n}}
+$$
+
+Each part has a job:
+
+- $X_1+\cdots+X_n$ adds all the changes.
+- The expected total is $n\mu$, so subtracting it moves the centre to 0.
+- The total's typical spread is $\sigma\sqrt{n}$, so dividing by it puts sums of different sizes on the same scale.
+
+As $n$ grows, a histogram of $Z_n$ gets closer to the same bell-shaped curve:
+
+$$
+\frac{1}{\sqrt{2\pi}}e^{-z^2/2}
+$$
+
+The curve is tallest near $z=0$, so results close to the average are common. Farther from 0, the curve becomes lower, so very large differences from the average are rare.
+
+The individual changes do not have to look like a bell. They might be coin flips, measurement errors, or left-right bounces. Under the theorem's conditions—especially independence and a finite spread—their centred and resized sum approaches this curve.
+
+<figure class="not-prose mx-auto my-8 w-full max-w-3xl overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.03] shadow-[0_18px_50px_rgb(0_0_0/0.16)]">
+  <iframe
+    class="block aspect-video w-full bg-[#070b14]"
+    src="https://www.youtube.com/embed/zeJD6dqJ5lo"
+    title="But what is the Central Limit Theorem?"
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  ></iframe>
+  <figcaption class="px-5 py-4 text-sm leading-relaxed text-foreground/70">
+    <strong class="text-foreground">
+      See the central limit theorem in action.
+    </strong>
+    This visual explanation shows why adding many random changes produces the
+    familiar bell curve.
+    <a href="https://www.youtube.com/watch?v=zeJD6dqJ5lo">
+      Watch it on YouTube.
+    </a>
+  </figcaption>
+</figure>
+
+## Prediction without predicting one path
+
+We cannot predict the exact left-right path of one ball. We also cannot know exactly where one future ball will land.
+
+But when we release thousands of balls, we can predict the shape of the whole pile. Most balls gather near the middle. Far fewer reach the edges.
+
+That is the hidden order: each path is random, but the collection follows a stable mathematical pattern.
+
+## What should you remember?
+
+- Independent random changes can be added together.
+- Their total spreads on the scale of $\sqrt{n}$.
+- After centring and resizing, many kinds of sums approach the same bell curve.
+- One result remains unpredictable, while the overall pattern becomes predictable.
+
+**Next:** [How next-token guesses grow into sentences →](/fun/mathematics/hidden-order/language-models)
+
+[Back to the Hidden order series](/fun/mathematics/hidden-order)

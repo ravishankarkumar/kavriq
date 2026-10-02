@@ -1,0 +1,127 @@
+---
+title: "Hidden order: The Mandelbrot set"
+description: How testing whether numbers escape turns one repeated equation into an endlessly detailed fractal.
+layout: ../../../../layouts/DocsLayout.astro
+---
+
+The Mandelbrot set is an enormous, detailed picture made by repeating one small rule:
+
+$$
+z_0=0,\qquad z_{n+1}=z_n^2+c
+$$
+
+<figure class="not-prose mx-auto my-8 w-full max-w-[22rem]">
+  <iframe
+    class="block aspect-[9/16] w-full rounded-2xl bg-[#070b14] shadow-[0_18px_50px_rgb(0_0_0/0.28)]"
+    src="https://www.youtube.com/embed/anTuf91eD18"
+    title="Mandelbrot set animation"
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  ></iframe>
+  <figcaption class="mt-3 text-center text-sm leading-relaxed text-foreground/70">
+    Watch the Mandelbrot set emerge from a simple repeated rule.
+    <a href="https://www.youtube.com/shorts/anTuf91eD18">
+      Watch it on YouTube.
+    </a>
+  </figcaption>
+</figure>
+
+The small number below $z$, called a **subscript**, tells us which step we are on. The list of answers $z_0,z_1,z_2,\ldots$ is called an **orbit**.
+
+We choose a value for $c$, begin with $z_0=0$, and use each answer to calculate the next one.
+
+## Three choices for $c$
+
+Start with $c=1$:
+
+$$
+\begin{aligned}
+z_0&=0 \\
+z_1&=0^2+1=1 \\
+z_2&=1^2+1=2 \\
+z_3&=2^2+1=5 \\
+z_4&=5^2+1=26
+\end{aligned}
+$$
+
+The orbit is
+
+$$
+0\rightarrow1\rightarrow2\rightarrow5\rightarrow26\rightarrow\cdots
+$$
+
+The answers grow and never return. We say that this orbit **escapes**, so $c=1$ is not in the Mandelbrot set.
+
+If $c=0$, every answer stays at 0:
+
+$$
+0\rightarrow0\rightarrow0\rightarrow0\rightarrow\cdots
+$$
+
+If $c=-1$, the answers repeat:
+
+$$
+0\rightarrow-1\rightarrow0\rightarrow-1\rightarrow\cdots
+$$
+
+These two orbits stay within a limited distance from 0. We call them **bounded**, so $c=0$ and $c=-1$ are in the Mandelbrot set.
+
+## Turning the rule into a picture
+
+So far, $c$ has been a point on an ordinary number line. To draw the Mandelbrot set, we allow $c$ to be a **complex number**.
+
+A complex number has the form
+
+$$
+c=a+bi
+$$
+
+The number $a$ gives a point's left-right position. The number $b$ gives its up-down position. The symbol $i$ is a special number for which $i^2=-1$. Together, $a$ and $b$ let a complex number describe any point on a flat grid.
+
+Every pixel in the Mandelbrot picture supplies a different value of $c$. For each pixel, a computer performs the same test:
+
+1. Use the pixel's position as $c$.
+2. Begin with $z_0=0$.
+3. Repeatedly calculate $z_{n+1}=z_n^2+c$.
+4. Check whether the orbit escapes.
+
+The notation $|z_n|$ means the distance of the current answer from the centre of the grid. For this rule, 2 is an **escape boundary**. Once $|z_n|$ becomes greater than 2, the orbit will keep running away.
+
+## Colouring escape time
+
+If an orbit never escapes, its pixel belongs to the Mandelbrot set and is usually coloured black.
+
+A computer cannot actually wait forever. Instead, it repeats the rule a large number of times. If the orbit still has not escaped, the computer treats that pixel as part of the set.
+
+For a pixel that does escape, the computer records how many steps it took to pass 2. This is called the **escape time**. In the $c=1$ example, the distance first passes 2 at $z_3=5$, so the escape time is 3.
+
+The computer gives different colours to different escape times. A point that escapes quickly might receive one colour, while a point that takes hundreds of steps receives another. Repeating this test for every pixel creates the famous picture.
+
+Points near the black boundary can behave very differently even when they are extremely close together. The coloured bands twist into detailed shapes, and smaller shapes resemble parts of the larger one. The boundary is a **fractal**: however far we zoom in, we continue to find new detail.
+
+## Mandelbrot sets and Julia sets
+
+The Mandelbrot set and Julia sets use the same formula, but they change different parts of the experiment:
+
+| Picture        | What stays fixed?                    | What changes?                                        |
+| -------------- | ------------------------------------ | ---------------------------------------------------- |
+| Mandelbrot set | The starting value is always $z_0=0$ | Each point supplies a different $c$                  |
+| Julia set      | One value of $c$ is chosen and kept  | Each point supplies a different starting value $z_0$ |
+
+In both pictures, the interesting shape appears along the border between orbits that stay bounded and those that escape.
+
+The [fractals](/fun/mathematics/fractals) page creates shapes by repeatedly copying pieces. The Mandelbrot set creates its shape by testing escape, one point at a time.
+
+## What should you remember?
+
+- Choose a point $c$ and begin with $z_0=0$.
+- Repeat $z_{n+1}=z_n^2+c$.
+- If the distance passes 2, the orbit escapes.
+- Black pixels represent bounded orbits; other colours show escape times.
+- Testing every point creates an endlessly detailed fractal boundary.
+
+**Next:** [How a population becomes chaotic →](/fun/mathematics/hidden-order/logistic-map)
+
+[Back to the Hidden order series](/fun/mathematics/hidden-order)

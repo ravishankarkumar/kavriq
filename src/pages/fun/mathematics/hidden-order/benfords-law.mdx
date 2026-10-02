@@ -1,0 +1,104 @@
+---
+title: "Hidden order: Benford's law"
+description: Why the first digits in many real-world lists are not equally likely, and how a logarithm predicts the pattern.
+layout: ../../../../layouts/DocsLayout.astro
+---
+
+If you pull a digit from a hat, every digit from 0 to 9 has the same chance of appearing. But many lists of real-world measurements behave differently.
+
+Think of city populations, river lengths, company values, or numbers in a newspaper. Look only at the **first non-zero digit** of each number. You might expect 1 through 9 to appear equally often. Surprisingly, 1 appears most often.
+
+This pattern is called **[Benford's law](https://en.wikipedia.org/wiki/Benford%27s_law)**:
+
+$$
+\begin{aligned}
+P(d)&=\log_{10}\!\left(1+\frac{1}{d}\right) \\
+&=\log_{10}(d+1)-\log_{10}(d)
+\end{aligned}
+$$
+
+Here, $d$ is the first non-zero digit, from 1 to 9. For example, the first non-zero digit of $0.025$ is 2. $P(d)$ means “the probability that this first digit is $d$.”
+
+## What does $\log_{10}$ mean?
+
+The expression $\log_{10}(x)$ asks:
+
+> What power must we raise 10 to in order to get $x$?
+
+For example,
+
+$$
+\log_{10}(1)=0,\qquad \log_{10}(10)=1,\qquad \log_{10}(100)=2
+$$
+
+These work because
+
+$$
+10^0=1,\qquad 10^1=10,\qquad 10^2=100
+$$
+
+The answer does not have to be a whole number. For example,
+
+$$
+\log_{10}(2)\approx0.301
+$$
+
+because $10^{0.301}$ is approximately 2.
+
+## What is the chance of starting with 2?
+
+Imagine a large list that follows Benford's law. If we choose one number at random, what is the probability that its first digit is 2?
+
+Substitute $d=2$ into the formula:
+
+$$
+\begin{aligned}
+P(2)
+&=\log_{10}\!\left(1+\frac{1}{2}\right) \\
+&=\log_{10}\!\left(\frac{3}{2}\right)
+\end{aligned}
+$$
+
+The logarithm of a fraction can be found by subtracting two logarithms:
+
+$$
+\begin{aligned}
+P(2)
+&=\log_{10}(3)-\log_{10}(2) \\
+&\approx0.47712-0.30103 \\
+&\approx0.17609
+\end{aligned}
+$$
+
+To turn a decimal probability into a percentage, multiply it by 100. Therefore, the chance of the first digit being 2 is about **17.6%**.
+
+If the digits 1 through 9 were equally likely, each would appear $1/9$, or about 11.1%, of the time. Benford's law says that they are not equally likely in suitable real-world datasets.
+
+## The full pattern
+
+| First digit | Chance |
+| ----------- | -----: |
+| 1           |  30.1% |
+| 2           |  17.6% |
+| 3           |  12.5% |
+| 4           |   9.7% |
+| 5           |   7.9% |
+| 6           |   6.7% |
+| 7           |   5.8% |
+| 8           |   5.1% |
+| 9           |   4.6% |
+
+A number in one of these lists begins with 1 about 30 times out of 100. It begins with 9 only about 5 times out of 100. The digit 1 is therefore about six times as common as 9.
+
+Benford's law has a deeper mathematical explanation involving logarithms and how numbers spread across different scales. The result may feel counterintuitive, yet one short formula predicts this surprising pattern in many real-world datasets. Isn't that beautiful?
+
+## What should you remember?
+
+- Benford's law is about the first non-zero digit.
+- The first digits are not always equally likely.
+- In suitable datasets, smaller first digits appear more often.
+- A short logarithmic formula predicts how often each digit appears.
+
+**Next:** [How escaping numbers draw the Mandelbrot set →](/fun/mathematics/hidden-order/mandelbrot-set)
+
+[Back to the Hidden order series](/fun/mathematics/hidden-order)

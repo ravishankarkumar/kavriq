@@ -626,6 +626,28 @@ export const docsNavSections: DocsNavSection[] = [
           {
             title: "Hidden order",
             href: "/fun/mathematics/hidden-order",
+            children: [
+              {
+                title: "Benford's Law",
+                href: "/fun/mathematics/hidden-order/benfords-law",
+              },
+              {
+                title: "The Mandelbrot Set",
+                href: "/fun/mathematics/hidden-order/mandelbrot-set",
+              },
+              {
+                title: "The Logistic Map",
+                href: "/fun/mathematics/hidden-order/logistic-map",
+              },
+              {
+                title: "The Central Limit Theorem",
+                href: "/fun/mathematics/hidden-order/central-limit-theorem",
+              },
+              {
+                title: "Language Models",
+                href: "/fun/mathematics/hidden-order/language-models",
+              },
+            ],
           },
         ],
       },
