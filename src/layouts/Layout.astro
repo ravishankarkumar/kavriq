@@ -156,8 +156,8 @@ const structuredData = {
       googleAnalyticsId && (
         <script is:inline define:vars={{ googleAnalyticsId }}>
           window.dataLayer = window.dataLayer || [];
-          function gtag() {
-            dataLayer.push(arguments);
+          function gtag(...args) {
+            dataLayer.push(args);
           }
           window.gtag = gtag;
 

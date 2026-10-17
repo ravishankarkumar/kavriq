@@ -7,8 +7,16 @@ import Footer from "@/components/Footer.astro";
 <Layout>
   <Header />
   <main id="main-content" data-layout="index" class="app-layout">
-    <section id="hero" class="pt-8 pb-6 sm:pt-10 lg:pt-12">
+    <section
+      id="hero"
+      class="landing-hero grid items-center gap-8 pt-8 pb-6 sm:pt-10 lg:pt-12"
+    >
       <div class="max-w-4xl">
+        <p
+          class="tech-label mb-4 text-xs font-semibold tracking-[0.2em] text-accent uppercase"
+        >
+          Learn from first principles
+        </p>
         <h1
           class="max-w-4xl text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl"
         >
@@ -18,6 +26,27 @@ import Footer from "@/components/Footer.astro";
           First-principles explanations of the mathematics, models, and systems
           behind modern AI.
         </p>
+      </div>
+
+      <div class="kavriq-hero-brand" aria-hidden="true">
+        <video
+          class="kavriq-hero-animation"
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="metadata"
+          poster="/brand/kavriq-logo.png"
+        >
+          <source src="/brand/kavriq-logo-splash.webm" type="video/webm" />
+        </video>
+        <img
+          class="kavriq-hero-static"
+          src="/brand/kavriq-logo.png"
+          alt=""
+          width="1200"
+          height="1200"
+        />
       </div>
     </section>
 

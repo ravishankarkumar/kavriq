@@ -39,9 +39,17 @@ const isActive = (path: string) => {
   >
     <a
       href="/"
-      class="site-wordmark shrink-0 py-1 text-2xl leading-none whitespace-nowrap text-black uppercase dark:text-white"
+      class="site-wordmark flex shrink-0 items-center gap-2.5 py-1 text-2xl leading-none whitespace-nowrap text-black uppercase dark:text-white"
     >
-      {SITE.navTitle}
+      <span class="site-logo-mark" aria-hidden="true">
+        <img
+          src="/brand/kavriq-logo-black.png"
+          alt=""
+          width="1200"
+          height="1200"
+        />
+      </span>
+      <span>{SITE.navTitle}</span>
     </a>
     <nav
       id="nav-menu"

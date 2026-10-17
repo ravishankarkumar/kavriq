@@ -3,7 +3,8 @@
 
 @font-face {
   font-family: "Satoshi";
-  src: url("/fonts/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.woff2") format("woff2");
+  src: url("/fonts/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.woff2")
+    format("woff2");
   font-style: normal;
   font-weight: 700;
   font-display: swap;
@@ -15,9 +16,10 @@
 html[data-theme="light"] {
   --background: #f8f7f3;
   --foreground: #18212b;
-  --accent: #c75a16;
+  --brand: #08a9c4;
+  --accent: #08798f;
   --structure: #27638a;
-  --ambient: rgba(39, 99, 138, 0.07);
+  --ambient: rgba(8, 169, 196, 0.09);
   --muted: #ece9e2;
   --border: #d9d5cb;
   --surface: rgba(255, 255, 255, 0.8);
@@ -27,9 +29,10 @@ html[data-theme="light"] {
 html[data-theme="dark"] {
   --background: #0e1524;
   --foreground: #e8eaf0;
-  --accent: #e87326;
+  --brand: #08a9c4;
+  --accent: #56d1e5;
   --structure: #8bb9d6;
-  --ambient: rgba(232, 115, 38, 0.07);
+  --ambient: rgba(8, 169, 196, 0.11);
   --muted: #192438;
   --border: rgba(148, 163, 184, 0.18);
   --surface: rgba(14, 21, 36, 0.72);
@@ -40,8 +43,8 @@ html[data-theme="dark"] {
   --font-inter: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-app: var(--font-inter);
   --font-mono:
-    "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+    "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
@@ -97,6 +100,75 @@ html[data-theme="dark"] {
   font-weight: 700;
   font-style: normal;
   letter-spacing: -0.04em;
+}
+
+.site-logo-mark {
+  position: relative;
+  display: block;
+  width: 1.25rem;
+  height: 1.875rem;
+  overflow: hidden;
+  flex: none;
+}
+
+.site-logo-mark img {
+  position: absolute;
+  top: -0.78rem;
+  left: -1.1rem;
+  width: 3.44rem;
+  max-width: none;
+  height: 3.44rem;
+}
+
+html[data-theme="dark"] .site-logo-mark img {
+  filter: invert(1);
+}
+
+.kavriq-hero-brand {
+  position: relative;
+  display: none;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.kavriq-hero-animation,
+.kavriq-hero-static {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.kavriq-hero-static {
+  display: none;
+}
+
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .landing-hero {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+  }
+
+  .kavriq-hero-brand {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .landing-hero {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    gap: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kavriq-hero-animation {
+    display: none;
+  }
+
+  .kavriq-hero-static {
+    display: block;
+  }
 }
 
 .surface-panel {

@@ -1,15 +1,14 @@
 import { defineConfig, envField } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
+import { unified } from "@astrojs/markdown-remark";
 import remarkToc from "remark-toc";
 import remarkMath from "remark-math";
-import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import remarkCollapse from "remark-collapse";
 import mdx from "@astrojs/mdx";
 import expressiveCode from "astro-expressive-code";
 import { pluginShiki, pluginFrames } from "astro-expressive-code";
-import rehypeExpressiveCode from "rehype-expressive-code";
 import { SITE } from "./src/config";
 import { isOfficialCtoMigratedPath } from "./src/data/officialCtoMigration";
 
@@ -38,33 +37,17 @@ export default defineConfig({
         );
       },
     }),
-    mdx({
+    mdx(),
+  ],
+  markdown: {
+    processor: unified({
       remarkPlugins: [
-        remarkGfm,
         remarkMath,
         remarkToc,
         [remarkCollapse, { test: "Table of contents" }],
       ],
-      rehypePlugins: [
-        rehypeKatex,
-        [
-          rehypeExpressiveCode,
-          {
-            plugins: [pluginShiki(), pluginFrames()],
-            themes: ["night-owl", "min-light"],
-          },
-        ],
-      ],
+      rehypePlugins: [rehypeKatex],
     }),
-  ],
-  markdown: {
-    remarkPlugins: [
-      remarkGfm,
-      remarkMath,
-      remarkToc,
-      [remarkCollapse, { test: "Table of contents" }],
-    ],
-    rehypePlugins: [rehypeKatex],
     shikiConfig: {
       themes: { light: "min-light", dark: "night-owl" },
       defaultColor: false,
